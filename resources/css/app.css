@@ -1,0 +1,144 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans TC',
+        'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    --font-serif: 'Newsreader', 'Source Serif 4', Georgia, 'Noto Serif TC', serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    --color-paper: #f6f1e7;
+    --color-paper-2: #ede6d6;
+    --color-paper-3: #e3dac6;
+    --color-card: #fbf8f0;
+    --color-ink: #2a221c;
+    --color-ink-2: #4a3f35;
+    --color-ink-3: #7a6e62;
+    --color-muted: #a39788;
+    --color-line: rgba(42, 34, 28, 0.10);
+    --color-line-2: rgba(42, 34, 28, 0.18);
+    --color-accent: #b2543b;
+    --color-accent-soft: rgba(178, 84, 59, 0.12);
+    --color-accent-ink: #8a3e2a;
+    --color-good: #4a6b3f;
+    --color-warn: #b08234;
+    --color-danger: #a83a2e;
+
+    --radius-card: 6px;
+    --radius-card-lg: 12px;
+}
+
+[data-theme='dark'] {
+    --color-paper: #181513;
+    --color-paper-2: #221d1a;
+    --color-paper-3: #2b2521;
+    --color-card: #1e1a17;
+    --color-ink: #f1e8d8;
+    --color-ink-2: #d4c7b3;
+    --color-ink-3: #9e927e;
+    --color-muted: #6b6151;
+    --color-line: rgba(241, 232, 216, 0.10);
+    --color-line-2: rgba(241, 232, 216, 0.16);
+    --color-accent: #d97a5a;
+    --color-accent-soft: rgba(217, 122, 90, 0.15);
+    --color-accent-ink: #ec8e6e;
+}
+
+@layer base {
+    html, body {
+        background: var(--color-paper);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    h1, h2, h3, h4 {
+        font-family: var(--font-serif);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    .font-serif { font-family: var(--font-serif); }
+    .font-mono  { font-family: var(--font-mono); }
+}
+
+/* Prose styles for rendered Markdown body */
+.prose-blog {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--color-ink);
+}
+.prose-blog p { margin: 1em 0; }
+.prose-blog h1, .prose-blog h2, .prose-blog h3, .prose-blog h4 {
+    font-family: var(--font-serif);
+    margin: 1.6em 0 0.6em;
+}
+.prose-blog h2 { font-size: 1.6em; }
+.prose-blog h3 { font-size: 1.3em; }
+.prose-blog a { color: var(--color-accent-ink); text-decoration: underline; text-decoration-thickness: 1px; }
+.prose-blog a:hover { color: var(--color-accent); }
+.prose-blog blockquote {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 1em;
+    color: var(--color-ink-2);
+    font-style: italic;
+    margin: 1.4em 0;
+}
+.prose-blog code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--color-paper-2);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+}
+.prose-blog pre {
+    background: var(--color-ink);
+    color: var(--color-card);
+    padding: 1em 1.2em;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1.4em 0;
+    font-size: 14px;
+    line-height: 1.55;
+}
+.prose-blog pre code { background: transparent; padding: 0; color: inherit; font-size: inherit; }
+.prose-blog img { border-radius: 6px; margin: 1.2em 0; max-width: 100%; }
+.prose-blog ul, .prose-blog ol { margin: 1em 0; padding-left: 1.4em; }
+.prose-blog li { margin: 0.4em 0; }
+.prose-blog table { border-collapse: collapse; margin: 1.2em 0; width: 100%; font-size: 0.95em; font-family: var(--font-sans); }
+.prose-blog th, .prose-blog td { border: 1px solid var(--color-line); padding: 0.6em 0.8em; text-align: left; }
+.prose-blog th { background: var(--color-paper-2); font-weight: 600; }
+.prose-blog aside.alert {
+    border-left: 3px solid var(--color-accent);
+    background: var(--color-accent-soft);
+    padding: 1em 1.2em;
+    border-radius: 4px;
+    margin: 1.4em 0;
+}
+.prose-blog aside.alert-warning { border-color: var(--color-warn); }
+.prose-blog aside.alert-danger { border-color: var(--color-danger); }
+.prose-blog .youtube-embed {
+    position: relative;
+    padding-bottom: 56.25%;
+    margin: 1.4em 0;
+}
+.prose-blog .youtube-embed iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 6px;
+}
+.prose-blog video {
+    max-width: 100%;
+    border-radius: 6px;
+    margin: 1.2em 0;
+}
