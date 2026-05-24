@@ -88,6 +88,16 @@ Route::middleware(['auth', 'role:admin'])
         Route::put('categories/{category}', [Admin\CategoryController::class, 'update'])->name('categories.update');
         Route::delete('categories/{category}', [Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
 
+        // Pages
+        Route::get('pages',                     [Admin\PageController::class, 'index'])->name('pages.index');
+        Route::get('pages/create',              [Admin\PageController::class, 'create'])->name('pages.create');
+        Route::post('pages',                    [Admin\PageController::class, 'store'])->name('pages.store');
+        Route::get('pages/{page}/edit',         [Admin\PageController::class, 'edit'])->name('pages.edit');
+        Route::put('pages/{page}',              [Admin\PageController::class, 'update'])->name('pages.update');
+        Route::delete('pages/{page}',           [Admin\PageController::class, 'destroy'])->name('pages.destroy');
+        Route::post('pages/{id}/restore',       [Admin\PageController::class, 'restore'])->name('pages.restore');
+        Route::post('pages/{page}/translation', [Admin\PageController::class, 'createTranslation'])->name('pages.create-translation');
+
         // Media
         Route::get('media', [Admin\MediaController::class, 'index'])->name('media.index');
         Route::post('media', [Admin\MediaController::class, 'store'])->name('media.store');
@@ -119,4 +129,10 @@ Route::prefix('{locale}')
         Route::get('categories/{slug}', [Public\CategoryController::class, 'show'])->name('categories.show');
 
         Route::get('search', [Public\SearchController::class, 'index'])->name('search');
+
+        // Static page catch-all (must be LAST so it doesn't shadow other routes above).
+        // Matches /{locale}/{slug} where slug is not one of the reserved names above.
+        Route::get('{slug}', [Public\PageController::class, 'show'])
+            ->where('slug', '(?!posts$|tweets$|tags$|categories$|search$)[A-Za-z0-9_\-]+')
+            ->name('pages.show');
     });

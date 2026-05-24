@@ -19,7 +19,7 @@ class UpdateRequest extends FormRequest
             'translations' => 'sometimes|array|min:1',
             'translations.*.locale' => 'required|in:zh,en,ja,vi,id|distinct',
             'translations.*.name' => 'required|string|max:100',
-            'translations.*.slug' => ['nullable', 'string', 'max:120', 'not_regex:#[/\\\\?#&\s]#'],
+            'translations.*.slug' => ['nullable', 'string', 'max:120', 'not_regex:~[/\\\\?#&\s]~'],
             'translations.*.description' => 'nullable|string|max:1000',
         ];
     }

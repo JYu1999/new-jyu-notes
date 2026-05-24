@@ -9,12 +9,19 @@ class CategoryRepository
 {
     public function all(?string $locale = null): Collection
     {
-        return Category::query()
+        $q = Category::query()
             ->with('translations')
-            ->withCount(['posts as posts_count' => function ($q) {
-                $q->where('status', 'published');
-            }])
-            ->get();
+            ->withCount(['posts as posts_count' => function ($pq) use ($locale) {
+                $pq->where('status', 'published');
+                if ($locale) $pq->where('locale', $locale);
+            }]);
+
+        if ($locale) {
+            // Only categories that actually have a translation in this locale.
+            $q->whereHas('translations', fn ($qq) => $qq->where('locale', $locale));
+        }
+
+        return $q->get();
     }
 
     public function findBySlug(string $locale, string $slug): ?Category

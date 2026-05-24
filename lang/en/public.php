@@ -56,4 +56,8 @@ return [
     'login_submit' => 'Sign in',
     'login_invalid' => 'Invalid email or password.',
     'back_home' => '← Back to home',
+
+    'loading_more' => 'Loading more…',
+    'toc' => 'On this page',
+    'no_more' => '— No more —',
 ];

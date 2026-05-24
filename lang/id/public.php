@@ -56,4 +56,8 @@ return [
     'login_submit' => 'Masuk',
     'login_invalid' => 'Email atau kata sandi salah.',
     'back_home' => '← Kembali ke beranda',
+
+    'loading_more' => 'Memuat lainnya…',
+    'toc' => 'Daftar isi',
+    'no_more' => '— Tidak ada lagi —',
 ];

@@ -10,7 +10,7 @@
     }
 
     $bodyLen = mb_strlen($tweet->body);
-    $isLong = ! $preview && $bodyLen > 400;
+    $isLong = ! $preview && $bodyLen > 800;
     $media = $tweet->media ?? [];
     $mediaCount = is_array($media) ? count($media) : 0;
 @endphp
@@ -92,13 +92,14 @@
     @endif
 
     @if($tweet->tags->isNotEmpty())
+        @php $loc = app()->getLocale(); @endphp
         <div class="mt-3 flex flex-wrap gap-1.5">
             @foreach($tweet->tags as $tag)
-                @php $tslug = $tag->slug(app()->getLocale()); @endphp
-                @if($tslug)
-                    <a href="{{ route('public.tags.show', [app()->getLocale(), $tslug]) }}"
+                @php $tt = $tag->translations->firstWhere('locale', $loc); @endphp
+                @if($tt)
+                    <a href="{{ route('public.tags.show', [$loc, $tt->slug]) }}"
                         class="text-[10px] font-mono px-2 py-0.5 bg-paper-2 text-ink-3 hover:text-accent rounded">
-                        #{{ $tag->name(app()->getLocale()) }}
+                        #{{ $tt->name }}
                     </a>
                 @endif
             @endforeach

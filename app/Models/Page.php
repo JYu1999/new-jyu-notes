@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Page extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_PUBLISHED = 'published';
+    public const STATUS_HIDDEN = 'hidden';
+
+    public const STATUSES = [
+        self::STATUS_DRAFT,
+        self::STATUS_PUBLISHED,
+        self::STATUS_HIDDEN,
+    ];
+
+    public const SUPPORTED_LOCALES = Post::SUPPORTED_LOCALES;
+
+    protected $fillable = [
+        'page_group_id', 'locale', 'slug', 'title', 'body',
+        'cover_image_path', 'status', 'published_at', 'author_id',
+    ];
+
+    protected function casts(): array
+    {
+        return ['published_at' => 'datetime'];
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(PageGroup::class, 'page_group_id');
+    }
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function translation(string $locale): ?self
+    {
+        if ($locale === $this->locale) return $this;
+        return self::query()
+            ->where('page_group_id', $this->page_group_id)
+            ->where('locale', $locale)
+            ->first();
+    }
+
+    public function allTranslations(): Collection
+    {
+        return self::query()->where('page_group_id', $this->page_group_id)->get();
+    }
+
+    public function scopePublished(Builder $q): Builder
+    {
+        return $q->where('status', self::STATUS_PUBLISHED);
+    }
+
+    public function scopeLocale(Builder $q, string $locale): Builder
+    {
+        return $q->where('locale', $locale);
+    }
+}

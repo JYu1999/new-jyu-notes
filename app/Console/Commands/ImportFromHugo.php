@@ -53,8 +53,9 @@ class ImportFromHugo extends Command
     private ShortcodeConverter $shortcoder;
     private MediaService $media;
     private ?User $admin = null;
-    private array $tagsBySlug = [];   // slug => Tag
-    private array $catsBySlug = [];   // slug => Category
+    private array $tagsBySlug = [];      // slug => Tag
+    private array $catsBySlug = [];      // slug => Category
+    private array $tweetIdByBundle = []; // [bundleSlug][locale] => tweet id (for internal link rewriting)
 
     public function __construct(ShortcodeConverter $shortcoder, MediaService $media)
     {
@@ -94,8 +95,8 @@ class ImportFromHugo extends Command
                     DB::table('tweet_tag')->truncate();
                     DB::table('category_post')->truncate();
                     DB::table('post_view_logs')->truncate();
-                    DB::statement('TRUNCATE posts, tweets RESTART IDENTITY CASCADE');
-                    DB::statement('TRUNCATE post_groups, tweet_groups RESTART IDENTITY CASCADE');
+                    DB::statement('TRUNCATE posts, tweets, pages RESTART IDENTITY CASCADE');
+                    DB::statement('TRUNCATE post_groups, tweet_groups, page_groups RESTART IDENTITY CASCADE');
                     DB::statement('TRUNCATE tag_translations, tags RESTART IDENTITY CASCADE');
                     DB::statement('TRUNCATE category_translations, categories RESTART IDENTITY CASCADE');
                     DB::statement('TRUNCATE media RESTART IDENTITY CASCADE');
@@ -107,9 +108,92 @@ class ImportFromHugo extends Command
         $this->importCategoryDefinitions("{$contentDir}/categories");
         $postCount = $this->importPosts("{$contentDir}/posts");
         $tweetCount = $this->importTweets("{$contentDir}/tweets");
+        $pageCount = $this->importPages($contentDir);
 
-        $this->info("Done. Imported {$postCount} post groups and {$tweetCount} tweet groups.");
+        if (! $this->option('dry-run')) {
+            $this->rewriteInternalLinks();
+        }
+
+        $this->info("Done. Imported {$postCount} post groups, {$tweetCount} tweet groups, {$pageCount} pages.");
         return self::SUCCESS;
+    }
+
+    /**
+     * Walk Hugo top-level content directories (about, why-blog, etc.) and import
+     * each as a static Page. Skips known special dirs (posts, tweets, categories, etc.).
+     */
+    private function importPages(string $contentDir): int
+    {
+        $reserved = ['posts', 'tweets', 'categories', 'resume', '_index.md', '_index.en.md', '_index.ja.md'];
+        $count = 0;
+
+        foreach (scandir($contentDir) as $entry) {
+            if (in_array($entry, ['.', '..'], true)) continue;
+            if (in_array($entry, $reserved, true)) continue;
+
+            $full = "{$contentDir}/{$entry}";
+            if (! is_dir($full)) continue;
+
+            $slug = $entry;
+            $locales = $this->findLocaleFiles($full);
+            if (! $locales) continue;
+
+            $group = $this->option('dry-run') ? new \App\Models\PageGroup() : \App\Models\PageGroup::create();
+
+            foreach ($locales as $locale => $filePath) {
+                $this->importPageFile($group, $locale, $slug, $filePath, $full);
+            }
+
+            $count++;
+        }
+
+        // Also handle truncate of pages if --fresh was specified earlier
+        return $count;
+    }
+
+    private function importPageFile(\App\Models\PageGroup $group, string $locale, string $slug, string $filePath, string $bundleDir): ?\App\Models\Page
+    {
+        $raw = file_get_contents($filePath);
+        [$fm, $body] = $this->splitFrontMatter($raw);
+
+        $storageSubdir = "imports/pages/{$slug}";
+
+        $converter = clone $this->shortcoder;
+        $converter->assetRewrites = $this->buildAssetRewrites($bundleDir, $storageSubdir);
+        $body = $converter->convert($body);
+
+        $coverPath = $this->ingestCoverImage($bundleDir, $storageSubdir);
+
+        $publishedAt = $this->parseDate($fm['date'] ?? null);
+        $status = ($fm['draft'] ?? false) ? \App\Models\Page::STATUS_DRAFT : \App\Models\Page::STATUS_PUBLISHED;
+
+        if ($this->option('dry-run')) {
+            $this->line("Page[{$locale}]: {$slug} ({$status})");
+            return null;
+        }
+
+        $page = \App\Models\Page::create([
+            'page_group_id' => $group->id,
+            'locale' => $locale,
+            'slug' => $slug,
+            'title' => $fm['title'] ?? $slug,
+            'body' => trim($body),
+            'cover_image_path' => $coverPath,
+            'status' => $status,
+            'published_at' => $publishedAt,
+            'author_id' => $this->admin->id,
+        ]);
+
+        if ($publishedAt) {
+            DB::table('pages')->where('id', $page->id)->update([
+                'created_at' => $publishedAt,
+                'updated_at' => $publishedAt,
+            ]);
+            $page->refresh();
+        }
+
+        $this->line("Page[{$locale}]: {$slug}");
+        return $page;
     }
 
     /**
@@ -322,8 +406,11 @@ class ImportFromHugo extends Command
 
     private function ingestCoverImage(string $bundleDir, string $storageSubdir): ?string
     {
-        $candidates = ['featured.png', 'featured.jpg', 'featured.jpeg', 'featured.webp'];
-        foreach ($candidates as $name) {
+        // 1) Explicit Hugo conventions
+        $explicit = ['featured.png', 'featured.jpg', 'featured.jpeg', 'featured.webp',
+                     'cover.png', 'cover.jpg', 'cover.jpeg', 'cover.webp',
+                     'book-cover.png', 'book-cover.jpg', 'book-cover.jpeg', 'book-cover.webp'];
+        foreach ($explicit as $name) {
             $path = "{$bundleDir}/{$name}";
             if (is_file($path)) {
                 if ($this->option('dry-run')) return "{$storageSubdir}/{$name}";
@@ -331,6 +418,17 @@ class ImportFromHugo extends Command
                 return $media?->path;
             }
         }
+
+        // 2) Fallback: first image in the bundle (alphabetical, excluding video)
+        $images = glob("{$bundleDir}/*.{png,jpg,jpeg,webp,gif}", GLOB_BRACE) ?: [];
+        sort($images);
+        if (! empty($images)) {
+            $first = $images[0];
+            if ($this->option('dry-run')) return "{$storageSubdir}/" . basename($first);
+            $media = $this->media->registerLocalFile($first, $storageSubdir, $this->admin);
+            return $media?->path;
+        }
+
         return null;
     }
 
@@ -544,6 +642,9 @@ class ImportFromHugo extends Command
             $tweet->refresh();
         }
 
+        // Track bundle slug → tweet id so internal `/tweets/<slug>/` links can be rewritten.
+        $this->tweetIdByBundle[$slug][$locale] = $tweet->id;
+
         $this->line("Tweet[{$locale}]: {$slug}");
         return $tweet;
     }
@@ -568,6 +669,137 @@ class ImportFromHugo extends Command
         foreach ($allTweets as $t) {
             $t->tags()->sync($tagIds);
         }
+    }
+
+    /**
+     * Second pass: rewrite all internal Hugo paths in post/tweet bodies to
+     * include the locale prefix and (for tweets) the correct DB id.
+     *
+     * - `/posts/<slug>/` → `/<locale>/posts/<slug>`
+     * - `/tweets/<bundle-slug>/` → `/<locale>/tweets/<id>`
+     *
+     * Also replaces link text that exactly equals the URL with the target's title/body excerpt
+     * (so `[/posts/foo](/posts/foo)` becomes `[Real Title](/zh/posts/foo)`).
+     *
+     * Storage paths like `/storage/imports/posts/...` are not touched — the regex
+     * only matches inside `]( … )` markdown links and `href="..."` HTML attributes.
+     */
+    private function rewriteInternalLinks(): void
+    {
+        $this->info('Rewriting internal links…');
+
+        // Build post slug → title lookup (per locale)
+        $postTitleByLocaleSlug = [];
+        foreach (Post::query()->select('locale', 'slug', 'title')->get() as $p) {
+            $postTitleByLocaleSlug[$p->locale][$p->slug] = $p->title;
+        }
+
+        // Build tweet id → body excerpt lookup (for replacing bare-path link text)
+        $tweetExcerptById = [];
+        foreach (Tweet::query()->select('id', 'body')->get() as $t) {
+            $plain = trim(preg_replace('/\s+/', ' ', strip_tags($t->body)));
+            $tweetExcerptById[$t->id] = \Illuminate\Support\Str::limit($plain, 60);
+        }
+
+        foreach (Post::query()->get() as $post) {
+            $newBody = $this->rewriteBodyLinks($post->body, $post->locale, $postTitleByLocaleSlug, $tweetExcerptById);
+            if ($newBody !== $post->body) {
+                DB::table('posts')->where('id', $post->id)->update(['body' => $newBody]);
+            }
+        }
+
+        foreach (Tweet::query()->get() as $tweet) {
+            $newBody = $this->rewriteBodyLinks($tweet->body, $tweet->locale, $postTitleByLocaleSlug, $tweetExcerptById);
+            if ($newBody !== $tweet->body) {
+                DB::table('tweets')->where('id', $tweet->id)->update(['body' => $newBody]);
+            }
+        }
+
+        foreach (\App\Models\Page::query()->get() as $page) {
+            $newBody = $this->rewriteBodyLinks($page->body, $page->locale, $postTitleByLocaleSlug, $tweetExcerptById);
+            if ($newBody !== $page->body) {
+                DB::table('pages')->where('id', $page->id)->update(['body' => $newBody]);
+            }
+        }
+    }
+
+    private function rewriteBodyLinks(string $body, string $locale, array $postTitles, array $tweetExcerpts): string
+    {
+        // Markdown link: [text](/posts/slug/) or [text](/tweets/slug/)
+        $body = preg_replace_callback(
+            '#\[([^\]]+)\]\(/(posts|tweets)/([A-Za-z0-9_\-]+)/?\)#',
+            function ($m) use ($locale, $postTitles, $tweetExcerpts) {
+                [$text, $kind, $slug] = [$m[1], $m[2], $m[3]];
+                if ($kind === 'posts') {
+                    $href = "/{$locale}/posts/{$slug}";
+                    $title = $postTitles[$locale][$slug] ?? null;
+                    if ($title && (trim($text) === "/posts/{$slug}/" || trim($text) === "/posts/{$slug}")) {
+                        $text = $title;
+                    }
+                    return "[{$text}]({$href})";
+                }
+                // tweets
+                $id = $this->resolveTweetId($slug, $locale);
+                if (! $id) return $m[0];
+                $excerpt = $tweetExcerpts[$id] ?? null;
+                if ($excerpt && (trim($text) === "/tweets/{$slug}/" || trim($text) === "/tweets/{$slug}")) {
+                    $text = $excerpt;
+                }
+                return "[{$text}](/{$locale}/tweets/{$id})";
+            },
+            $body
+        );
+
+        // HTML <a href="/posts/slug/"> or <a href="/tweets/slug/">
+        $body = preg_replace_callback(
+            '#href="/(posts|tweets)/([A-Za-z0-9_\-]+)/?"#',
+            function ($m) use ($locale) {
+                [$kind, $slug] = [$m[1], $m[2]];
+                if ($kind === 'posts') return 'href="/' . $locale . '/posts/' . $slug . '"';
+                $id = $this->resolveTweetId($slug, $locale);
+                return $id ? 'href="/' . $locale . '/tweets/' . $id . '"' : $m[0];
+            },
+            $body
+        );
+
+        // Clean up link TEXT inside <a>...</a> when it equals the path
+        // (the article shortcode produces `<a href="...">/path</a>`).
+        $body = preg_replace_callback(
+            '#<a href="(/[a-z]{2,5}/(posts|tweets)/([A-Za-z0-9_\-]+))">(/(?:posts|tweets)/[A-Za-z0-9_\-]+/?)</a>#',
+            function ($m) use ($postTitles, $tweetExcerpts) {
+                [$href, $kind, $slug] = [$m[1], $m[2], $m[3]];
+                if ($kind === 'posts') {
+                    if (preg_match('#^/([a-z]{2,5})/posts/#', $href, $hm)) {
+                        $loc = $hm[1];
+                        $title = $postTitles[$loc][$slug] ?? null;
+                        if ($title) return '<a href="' . $href . '">' . htmlspecialchars($title) . '</a>';
+                    }
+                }
+                if ($kind === 'tweets') {
+                    $excerpt = $tweetExcerpts[(int) $slug] ?? null;
+                    if ($excerpt) return '<a href="' . $href . '">' . htmlspecialchars($excerpt) . '</a>';
+                }
+                return $m[0];
+            },
+            $body
+        );
+
+        return $body;
+    }
+
+    private function resolveTweetId(string $bundleSlug, string $locale): ?int
+    {
+        // Prefer same locale
+        if (isset($this->tweetIdByBundle[$bundleSlug][$locale])) {
+            return $this->tweetIdByBundle[$bundleSlug][$locale];
+        }
+        // Fallback: any locale
+        foreach (['zh', 'en', 'ja', 'vi', 'id'] as $loc) {
+            if (isset($this->tweetIdByBundle[$bundleSlug][$loc])) {
+                return $this->tweetIdByBundle[$bundleSlug][$loc];
+            }
+        }
+        return null;
     }
 
     /**

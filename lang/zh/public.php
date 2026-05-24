@@ -65,4 +65,9 @@ return [
     'login_submit' => '登入',
     'login_invalid' => '帳號或密碼錯誤',
     'back_home' => '← 回到首頁',
+
+    // Infinite scroll
+    'loading_more' => '載入更多…',
+    'toc' => '目錄',
+    'no_more' => '— 沒有更多了 —',
 ];

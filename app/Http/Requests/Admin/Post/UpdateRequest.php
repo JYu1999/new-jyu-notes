@@ -15,7 +15,7 @@ class UpdateRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|required|string|max:255',
-            'slug' => ['nullable', 'string', 'max:255', 'not_regex:#[/\\\\?#&\s]#'],
+            'slug' => ['nullable', 'string', 'max:255', 'not_regex:~[/\\\\?#&\s]~'],
             'excerpt' => 'nullable|string|max:1000',
             'body' => 'sometimes|required|string',
             'cover_image_path' => 'nullable|string|max:500',

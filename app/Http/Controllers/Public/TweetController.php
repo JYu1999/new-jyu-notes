@@ -8,11 +8,16 @@ use Illuminate\View\View;
 
 class TweetController extends Controller
 {
-    public function index(TweetRepository $tweets): View
+    public function index(TweetRepository $tweets, \Illuminate\Http\Request $request): View
     {
-        return view('public.tweets.index', [
-            'tweets' => $tweets->paginate(app()->getLocale(), 20),
-        ]);
+        $paginator = $tweets->paginate(app()->getLocale(), 20);
+
+        // Infinite-scroll AJAX request: return only the items partial
+        if ($request->boolean('partial')) {
+            return view('public.tweets._items', ['tweets' => $paginator]);
+        }
+
+        return view('public.tweets.index', ['tweets' => $paginator]);
     }
 
     public function show(string $locale, int $id, TweetRepository $tweets): View

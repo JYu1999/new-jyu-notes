@@ -56,4 +56,8 @@ return [
     'login_submit' => 'Đăng nhập',
     'login_invalid' => 'Email hoặc mật khẩu không đúng.',
     'back_home' => '← Về trang chủ',
+
+    'loading_more' => 'Đang tải thêm…',
+    'toc' => 'Mục lục',
+    'no_more' => '— Hết rồi —',
 ];

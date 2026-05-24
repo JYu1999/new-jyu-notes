@@ -9,7 +9,13 @@ class TagRepository
 {
     public function all(?string $locale = null): Collection
     {
-        return Tag::query()->with('translations')->get();
+        $q = Tag::query()->with('translations');
+        if ($locale) {
+            // Only return tags that actually have a translation in this locale,
+            // so the sidebar doesn't leak names from other languages.
+            $q->whereHas('translations', fn ($qq) => $qq->where('locale', $locale));
+        }
+        return $q->get();
     }
 
     public function allWithCounts(): Collection
@@ -48,8 +54,9 @@ class TagRepository
     {
         return Tag::query()
             ->with('translations')
-            ->withCount(['posts as posts_count' => function ($q) {
-                $q->where('status', 'published');
+            ->whereHas('translations', fn ($qq) => $qq->where('locale', $locale))
+            ->withCount(['posts as posts_count' => function ($q) use ($locale) {
+                $q->where('status', 'published')->where('locale', $locale);
             }])
             ->orderByDesc('posts_count')
             ->limit($limit)

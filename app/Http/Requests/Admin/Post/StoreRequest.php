@@ -17,7 +17,7 @@ class StoreRequest extends FormRequest
             'post_group_id' => 'nullable|integer|exists:post_groups,id',
             'locale' => 'required|string|in:zh,en,ja,vi,id',
             'title' => 'required|string|max:255',
-            'slug' => ['nullable', 'string', 'max:255', 'not_regex:#[/\\\\?#&\s]#'],
+            'slug' => ['nullable', 'string', 'max:255', 'not_regex:~[/\\\\?#&\s]~'],
             'excerpt' => 'nullable|string|max:1000',
             'body' => 'required|string',
             'cover_image_path' => 'nullable|string|max:500',

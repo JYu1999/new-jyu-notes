@@ -19,7 +19,7 @@ class StoreRequest extends FormRequest
             'translations.*.locale' => 'required|in:zh,en,ja,vi,id|distinct',
             'translations.*.name' => 'required|string|max:100',
             // Slug: nullable (auto-generated from name when empty); reject only chars that break URLs.
-            'translations.*.slug' => ['nullable', 'string', 'max:120', 'not_regex:#[/\\\\?#&\s]#'],
+            'translations.*.slug' => ['nullable', 'string', 'max:120', 'not_regex:~[/\\\\?#&\s]~'],
         ];
     }
 

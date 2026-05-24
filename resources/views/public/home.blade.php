@@ -40,9 +40,7 @@
                 <h2 class="font-serif text-xl font-semibold mb-4">{{ __('public.home_recent_tweets') }}</h2>
                 <div class="space-y-4">
                     @forelse($recentTweets as $tweet)
-                        <a href="{{ route('public.tweets.show', [app()->getLocale(), $tweet->id]) }}" class="block hover:opacity-80 transition-opacity">
-                            <x-tweet-card :tweet="$tweet" preview />
-                        </a>
+                        <x-tweet-card :tweet="$tweet" />
                     @empty
                         <p class="text-ink-3 text-sm">{{ __('public.no_tweets') }}</p>
                     @endforelse

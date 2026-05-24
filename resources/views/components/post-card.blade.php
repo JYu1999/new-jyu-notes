@@ -9,9 +9,13 @@
         </div>
     @endif
 
-    @if($post->categories->isNotEmpty())
+    @php
+        $loc = app()->getLocale();
+        $catTrans = $post->categories->first()?->translations->firstWhere('locale', $loc);
+    @endphp
+    @if($catTrans)
         <div class="text-[10px] uppercase tracking-widest text-accent font-mono mb-2">
-            {{ $post->categories->first()->name(app()->getLocale()) }}
+            {{ $catTrans->name }}
         </div>
     @endif
 
@@ -34,10 +38,10 @@
     @if($post->tags->isNotEmpty())
         <div class="mt-3 flex flex-wrap gap-1.5 relative z-10">
             @foreach($post->tags->take(4) as $tag)
-                @php $tslug = $tag->slug(app()->getLocale()); @endphp
-                @if($tslug)
-                    <a href="{{ route('public.tags.show', [app()->getLocale(), $tslug]) }}" class="text-[10px] font-mono px-2 py-0.5 bg-paper-2 text-ink-3 hover:text-accent rounded">
-                        #{{ $tag->name(app()->getLocale()) }}
+                @php $tt = $tag->translations->firstWhere('locale', $loc); @endphp
+                @if($tt)
+                    <a href="{{ route('public.tags.show', [$loc, $tt->slug]) }}" class="text-[10px] font-mono px-2 py-0.5 bg-paper-2 text-ink-3 hover:text-accent rounded">
+                        #{{ $tt->name }}
                     </a>
                 @endif
             @endforeach

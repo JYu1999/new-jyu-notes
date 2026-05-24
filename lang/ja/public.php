@@ -56,4 +56,8 @@ return [
     'login_submit' => 'ログイン',
     'login_invalid' => 'メールアドレスまたはパスワードが正しくありません。',
     'back_home' => '← ホームへ戻る',
+
+    'loading_more' => 'もっと読み込み中…',
+    'toc' => '目次',
+    'no_more' => '— これ以上ありません —',
 ];
