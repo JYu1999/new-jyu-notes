@@ -30,44 +30,25 @@
     @endforeach
 </div>
 
-<div class="bg-card border border-line rounded-md divide-y divide-line">
-    @forelse($tweets as $t)
-        <div class="p-4 hover:bg-paper-2">
-            <div class="flex items-baseline justify-between gap-3 mb-2">
-                <a href="{{ route('admin.tweets.edit', $t->id) }}" class="text-sm font-medium text-ink hover:text-accent line-clamp-2 flex-1">
-                    {{ \Illuminate\Support\Str::limit($t->body, 120) }}
-                </a>
-                <div class="flex items-center gap-3 flex-shrink-0">
-                    <span class="text-xs px-2 py-0.5 rounded font-mono
-                        {{ $t->trashed() ? 'bg-danger/10 text-danger'
-                            : ($t->status === 'published' ? 'bg-good/10 text-good'
-                            : ($t->status === 'draft' ? 'bg-warn/10 text-warn' : 'bg-ink-3/10 text-ink-3')) }}">
-                        {{ $t->trashed() ? 'trashed' : $t->status }}
-                    </span>
-                    <span class="text-xs font-mono uppercase text-ink-3">{{ $t->locale }}</span>
-                </div>
-            </div>
-            <div class="flex items-center justify-between text-xs text-ink-3 font-mono">
-                <span>{{ $t->published_at?->format('Y/m/d H:i') ?? '—' }}</span>
-                <div class="flex gap-3">
-                    @if($t->trashed())
-                        <form method="POST" action="{{ route('admin.tweets.restore', $t->id) }}" class="inline">
-                            @csrf<button class="text-accent hover:text-accent-ink">還原</button>
-                        </form>
-                    @else
-                        <a href="{{ route('admin.tweets.edit', $t->id) }}" class="text-accent hover:text-accent-ink">編輯</a>
-                        <form method="POST" action="{{ route('admin.tweets.destroy', $t->id) }}" class="inline" onsubmit="return confirm('確定？')">
-                            @csrf @method('DELETE')
-                            <button class="text-danger hover:underline">刪除</button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-        </div>
-    @empty
-        <div class="p-8 text-center text-ink-3 text-sm">沒有資料</div>
-    @endforelse
+{{-- Filters auto-apply via AJAX --}}
+<div x-data="liveFilter({ url: '{{ route('admin.tweets.index') }}', target: '#tweet-results' })" class="mb-6">
+    <form @input.debounce.300ms="submit($event)" @change="submit($event)" class="flex items-center gap-3">
+        @if($currentStatus)<input type="hidden" name="status" value="{{ $currentStatus }}">@endif
+        <input
+            type="search" name="q" value="{{ $currentSearch }}"
+            placeholder="搜尋 tweet 內文..."
+            class="flex-1 max-w-md px-3 py-1.5 bg-card border border-line rounded text-sm focus:border-accent focus:outline-none">
+        <select name="locale" class="bg-card border border-line rounded px-2 py-1.5 text-sm focus:border-accent focus:outline-none">
+            <option value="">所有語言</option>
+            @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
+                <option value="{{ $loc }}" {{ $currentLocale === $loc ? 'selected' : '' }}>{{ strtoupper($loc) }}</option>
+            @endforeach
+        </select>
+        <span x-show="loading" x-cloak class="text-xs text-ink-3 font-mono animate-pulse">載入中…</span>
+    </form>
 </div>
 
-<div class="mt-6">{{ $tweets->withQueryString()->links() }}</div>
+<div id="tweet-results">
+    @include('admin.tweets._table')
+</div>
 @endsection

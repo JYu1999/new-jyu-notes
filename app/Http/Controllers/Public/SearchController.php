@@ -18,10 +18,17 @@ class SearchController extends Controller
 
         $results = $search->fullText($query, $locale, $type);
 
-        return view('public.search', [
+        $data = [
             'q' => $query,
             'type' => $type,
             'results' => $results,
-        ]);
+        ];
+
+        // AJAX live search: return only the results partial
+        if ($request->boolean('partial')) {
+            return view('public._search-results', $data);
+        }
+
+        return view('public.search', $data);
     }
 }

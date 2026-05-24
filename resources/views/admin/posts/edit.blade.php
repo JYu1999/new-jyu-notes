@@ -93,14 +93,35 @@
                     <span>顯示在首頁精選</span>
                 </label>
 
-                <div>
-                    <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">封面圖片路徑</label>
-                    <input type="text" name="cover_image_path" value="{{ old('cover_image_path', $post->cover_image_path) }}"
-                        placeholder="imports/featured.png"
-                        class="w-full bg-paper border border-line rounded px-2 py-1.5 text-xs font-mono focus:border-accent focus:outline-none">
-                    @if($post->cover_image_path)
-                        <img src="{{ asset('storage/' . $post->cover_image_path) }}" class="mt-2 rounded max-h-32 w-full object-cover">
-                    @endif
+                <div x-data="coverUpload({ initial: @js($post->cover_image_path) })">
+                    <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">封面圖片</label>
+
+                    {{-- Preview --}}
+                    <template x-if="path">
+                        <div class="relative mb-2 group">
+                            <img :src="'/storage/' + path" class="rounded max-h-40 w-full object-cover border border-line">
+                            <button type="button" @click="clear()" class="absolute top-1 right-1 bg-paper/90 border border-line rounded px-2 py-0.5 text-xs hover:text-danger">移除</button>
+                        </div>
+                    </template>
+
+                    {{-- Upload zone --}}
+                    <label class="block cursor-pointer border-2 border-dashed border-line rounded-md p-4 text-center text-xs text-ink-3 hover:border-accent hover:text-accent transition-colors"
+                        :class="uploading ? 'animate-pulse' : ''">
+                        <span x-show="!uploading">
+                            <template x-if="path">
+                                <span>點此重新上傳</span>
+                            </template>
+                            <template x-if="!path">
+                                <span>點此選擇圖片（PNG/JPG/WebP，≤ 10 MB）</span>
+                            </template>
+                        </span>
+                        <span x-show="uploading" x-cloak>上傳中…</span>
+                        <input type="file" class="hidden" accept="image/*" @change="upload($event.target.files[0])">
+                    </label>
+
+                    {{-- Hidden form field that actually submits --}}
+                    <input type="hidden" name="cover_image_path" x-model="path">
+                    <p x-show="error" x-cloak class="mt-2 text-xs text-danger" x-text="error"></p>
                 </div>
             </div>
 
@@ -140,7 +161,9 @@
                 </div>
             </div>
 
-            {{-- Translations (edit mode only) --}}
+            {{-- Translations (edit mode only).
+                 NOTE: HTML disallows nested forms. The buttons below use the `form="..."`
+                 attribute to associate with hidden forms rendered AFTER the main #post-form. --}}
             @if(!$isCreate)
                 <div class="bg-card border border-line rounded-md p-4">
                     <h3 class="text-xs text-ink-3 font-mono uppercase mb-3">翻譯版本</h3>
@@ -154,11 +177,10 @@
                                         {{ $t->title ?: '(no title)' }}
                                     </a>
                                 @else
-                                    <form method="POST" action="{{ route('admin.posts.create-translation', $post) }}" class="contents">
-                                        @csrf
-                                        <input type="hidden" name="locale" value="{{ $loc }}">
-                                        <button type="submit" class="text-xs text-ink-3 hover:text-accent">+ 新增翻譯</button>
-                                    </form>
+                                    <button type="submit" form="translate-post-{{ $loc }}"
+                                        class="text-xs text-ink-3 hover:text-accent">
+                                        + 新增翻譯
+                                    </button>
                                 @endif
                             </div>
                         @endforeach
@@ -177,4 +199,17 @@
         </aside>
     </div>
 </form>
+
+{{-- Hidden "create translation" forms (referenced via form="..." attribute from sidebar). --}}
+@if(!$isCreate)
+    @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
+        @if(!isset($translations[$loc]))
+            <form id="translate-post-{{ $loc }}" method="POST"
+                action="{{ route('admin.posts.create-translation', $post) }}" class="hidden">
+                @csrf
+                <input type="hidden" name="locale" value="{{ $loc }}">
+            </form>
+        @endif
+    @endforeach
+@endif
 @endsection

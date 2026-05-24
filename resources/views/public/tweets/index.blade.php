@@ -1,16 +1,16 @@
 @extends('layouts.public')
 
-@section('title', 'Tweets · ' . config('app.name'))
+@section('title', __('public.tweets') . ' · ' . config('app.name'))
 
 @section('content')
 <div class="max-w-3xl mx-auto px-6 py-12">
     <header class="mb-10">
         <h1 class="font-serif text-3xl md:text-4xl font-semibold">@lang('nav.tweets')</h1>
-        <p class="text-ink-3 text-sm mt-2 font-mono">共 {{ $tweets->total() }} 則</p>
+        <p class="text-ink-3 text-sm mt-2 font-mono">{{ __('public.tweets_total', ['n' => $tweets->total()]) }}</p>
     </header>
 
     @if($tweets->isEmpty())
-        <p class="text-ink-3">目前沒有 tweets。</p>
+        <p class="text-ink-3">{{ __('public.no_tweets') }}</p>
     @else
         {{-- Group by year-month --}}
         @php
@@ -25,9 +25,7 @@
                         @foreach($items as $tweet)
                             <div class="relative">
                                 <span class="absolute -left-[1.85rem] top-3 w-2 h-2 rounded-full bg-accent border-2 border-paper"></span>
-                                <a href="{{ route('public.tweets.show', [app()->getLocale(), $tweet->id]) }}" class="block hover:opacity-80">
-                                    <x-tweet-card :tweet="$tweet" />
-                                </a>
+                                <x-tweet-card :tweet="$tweet" />
                             </div>
                         @endforeach
                     </div>

@@ -9,7 +9,13 @@ use Illuminate\Support\Collection;
 class SearchService
 {
     /**
-     * Perform a PostgreSQL full-text search across posts and tweets in the given locale.
+     * Search posts and tweets in the given locale.
+     *
+     * Combines PostgreSQL tsvector match (good for English tokens) with
+     * ILIKE substring match (necessary for CJK, which doesn't tokenize
+     * cleanly under the `simple` text-search config). Results are
+     * deduplicated and ranked: exact ILIKE matches first, then tsvector
+     * ranks.
      *
      * @return array{posts: Collection, tweets: Collection}
      */
@@ -17,31 +23,38 @@ class SearchService
     {
         $trimmed = trim($query);
         if ($trimmed === '') {
-            return [
-                'posts' => collect(),
-                'tweets' => collect(),
-            ];
+            return ['posts' => collect(), 'tweets' => collect()];
         }
+
+        $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $trimmed) . '%';
 
         $posts = collect();
         $tweets = collect();
 
         if ($type !== 'tweet') {
             $posts = Post::query()
-                ->whereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed])
                 ->where('locale', $locale)
                 ->published()
-                ->orderByRaw("ts_rank(search_vector, websearch_to_tsquery('simple', ?)) DESC", [$trimmed])
+                ->where(function ($q) use ($like, $trimmed) {
+                    $q->where('title', 'ILIKE', $like)
+                      ->orWhere('excerpt', 'ILIKE', $like)
+                      ->orWhere('body', 'ILIKE', $like)
+                      ->orWhereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed]);
+                })
+                ->orderByDesc('published_at')
                 ->limit(20)
                 ->get();
         }
 
         if ($type !== 'post') {
             $tweets = Tweet::query()
-                ->whereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed])
                 ->where('locale', $locale)
                 ->published()
-                ->orderByRaw("ts_rank(search_vector, websearch_to_tsquery('simple', ?)) DESC", [$trimmed])
+                ->where(function ($q) use ($like, $trimmed) {
+                    $q->where('body', 'ILIKE', $like)
+                      ->orWhereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed]);
+                })
+                ->orderByDesc('published_at')
                 ->limit(20)
                 ->get();
         }

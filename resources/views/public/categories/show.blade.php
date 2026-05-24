@@ -5,16 +5,16 @@
 @section('content')
 <div class="max-w-5xl mx-auto px-6 py-12">
     <header class="mb-10">
-        <div class="text-xs uppercase tracking-widest text-ink-3 font-mono mb-2">分類 / 系列</div>
+        <div class="text-xs uppercase tracking-widest text-ink-3 font-mono mb-2">{{ __('public.category_subtitle') }}</div>
         <h1 class="font-serif text-3xl md:text-4xl font-semibold">{{ $category->name(app()->getLocale()) }}</h1>
         @if($category->description(app()->getLocale()))
             <p class="text-ink-2 mt-3 max-w-2xl">{{ $category->description(app()->getLocale()) }}</p>
         @endif
-        <p class="text-ink-3 text-sm mt-3 font-mono">共 {{ $posts->total() }} 篇</p>
+        <p class="text-ink-3 text-sm mt-3 font-mono">{{ __('public.posts_total', ['n' => $posts->total()]) }}</p>
     </header>
 
     @if($posts->isEmpty())
-        <p class="text-ink-3">這個分類目前沒有文章。</p>
+        <p class="text-ink-3">{{ __('public.no_category_posts') }}</p>
     @else
         <div class="space-y-2">
             @foreach($posts as $i => $post)

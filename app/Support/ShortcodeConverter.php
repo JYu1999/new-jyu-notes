@@ -50,7 +50,7 @@ class ShortcodeConverter
                     str_contains($type, 'danger'), str_contains($type, 'error') => 'alert-danger',
                     default => 'alert-info',
                 };
-                return "<aside class=\"alert {$class}\">\n\n{$body}\n\n</aside>";
+                return "\n\n<aside class=\"alert {$class}\">\n\n{$body}\n\n</aside>\n\n";
             },
             $content
         );
@@ -67,9 +67,9 @@ class ShortcodeConverter
                 $attrs = $this->parseAttrs($m[1]);
                 $id = $attrs['id'] ?? '';
                 if ($id === '') return $m[0];
-                return '<div class="youtube-embed"><iframe src="https://www.youtube.com/embed/'
+                return "\n\n" . '<div class="youtube-embed"><iframe src="https://www.youtube.com/embed/'
                     . htmlspecialchars($id)
-                    . '" frameborder="0" allowfullscreen loading="lazy"></iframe></div>';
+                    . '" frameborder="0" allowfullscreen loading="lazy"></iframe></div>' . "\n\n";
             },
             $content
         );
@@ -84,7 +84,7 @@ class ShortcodeConverter
             '/\{\{<\s*local-video\s+"([^"]+)"\s*(?:"([^"]*)")?\s*>\}\}/',
             function ($m) {
                 $file = $m[1];
-                return "<video class=\"local-video\" controls src=\"{$file}\" preload=\"metadata\"></video>";
+                return "\n\n<video class=\"local-video\" controls src=\"{$file}\" preload=\"metadata\"></video>\n\n";
             },
             $content
         );
@@ -99,7 +99,7 @@ class ShortcodeConverter
             '/\{\{<\s*carousel\s*([^>]*)\s*>\}\}(.*?)\{\{<\s*\/carousel\s*>\}\}/s',
             function ($m) {
                 $body = trim($m[2]);
-                return "<div class=\"carousel\">\n\n{$body}\n\n</div>";
+                return "\n\n<div class=\"carousel\">\n\n{$body}\n\n</div>\n\n";
             },
             $content
         );
@@ -118,7 +118,7 @@ class ShortcodeConverter
                 $id = $attrs['id'] ?? '';
                 if ($user === '' || $id === '') return $m[0];
                 $url = "https://x.com/{$user}/status/{$id}";
-                return "<blockquote class=\"x-embed\"><a href=\"{$url}\" target=\"_blank\" rel=\"noopener\">{$url}</a></blockquote>";
+                return "\n\n<blockquote class=\"x-embed\"><a href=\"{$url}\" target=\"_blank\" rel=\"noopener\">{$url}</a></blockquote>\n\n";
             },
             $content
         );
@@ -158,7 +158,21 @@ class ShortcodeConverter
     private function rewriteAssets(string $content): string
     {
         foreach ($this->assetRewrites as $from => $to) {
-            $content = str_replace($from, $to, $content);
+            $quoted = preg_quote($from, '#');
+
+            // Markdown image: ![alt](optional/path/<filename>)  →  ![alt](<newUrl>)
+            $content = preg_replace(
+                '#(\!\[[^\]]*\]\()(?:[^()\s]*?/)?' . $quoted . '(\))#',
+                '$1' . $to . '$2',
+                $content
+            );
+
+            // HTML attribute: src="optional/path/<filename>" or href="..."
+            $content = preg_replace(
+                '#(\b(?:src|href)\s*=\s*")(?:[^"\s]*?/)?' . $quoted . '(")#',
+                '$1' . $to . '$2',
+                $content
+            );
         }
         return $content;
     }

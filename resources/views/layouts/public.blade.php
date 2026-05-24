@@ -30,27 +30,59 @@
                 </a>
             </nav>
 
+            @php
+                // Layout reads $availableLocales if a controller sets it (e.g. post show).
+                // Default: all supported locales.
+                $availableLocales = $availableLocales ?? \App\Models\Post::SUPPORTED_LOCALES;
+                $localeLabels = ['zh' => '繁體中文', 'en' => 'English', 'ja' => '日本語', 'vi' => 'Tiếng Việt', 'id' => 'Bahasa Indonesia'];
+            @endphp
+
             <div class="flex items-center gap-3">
                 {{-- Language switcher --}}
                 <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open" class="px-2.5 py-1 text-xs uppercase tracking-wide border border-line rounded hover:border-accent hover:text-accent">
-                        {{ strtoupper(app()->getLocale()) }}
+                    <button @click="open = !open"
+                        class="w-9 h-9 rounded-full border border-line hover:border-accent flex items-center justify-center text-ink-2 hover:text-accent"
+                        aria-label="Switch language">
+                        {{-- globe icon --}}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M3 12h18"/>
+                            <path d="M12 3a14 14 0 0 1 0 18"/>
+                            <path d="M12 3a14 14 0 0 0 0 18"/>
+                        </svg>
                     </button>
-                    <div x-show="open" @click.outside="open = false" x-cloak class="absolute right-0 mt-2 w-32 rounded-md border border-line bg-card shadow-md text-sm overflow-hidden">
-                        @foreach(['zh' => '繁體中文', 'en' => 'English', 'ja' => '日本語', 'vi' => 'Tiếng Việt', 'id' => 'Bahasa Indonesia'] as $code => $label)
-                            <form method="POST" action="{{ route('public.locale.switch', $code) }}" class="contents">
-                                @csrf
-                                <button type="submit" class="w-full text-left px-3 py-1.5 hover:bg-paper-2 {{ app()->getLocale() === $code ? 'text-accent font-medium' : 'text-ink-2' }}">
-                                    {{ $label }}
-                                </button>
-                            </form>
+                    <div x-show="open" @click.outside="open = false" x-cloak
+                        class="absolute right-0 mt-2 w-40 rounded-md border border-line bg-card shadow-md text-sm overflow-hidden z-40">
+                        @foreach($localeLabels as $code => $label)
+                            @if(in_array($code, $availableLocales, true))
+                                <form method="POST" action="{{ route('public.locale.switch', $code) }}" class="contents">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full text-left px-3 py-1.5 hover:bg-paper-2 flex items-center justify-between {{ app()->getLocale() === $code ? 'text-accent font-medium' : 'text-ink-2' }}">
+                                        <span>{{ $label }}</span>
+                                        <span class="text-[10px] font-mono text-ink-3 uppercase">{{ $code }}</span>
+                                    </button>
+                                </form>
+                            @endif
                         @endforeach
                     </div>
                 </div>
 
-                {{-- Theme toggle --}}
-                <button onclick="toggleTheme()" class="w-8 h-8 rounded-full border border-line hover:border-accent flex items-center justify-center text-ink-2 hover:text-accent" aria-label="Toggle theme">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                {{-- Theme toggle (icon flips based on current theme) --}}
+                <button
+                    x-data="{ dark: document.documentElement.getAttribute('data-theme') === 'dark' }"
+                    @click="window.toggleTheme(); dark = !dark"
+                    class="w-9 h-9 rounded-full border border-line hover:border-accent flex items-center justify-center text-ink-2 hover:text-accent"
+                    aria-label="Toggle theme">
+                    {{-- Sun when in dark mode (click to go light) --}}
+                    <svg x-show="dark" x-cloak width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                    </svg>
+                    {{-- Moon when in light mode (click to go dark) --}}
+                    <svg x-show="!dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
                 </button>
             </div>
         </div>

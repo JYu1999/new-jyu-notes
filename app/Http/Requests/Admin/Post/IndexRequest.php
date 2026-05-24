@@ -18,6 +18,7 @@ class IndexRequest extends FormRequest
             'locale' => 'nullable|in:zh,en,ja,vi,id',
             'q' => 'nullable|string|max:100',
             'page' => 'nullable|integer|min:1',
+            'partial' => 'nullable|boolean',
         ];
     }
 }

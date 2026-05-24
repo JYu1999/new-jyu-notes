@@ -21,8 +21,7 @@ class PostController extends Controller
     public function index(IndexRequest $request, PostRepository $repo): View
     {
         $params = $request->validated();
-
-        return view('admin.posts.index', [
+        $data = [
             'posts' => $repo->adminPaginate(
                 status: $params['status'] ?? null,
                 locale: $params['locale'] ?? null,
@@ -32,7 +31,14 @@ class PostController extends Controller
             'currentStatus' => $params['status'] ?? 'all',
             'currentLocale' => $params['locale'] ?? null,
             'currentSearch' => $params['q'] ?? '',
-        ]);
+        ];
+
+        // AJAX live-filter: return only the table partial
+        if ($request->boolean('partial')) {
+            return view('admin.posts._table', $data);
+        }
+
+        return view('admin.posts.index', $data);
     }
 
     public function create(TagRepository $tags, CategoryRepository $categories): View

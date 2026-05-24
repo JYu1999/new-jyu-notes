@@ -124,19 +124,42 @@
 }
 .prose-blog aside.alert-warning { border-color: var(--color-warn); }
 .prose-blog aside.alert-danger { border-color: var(--color-danger); }
-.prose-blog .youtube-embed {
+.prose-blog .youtube-embed,
+.prose-blog div.youtube-embed {
     position: relative;
     padding-bottom: 56.25%;
     margin: 1.4em 0;
+    max-width: 100%;
+    overflow: hidden;
 }
-.prose-blog .youtube-embed iframe {
+.prose-blog .youtube-embed iframe,
+.prose-blog iframe {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
+    max-width: 100%;
     border: 0;
     border-radius: 6px;
 }
+/* Standalone iframe outside the youtube-embed wrapper still constrained */
+.prose-blog > iframe {
+    position: static;
+    aspect-ratio: 16 / 9;
+    height: auto;
+}
+
+/* Tweet body: tighter spacing within prose */
+.tweet-body p:first-child { margin-top: 0; }
+.tweet-body p:last-child { margin-bottom: 0; }
+.tweet-body p { margin: 0.5em 0; }
+.tweet-body h1, .tweet-body h2, .tweet-body h3 { margin: 0.8em 0 0.4em; font-size: 1.1em; }
+.tweet-body blockquote { margin: 0.6em 0; padding-left: 0.8em; }
+
+/* Custom scrollbar for media carousel */
+.scrollbar-thin::-webkit-scrollbar { height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-line-2); border-radius: 4px; }
+.scrollbar-thin { scrollbar-width: thin; }
 .prose-blog video {
     max-width: 100%;
     border-radius: 6px;

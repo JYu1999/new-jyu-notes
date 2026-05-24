@@ -237,6 +237,9 @@ class PostService
 
     /**
      * Given a URL in one locale, find the corresponding URL in another locale.
+     *
+     * If the post translation doesn't exist, returns the post-list page in target locale
+     * (rather than a URL that would 404).
      */
     public function equivalentUrlInLocale(?string $url, string $targetLocale): ?string
     {
@@ -244,21 +247,36 @@ class PostService
 
         $path = parse_url($url, PHP_URL_PATH) ?? '';
 
+        // Post detail
         if (preg_match('#^/(zh|en|ja|vi|id)/posts/([^/]+)/?$#', $path, $m)) {
             $sourceLocale = $m[1];
             $slug = $m[2];
-            $post = Post::query()
-                ->where('locale', $sourceLocale)
-                ->where('slug', $slug)
-                ->first();
+            $post = Post::query()->where('locale', $sourceLocale)->where('slug', $slug)->first();
             if ($post) {
                 $sibling = $post->translation($targetLocale);
-                if ($sibling) {
+                if ($sibling && $sibling->status === Post::STATUS_PUBLISHED) {
                     return "/{$targetLocale}/posts/{$sibling->slug}";
                 }
             }
+            // No translation → fall back to posts list (NOT the same URL, would 404)
+            return "/{$targetLocale}/posts";
         }
 
+        // Tweet detail
+        if (preg_match('#^/(zh|en|ja|vi|id)/tweets/(\d+)/?$#', $path, $m)) {
+            $sourceLocale = $m[1];
+            $id = (int) $m[2];
+            $tweet = \App\Models\Tweet::query()->where('locale', $sourceLocale)->where('id', $id)->first();
+            if ($tweet) {
+                $sibling = $tweet->translation($targetLocale);
+                if ($sibling && $sibling->status === \App\Models\Tweet::STATUS_PUBLISHED) {
+                    return "/{$targetLocale}/tweets/{$sibling->id}";
+                }
+            }
+            return "/{$targetLocale}/tweets";
+        }
+
+        // Other locale-prefixed pages: swap locale prefix
         if (preg_match('#^/(zh|en|ja|vi|id)(/.*)?$#', $path, $m)) {
             return "/{$targetLocale}" . ($m[2] ?? '');
         }

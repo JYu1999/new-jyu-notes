@@ -1,20 +1,92 @@
-@props(['tweet'])
+@props(['tweet', 'preview' => false])
 
-<article class="bg-card border-l-2 border-accent/40 pl-4 pr-2 py-3 relative">
+@php
+    $renderer = app(\App\Support\MarkdownRenderer::class);
+    $rendered = $renderer->render($tweet->body);
+
+    if ($preview) {
+        $plain = trim(preg_replace('/\s+/', ' ', strip_tags($rendered)));
+        $previewText = \Illuminate\Support\Str::limit($plain, 220);
+    }
+
+    $bodyLen = mb_strlen($tweet->body);
+    $isLong = ! $preview && $bodyLen > 400;
+    $media = $tweet->media ?? [];
+    $mediaCount = is_array($media) ? count($media) : 0;
+@endphp
+
+<article
+    @if($isLong) x-data="{ expanded: false }" @endif
+    class="bg-card border-l-2 border-accent/40 pl-4 pr-3 py-3 relative overflow-hidden">
+
     <div class="text-[10px] uppercase tracking-widest text-ink-3 font-mono mb-1.5">
-        {{ $tweet->published_at?->format('Y/m/d H:i') }}
+        <a href="{{ route('public.tweets.show', [app()->getLocale(), $tweet->id]) }}"
+            class="hover:text-accent"
+            @if(! $preview) @click.stop @endif>
+            {{ $tweet->published_at?->format('Y/m/d H:i') }}
+        </a>
     </div>
 
-    <div class="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">{{ \Illuminate\Support\Str::limit($tweet->body, 280) }}</div>
+    @if($preview)
+        <div class="font-serif text-[15px] leading-relaxed text-ink">{{ $previewText }}</div>
+    @else
+        {{-- Full markdown rendering, collapsible if long --}}
+        <div class="prose-blog tweet-body text-[15px] leading-relaxed relative"
+            @if($isLong) :class="expanded ? '' : 'max-h-72 overflow-hidden'" @endif>
+            {!! $rendered !!}
+            @if($isLong)
+                <div x-show="!expanded"
+                    class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card via-card/80 to-transparent pointer-events-none"></div>
+            @endif
+        </div>
+        @if($isLong)
+            <button type="button" x-show="!expanded" @click.prevent.stop="expanded = true"
+                class="mt-2 text-xs font-mono text-accent hover:text-accent-ink">
+                … Read more
+            </button>
+            <button type="button" x-show="expanded" x-cloak @click.prevent.stop="expanded = false"
+                class="mt-2 text-xs font-mono text-ink-3 hover:text-accent">
+                ↑ Show less
+            </button>
+        @endif
+    @endif
 
-    @if($tweet->media)
-        <div class="mt-3 grid {{ count($tweet->media) > 1 ? 'grid-cols-2' : 'grid-cols-1' }} gap-2">
-            @foreach($tweet->media as $m)
+    {{-- Media: 1 → full, 2 → side-by-side, 3+ → horizontal scroll-snap --}}
+    @if($mediaCount === 1)
+        @php $m = $media[0]; @endphp
+        <div class="mt-3">
+            @if(($m['type'] ?? 'image') === 'image')
+                <img src="{{ asset('storage/' . $m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
+                    class="rounded-md w-full h-auto object-cover max-h-96">
+            @else
+                <video src="{{ asset('storage/' . $m['path']) }}" controls
+                    class="rounded-md w-full max-w-full max-h-96"></video>
+            @endif
+        </div>
+    @elseif($mediaCount === 2)
+        <div class="mt-3 grid grid-cols-2 gap-2">
+            @foreach($media as $m)
                 @if(($m['type'] ?? 'image') === 'image')
-                    <img src="{{ asset('storage/' . $m['path']) }}" alt="{{ $m['alt'] ?? '' }}" class="rounded-md w-full h-auto object-cover max-h-64">
+                    <img src="{{ asset('storage/' . $m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
+                        class="rounded-md w-full h-48 object-cover">
                 @else
-                    <video src="{{ asset('storage/' . $m['path']) }}" controls class="rounded-md w-full"></video>
+                    <video src="{{ asset('storage/' . $m['path']) }}" controls
+                        class="rounded-md w-full h-48 object-cover"></video>
                 @endif
+            @endforeach
+        </div>
+    @elseif($mediaCount > 2)
+        <div class="mt-3 -mx-1 flex gap-2 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-thin">
+            @foreach($media as $m)
+                <div class="snap-start flex-shrink-0 w-56 sm:w-64">
+                    @if(($m['type'] ?? 'image') === 'image')
+                        <img src="{{ asset('storage/' . $m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
+                            class="rounded-md w-full h-44 object-cover">
+                    @else
+                        <video src="{{ asset('storage/' . $m['path']) }}" controls
+                            class="rounded-md w-full h-44 object-cover"></video>
+                    @endif
+                </div>
             @endforeach
         </div>
     @endif
@@ -22,9 +94,13 @@
     @if($tweet->tags->isNotEmpty())
         <div class="mt-3 flex flex-wrap gap-1.5">
             @foreach($tweet->tags as $tag)
-                <a href="{{ route('public.tags.show', [app()->getLocale(), $tag->slug(app()->getLocale())]) }}" class="text-[10px] font-mono px-2 py-0.5 bg-paper-2 text-ink-3 hover:text-accent rounded">
-                    #{{ $tag->name(app()->getLocale()) }}
-                </a>
+                @php $tslug = $tag->slug(app()->getLocale()); @endphp
+                @if($tslug)
+                    <a href="{{ route('public.tags.show', [app()->getLocale(), $tslug]) }}"
+                        class="text-[10px] font-mono px-2 py-0.5 bg-paper-2 text-ink-3 hover:text-accent rounded">
+                        #{{ $tag->name(app()->getLocale()) }}
+                    </a>
+                @endif
             @endforeach
         </div>
     @endif

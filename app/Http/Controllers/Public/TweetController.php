@@ -20,8 +20,14 @@ class TweetController extends Controller
         $tweet = $tweets->findPublished($locale, $id);
         abort_if(! $tweet, 404);
 
+        $availableLocales = $tweet->allTranslations()
+            ->filter(fn ($t) => $t->status === 'published')
+            ->pluck('locale')
+            ->all();
+
         return view('public.tweets.show', [
             'tweet' => $tweet,
+            'availableLocales' => $availableLocales,
         ]);
     }
 }

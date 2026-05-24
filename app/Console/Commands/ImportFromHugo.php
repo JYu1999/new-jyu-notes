@@ -249,13 +249,14 @@ class ImportFromHugo extends Command
         $raw = file_get_contents($filePath);
         [$fm, $body] = $this->splitFrontMatter($raw);
 
-        // Convert shortcodes
+        $storageSubdir = "imports/posts/{$slug}";
+
+        // Convert shortcodes (with per-bundle asset path mapping)
         $converter = clone $this->shortcoder;
-        $converter->assetRewrites = $this->buildAssetRewrites($bundleDir);
+        $converter->assetRewrites = $this->buildAssetRewrites($bundleDir, $storageSubdir);
         $body = $converter->convert($body);
 
-        // Copy bundle images into storage
-        $coverPath = $this->ingestCoverImage($bundleDir);
+        $coverPath = $this->ingestCoverImage($bundleDir, $storageSubdir);
 
         $publishedAt = $this->parseDate($fm['date'] ?? null);
         $lastModifiedAt = $this->parseDate($fm['lastmod'] ?? null) ?? $publishedAt ?? now();
@@ -282,39 +283,51 @@ class ImportFromHugo extends Command
             'author_id' => $this->admin->id,
         ]);
 
+        // Preserve Hugo's date/lastmod as Eloquent created_at/updated_at
+        if ($publishedAt) {
+            DB::table('posts')->where('id', $post->id)->update([
+                'created_at' => $publishedAt,
+                'updated_at' => $lastModifiedAt,
+            ]);
+            $post->refresh();
+        }
+
         $this->line("Post[{$locale}]: {$slug}");
         return $post;
     }
 
     /**
      * Build asset URL rewrite map for shortcode converter and inline-image references.
+     *
+     * @param  string  $bundleDir       absolute path of the Hugo bundle directory
+     * @param  string  $storageSubdir   target subdirectory under storage/public (e.g. "imports/posts/<slug>")
+     * @return array<string, string>    map of bare filename → web URL
      */
-    private function buildAssetRewrites(string $bundleDir): array
+    private function buildAssetRewrites(string $bundleDir, string $storageSubdir): array
     {
         $rewrites = [];
         foreach (glob("{$bundleDir}/*.{png,jpg,jpeg,webp,gif,mp4,webm}", GLOB_BRACE) ?: [] as $file) {
             $filename = basename($file);
             if ($this->option('dry-run')) {
-                $rewrites[$filename] = "/storage/imports/{$filename}";
+                $rewrites[$filename] = "/storage/{$storageSubdir}/{$filename}";
             } else {
-                $media = $this->media->registerLocalFile($file, 'imports', $this->admin);
+                $media = $this->media->registerLocalFile($file, $storageSubdir, $this->admin);
                 if ($media) {
-                    $newUrl = '/storage/' . $media->path;
-                    $rewrites[$filename] = $newUrl;
+                    $rewrites[$filename] = '/storage/' . $media->path;
                 }
             }
         }
         return $rewrites;
     }
 
-    private function ingestCoverImage(string $bundleDir): ?string
+    private function ingestCoverImage(string $bundleDir, string $storageSubdir): ?string
     {
         $candidates = ['featured.png', 'featured.jpg', 'featured.jpeg', 'featured.webp'];
         foreach ($candidates as $name) {
             $path = "{$bundleDir}/{$name}";
             if (is_file($path)) {
-                if ($this->option('dry-run')) return "imports/{$name}";
-                $media = $this->media->registerLocalFile($path, 'imports', $this->admin);
+                if ($this->option('dry-run')) return "{$storageSubdir}/{$name}";
+                $media = $this->media->registerLocalFile($path, $storageSubdir, $this->admin);
                 return $media?->path;
             }
         }
@@ -474,20 +487,26 @@ class ImportFromHugo extends Command
         $raw = file_get_contents($filePath);
         [$fm, $body] = $this->splitFrontMatter($raw);
 
+        $slug = basename($bundleDir);
+        $storageSubdir = "imports/tweets/{$slug}";
+
         $converter = clone $this->shortcoder;
-        $converter->assetRewrites = $this->buildAssetRewrites($bundleDir);
+        $converter->assetRewrites = $this->buildAssetRewrites($bundleDir, $storageSubdir);
         $body = $converter->convert($body);
 
-        // Collect inline media (images / videos in bundle)
+        // Collect inline media (only files NOT already referenced in body to avoid duplicate rendering)
         $media = [];
         foreach (glob("{$bundleDir}/*.{png,jpg,jpeg,webp,gif,mp4,webm}", GLOB_BRACE) ?: [] as $file) {
             $filename = basename($file);
             if (str_starts_with($filename, 'featured.')) continue;
+            // Skip if body already embeds this file (avoid Bug 4: duplicate render)
+            if (stripos($body, $filename) !== false) continue;
+
             $mime = mime_content_type($file) ?: '';
             $type = str_starts_with($mime, 'video/') ? 'video' : 'image';
 
             if (! $this->option('dry-run')) {
-                $mediaRecord = $this->media->registerLocalFile($file, 'imports', $this->admin);
+                $mediaRecord = $this->media->registerLocalFile($file, $storageSubdir, $this->admin);
                 if ($mediaRecord) {
                     $media[] = [
                         'path' => $mediaRecord->path,
@@ -502,7 +521,7 @@ class ImportFromHugo extends Command
         $status = ($fm['draft'] ?? false) ? Tweet::STATUS_DRAFT : Tweet::STATUS_PUBLISHED;
 
         if ($this->option('dry-run')) {
-            $this->line("Tweet[{$locale}]: " . basename($bundleDir) . " ({$status})");
+            $this->line("Tweet[{$locale}]: {$slug} ({$status})");
             return null;
         }
 
@@ -516,7 +535,16 @@ class ImportFromHugo extends Command
             'author_id' => $this->admin->id,
         ]);
 
-        $this->line("Tweet[{$locale}]: " . basename($bundleDir));
+        // Preserve Hugo's date as Eloquent created_at/updated_at
+        if ($publishedAt) {
+            DB::table('tweets')->where('id', $tweet->id)->update([
+                'created_at' => $publishedAt,
+                'updated_at' => $publishedAt,
+            ]);
+            $tweet->refresh();
+        }
+
+        $this->line("Tweet[{$locale}]: {$slug}");
         return $tweet;
     }
 
@@ -553,7 +581,9 @@ class ImportFromHugo extends Command
             return [[], $raw];
         }
         try {
-            $fm = Yaml::parse($m[1]) ?? [];
+            // PARSE_DATETIME → returns \DateTime objects for ISO-8601 timestamps
+            // instead of Unix integers (which Carbon::parse can't handle as strings).
+            $fm = Yaml::parse($m[1], Yaml::PARSE_DATETIME) ?? [];
         } catch (\Throwable $e) {
             $fm = [];
         }
@@ -562,10 +592,13 @@ class ImportFromHugo extends Command
 
     private function parseDate($val): ?Carbon
     {
-        if (! $val) return null;
+        if ($val === null || $val === '') return null;
         try {
             if ($val instanceof \DateTimeInterface) {
                 return Carbon::instance($val);
+            }
+            if (is_int($val)) {
+                return Carbon::createFromTimestamp($val);
             }
             return Carbon::parse((string) $val);
         } catch (\Throwable $e) {

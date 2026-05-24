@@ -20,8 +20,7 @@ class TweetController extends Controller
     public function index(IndexRequest $request, TweetRepository $repo): View
     {
         $params = $request->validated();
-
-        return view('admin.tweets.index', [
+        $data = [
             'tweets' => $repo->adminPaginate(
                 status: $params['status'] ?? null,
                 locale: $params['locale'] ?? null,
@@ -31,7 +30,13 @@ class TweetController extends Controller
             'currentStatus' => $params['status'] ?? 'all',
             'currentLocale' => $params['locale'] ?? null,
             'currentSearch' => $params['q'] ?? '',
-        ]);
+        ];
+
+        if ($request->boolean('partial')) {
+            return view('admin.tweets._table', $data);
+        }
+
+        return view('admin.tweets.index', $data);
     }
 
     public function create(TagRepository $tags): View

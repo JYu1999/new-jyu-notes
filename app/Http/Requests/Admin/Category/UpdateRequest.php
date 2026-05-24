@@ -19,8 +19,15 @@ class UpdateRequest extends FormRequest
             'translations' => 'sometimes|array|min:1',
             'translations.*.locale' => 'required|in:zh,en,ja,vi,id|distinct',
             'translations.*.name' => 'required|string|max:100',
-            'translations.*.slug' => 'nullable|string|max:120|regex:/^[a-z0-9\-]+$/',
+            'translations.*.slug' => ['nullable', 'string', 'max:120', 'not_regex:#[/\\\\?#&\s]#'],
             'translations.*.description' => 'nullable|string|max:1000',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'translations.*.slug.not_regex' => 'Slug 不可包含空白、斜線、? 、# 或 & 符號',
         ];
     }
 }

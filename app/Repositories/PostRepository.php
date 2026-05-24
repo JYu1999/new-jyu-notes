@@ -36,7 +36,7 @@ class PostRepository
 
     public function featured(string $locale, int $limit = 4): Collection
     {
-        return Post::query()
+        $featured = Post::query()
             ->with(['tags.translations', 'categories.translations'])
             ->locale($locale)
             ->published()
@@ -44,6 +44,19 @@ class PostRepository
             ->orderByDesc('published_at')
             ->limit($limit)
             ->get();
+
+        // Fallback: if no posts are explicitly marked featured, show the latest published posts
+        if ($featured->isEmpty()) {
+            return Post::query()
+                ->with(['tags.translations', 'categories.translations'])
+                ->locale($locale)
+                ->published()
+                ->orderByDesc('published_at')
+                ->limit($limit)
+                ->get();
+        }
+
+        return $featured;
     }
 
     public function findPublishedBySlug(string $locale, string $slug): ?Post

@@ -16,6 +16,7 @@ class SearchRequest extends FormRequest
         return [
             'q' => 'nullable|string|max:100',
             'type' => 'nullable|in:all,post,tweet',
+            'partial' => 'nullable|boolean',
         ];
     }
 }

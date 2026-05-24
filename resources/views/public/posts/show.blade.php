@@ -4,17 +4,7 @@
 
 @section('content')
 <article class="max-w-3xl mx-auto px-6 py-12">
-    {{-- Translation switcher --}}
-    @if($translations->count() > 1)
-        <div class="mb-6 flex items-center gap-3 text-xs font-mono text-ink-3">
-            <span>其他語言：</span>
-            @foreach($translations as $loc => $t)
-                @if($loc !== $post->locale && $t->status === 'published')
-                    <a href="{{ route('public.posts.show', [$loc, $t->slug]) }}" class="text-accent hover:text-accent-ink uppercase">{{ $loc }}</a>
-                @endif
-            @endforeach
-        </div>
-    @endif
+    {{-- Language switcher handled by navbar (uses $availableLocales passed from controller) --}}
 
     {{-- Category badge --}}
     @if($post->categories->isNotEmpty())
@@ -67,7 +57,7 @@
         <nav class="mt-12 pt-6 border-t border-line grid grid-cols-2 gap-4">
             @if($seriesNav['previous'])
                 <a href="{{ route('public.posts.show', [app()->getLocale(), $seriesNav['previous']->slug]) }}" class="block p-4 border border-line rounded hover:border-accent text-left">
-                    <div class="text-xs text-ink-3 font-mono mb-1">← 上一篇</div>
+                    <div class="text-xs text-ink-3 font-mono mb-1">← {{ __('public.prev_post') }}</div>
                     <div class="font-serif text-sm font-medium line-clamp-2">{{ $seriesNav['previous']->title }}</div>
                 </a>
             @else
@@ -75,7 +65,7 @@
             @endif
             @if($seriesNav['next'])
                 <a href="{{ route('public.posts.show', [app()->getLocale(), $seriesNav['next']->slug]) }}" class="block p-4 border border-line rounded hover:border-accent text-right">
-                    <div class="text-xs text-ink-3 font-mono mb-1">下一篇 →</div>
+                    <div class="text-xs text-ink-3 font-mono mb-1">{{ __('public.next_post') }} →</div>
                     <div class="font-serif text-sm font-medium line-clamp-2">{{ $seriesNav['next']->title }}</div>
                 </a>
             @endif

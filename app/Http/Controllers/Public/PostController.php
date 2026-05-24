@@ -50,9 +50,18 @@ class PostController extends Controller
         // Stash the post on the request so TrackPostView middleware can record a view post-response.
         $request->attributes->set('tracked_post', $post);
 
+        $translations = $post->allTranslations()->keyBy('locale');
+        // Only published translations are reachable; pass list of locales to layout
+        // so the language switcher only shows existing options.
+        $availableLocales = $translations
+            ->filter(fn ($p) => $p->status === 'published')
+            ->keys()
+            ->all();
+
         return view('public.posts.show', [
             'post' => $post,
-            'translations' => $post->allTranslations()->keyBy('locale'),
+            'translations' => $translations,
+            'availableLocales' => $availableLocales,
             'seriesNav' => $service->seriesNavigation($post),
         ]);
     }
