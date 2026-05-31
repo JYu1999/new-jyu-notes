@@ -23,7 +23,7 @@ class LoginController extends Controller
 
         if (! Auth::attempt($credentials, $remember)) {
             return back()
-                ->withErrors(['email' => __('public.login_invalid')])
+                ->withErrors(['email' => '帳號或密碼錯誤'])
                 ->withInput($request->only('email'));
         }
 
