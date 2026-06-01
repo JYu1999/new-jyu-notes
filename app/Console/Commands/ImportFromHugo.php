@@ -393,11 +393,11 @@ class ImportFromHugo extends Command
         foreach (glob("{$bundleDir}/*.{png,jpg,jpeg,webp,gif,mp4,webm}", GLOB_BRACE) ?: [] as $file) {
             $filename = basename($file);
             if ($this->option('dry-run')) {
-                $rewrites[$filename] = "/storage/{$storageSubdir}/{$filename}";
+                $rewrites[$filename] = media_url("{$storageSubdir}/{$filename}");
             } else {
                 $media = $this->media->registerLocalFile($file, $storageSubdir, $this->admin);
                 if ($media) {
-                    $rewrites[$filename] = '/storage/' . $media->path;
+                    $rewrites[$filename] = media_url($media->path);
                 }
             }
         }
