@@ -14,7 +14,7 @@ class MediaService
     {
         $year = date('Y');
         $month = date('m');
-        $path = $file->store("uploads/{$year}/{$month}", 'public');
+        $path = $file->store("uploads/{$year}/{$month}", config('media.disk'));
 
         $dimensions = $this->dimensions($file);
 
@@ -32,7 +32,7 @@ class MediaService
     public function delete(int $id): void
     {
         $media = Media::findOrFail($id);
-        Storage::disk('public')->delete($media->path);
+        Storage::disk(config('media.disk'))->delete($media->path);
         $media->delete();
     }
 
@@ -56,7 +56,7 @@ class MediaService
         $filename = basename($sourcePath);
         $targetPath = "{$folder}/{$filename}";
 
-        Storage::disk('public')->put($targetPath, file_get_contents($sourcePath));
+        Storage::disk(config('media.disk'))->put($targetPath, file_get_contents($sourcePath));
 
         $existing = Media::where('path', $targetPath)->first();
         if ($existing) return $existing;
