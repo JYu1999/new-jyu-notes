@@ -37,4 +37,18 @@ class MediaServiceTest extends TestCase
         $this->assertNotNull($media);
         Storage::disk('mediafake')->assertExists($media->path);
     }
+
+    public function test_delete_removes_file_from_configured_media_disk(): void
+    {
+        config(['media.disk' => 'mediafake']);
+        Storage::fake('mediafake');
+
+        $service = app(MediaService::class);
+        $media = $service->upload(UploadedFile::fake()->image('to-delete.jpg', 10, 10));
+
+        $service->delete($media->id);
+
+        Storage::disk('mediafake')->assertMissing($media->path);
+        $this->assertModelMissing($media);
+    }
 }
