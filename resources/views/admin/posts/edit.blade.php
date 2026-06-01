@@ -99,7 +99,7 @@
                     {{-- Preview --}}
                     <template x-if="path">
                         <div class="relative mb-2 group">
-                            <img :src="'/storage/' + path" class="rounded max-h-40 w-full object-cover border border-line">
+                            <img :src="previewUrl" class="rounded max-h-40 w-full object-cover border border-line">
                             <button type="button" @click="clear()" class="absolute top-1 right-1 bg-paper/90 border border-line rounded px-2 py-0.5 text-xs hover:text-danger">移除</button>
                         </div>
                     </template>

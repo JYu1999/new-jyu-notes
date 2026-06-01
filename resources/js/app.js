@@ -84,6 +84,12 @@ window.coverUpload = function ({ initial }) {
         path: initial || '',
         uploading: false,
         error: null,
+        get mediaBase() {
+            return document.querySelector('meta[name=media-base]')?.content ?? '';
+        },
+        get previewUrl() {
+            return this.path ? this.mediaBase + '/' + this.path : '';
+        },
         async upload(file) {
             if (!file) return;
             this.error = null;
