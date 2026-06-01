@@ -8,6 +8,6 @@ if (! function_exists('media_url')) {
      */
     function media_url(string $path): string
     {
-        return Storage::disk(config('media.disk', 'public'))->url($path);
+        return Storage::disk(config('media.disk'))->url($path);
     }
 }
