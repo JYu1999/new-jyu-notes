@@ -681,8 +681,9 @@ class ImportFromHugo extends Command
      * Also replaces link text that exactly equals the URL with the target's title/body excerpt
      * (so `[/posts/foo](/posts/foo)` becomes `[Real Title](/zh/posts/foo)`).
      *
-     * Storage paths like `/storage/imports/posts/...` are not touched — the regex
-     * only matches inside `]( … )` markdown links and `href="..."` HTML attributes.
+     * Media URLs like `https://media.jyu1999.com/imports/posts/...` are not touched —
+     * the regex only rewrites root-relative `/posts/` and `/tweets/` links, so absolute
+     * media URLs (even though they contain `posts`) are left intact.
      */
     private function rewriteInternalLinks(): void
     {
