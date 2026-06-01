@@ -66,9 +66,21 @@ class ImportMediaRewriteTest extends TestCase
         $rewrites = $method->invoke($cmd, $bundle, 'imports/posts/demo');
 
         $this->assertArrayHasKey('pic.png', $rewrites);
-        $this->assertStringStartsWith('https://media.jyu1999.com/', $rewrites['pic.png']);
+        $this->assertSame('https://media.jyu1999.com/imports/posts/demo/pic.png', $rewrites['pic.png']);
 
         @unlink("{$bundle}/pic.png");
         @rmdir($bundle);
+
+        // recursively remove the temp disk root
+        if (is_dir($testRoot)) {
+            $it = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($testRoot, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($it as $f) {
+                $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname());
+            }
+            @rmdir($testRoot);
+        }
     }
 }
