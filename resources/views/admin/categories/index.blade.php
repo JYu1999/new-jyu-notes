@@ -79,7 +79,7 @@
         <div x-data="{ editing: false }" class="bg-card border border-line rounded-md p-5">
             <div x-show="!editing">
                 @if($cat->cover_image_path)
-                    <img src="{{ asset('storage/' . $cat->cover_image_path) }}" class="w-full h-32 object-cover rounded mb-3">
+                    <img src="{{ media_url($cat->cover_image_path) }}" class="w-full h-32 object-cover rounded mb-3">
                 @endif
                 <div class="flex items-start justify-between gap-3 mb-3">
                     <div>

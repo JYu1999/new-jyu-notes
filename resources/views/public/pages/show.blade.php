@@ -7,7 +7,7 @@
     <h1 class="font-serif text-3xl md:text-4xl font-semibold leading-tight tracking-tight mb-5">{{ $page->title }}</h1>
 
     @if($page->cover_image_path)
-        <img src="{{ asset('storage/' . $page->cover_image_path) }}" alt=""
+        <img src="{{ media_url($page->cover_image_path) }}" alt=""
             class="w-full rounded-lg mb-10 h-auto max-h-[400px] object-cover">
     @endif
 

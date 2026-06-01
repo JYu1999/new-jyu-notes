@@ -5,7 +5,7 @@
 <article class="bg-card border border-line rounded-md p-5 hover:border-line-2 transition-colors flex flex-col h-full relative">
     @if($post->cover_image_path)
         <div class="block mb-4 -mx-5 -mt-5 overflow-hidden rounded-t-md">
-            <img src="{{ asset('storage/' . $post->cover_image_path) }}" alt="" class="w-full h-44 object-cover">
+            <img src="{{ media_url($post->cover_image_path) }}" alt="" class="w-full h-44 object-cover">
         </div>
     @endif
 

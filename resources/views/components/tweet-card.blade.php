@@ -56,10 +56,10 @@
         @php $m = $media[0]; @endphp
         <div class="mt-3">
             @if(($m['type'] ?? 'image') === 'image')
-                <img src="{{ asset('storage/' . $m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
+                <img src="{{ media_url($m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
                     class="rounded-md w-full h-auto object-cover max-h-96">
             @else
-                <video src="{{ asset('storage/' . $m['path']) }}" controls
+                <video src="{{ media_url($m['path']) }}" controls
                     class="rounded-md w-full max-w-full max-h-96"></video>
             @endif
         </div>
@@ -67,10 +67,10 @@
         <div class="mt-3 grid grid-cols-2 gap-2">
             @foreach($media as $m)
                 @if(($m['type'] ?? 'image') === 'image')
-                    <img src="{{ asset('storage/' . $m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
+                    <img src="{{ media_url($m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
                         class="rounded-md w-full h-48 object-cover">
                 @else
-                    <video src="{{ asset('storage/' . $m['path']) }}" controls
+                    <video src="{{ media_url($m['path']) }}" controls
                         class="rounded-md w-full h-48 object-cover"></video>
                 @endif
             @endforeach
@@ -80,10 +80,10 @@
             @foreach($media as $m)
                 <div class="snap-start flex-shrink-0 w-56 sm:w-64">
                     @if(($m['type'] ?? 'image') === 'image')
-                        <img src="{{ asset('storage/' . $m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
+                        <img src="{{ media_url($m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
                             class="rounded-md w-full h-44 object-cover">
                     @else
-                        <video src="{{ asset('storage/' . $m['path']) }}" controls
+                        <video src="{{ media_url($m['path']) }}" controls
                             class="rounded-md w-full h-44 object-cover"></video>
                     @endif
                 </div>

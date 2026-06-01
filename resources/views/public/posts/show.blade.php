@@ -34,7 +34,7 @@
         </div>
 
         @if($post->cover_image_path)
-            <img src="{{ asset('storage/' . $post->cover_image_path) }}" alt="" class="w-full rounded-lg mb-10 h-auto max-h-[400px] object-cover">
+            <img src="{{ media_url($post->cover_image_path) }}" alt="" class="w-full rounded-lg mb-10 h-auto max-h-[400px] object-cover">
         @endif
 
         <div class="prose-blog">
