@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\TweetController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,12 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/categories/{category}', [CategoryController::class, 'show'])->middleware('ability:categories:read');
     Route::patch('/categories/{category}', [CategoryController::class, 'update'])->middleware('ability:categories:update');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('ability:categories:delete');
+
+    Route::get('/tags', [TagController::class, 'index'])->middleware('ability:tags:read');
+    Route::post('/tags', [TagController::class, 'store'])->middleware('ability:tags:create');
+    Route::get('/tags/{tag}', [TagController::class, 'show'])->middleware('ability:tags:read');
+    Route::patch('/tags/{tag}', [TagController::class, 'update'])->middleware('ability:tags:update');
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->middleware('ability:tags:delete');
 });
 
 if (app()->environment('testing')) {
