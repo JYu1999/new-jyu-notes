@@ -23,22 +23,4 @@ class UpdateRequest extends FormRequest
             'translations.*.description' => 'nullable|string|max:1000',
         ];
     }
-
-    /**
-     * Ensure each translation always carries slug/description keys so the
-     * service can read them directly even when the client omits them.
-     */
-    public function validated($key = null, $default = null)
-    {
-        $validated = parent::validated();
-
-        if (isset($validated['translations'])) {
-            $validated['translations'] = array_map(static fn (array $t) => $t + [
-                'slug' => null,
-                'description' => null,
-            ], $validated['translations']);
-        }
-
-        return data_get($validated, $key, $default);
-    }
 }

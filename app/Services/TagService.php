@@ -16,7 +16,7 @@ class TagService
             ]);
 
             foreach ($data['translations'] ?? [] as $trans) {
-                $slug = $trans['slug'] ?: SlugGenerator::forTag($trans['name'], $trans['locale']);
+                $slug = ($trans['slug'] ?? null) ?: SlugGenerator::forTag($trans['name'], $trans['locale']);
                 $tag->translations()->create([
                     'locale' => $trans['locale'],
                     'name' => $trans['name'],
@@ -41,7 +41,7 @@ class TagService
 
                 foreach ($data['translations'] as $trans) {
                     $existing = $byLocale->get($trans['locale']);
-                    $slug = $trans['slug'] ?: SlugGenerator::forTag($trans['name'], $trans['locale'], $tag->id);
+                    $slug = ($trans['slug'] ?? null) ?: SlugGenerator::forTag($trans['name'], $trans['locale'], $tag->id);
                     if ($existing) {
                         $existing->update([
                             'name' => $trans['name'],

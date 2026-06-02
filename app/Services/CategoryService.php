@@ -17,7 +17,7 @@ class CategoryService
             ]);
 
             foreach ($data['translations'] ?? [] as $trans) {
-                $slug = $trans['slug'] ?: SlugGenerator::forCategory($trans['name'], $trans['locale']);
+                $slug = ($trans['slug'] ?? null) ?: SlugGenerator::forCategory($trans['name'], $trans['locale']);
                 $category->translations()->create([
                     'locale' => $trans['locale'],
                     'name' => $trans['name'],
@@ -50,7 +50,7 @@ class CategoryService
 
                 foreach ($data['translations'] as $trans) {
                     $existing = $byLocale->get($trans['locale']);
-                    $slug = $trans['slug'] ?: SlugGenerator::forCategory($trans['name'], $trans['locale'], $category->id);
+                    $slug = ($trans['slug'] ?? null) ?: SlugGenerator::forCategory($trans['name'], $trans['locale'], $category->id);
                     $payload = [
                         'name' => $trans['name'],
                         'slug' => $slug,
