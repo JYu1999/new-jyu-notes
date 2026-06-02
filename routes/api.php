@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\TodoController;
+use App\Http\Controllers\Api\TweetController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
@@ -22,6 +23,12 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     Route::post('/posts/{post}/translations', [PostController::class, 'storeTranslation'])->middleware('ability:posts:create');
     Route::post('/posts/{post}/publish', [PostController::class, 'publish'])->middleware('ability:posts:publish');
+
+    Route::get('/tweets', [TweetController::class, 'index'])->middleware('ability:tweets:read');
+    Route::post('/tweets', [TweetController::class, 'store'])->middleware('ability:tweets:create');
+    Route::get('/tweets/{tweet}', [TweetController::class, 'show'])->middleware('ability:tweets:read');
+    Route::patch('/tweets/{tweet}', [TweetController::class, 'update'])->middleware('ability:tweets:update');
+    Route::delete('/tweets/{tweet}', [TweetController::class, 'destroy'])->middleware('ability:tweets:delete');
 });
 
 if (app()->environment('testing')) {
