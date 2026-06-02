@@ -88,14 +88,14 @@
             <div>
                 <label class="block text-xs text-ink-3 mb-1">優先級</label>
                 <select name="priority" class="w-full bg-paper border border-line rounded px-2 py-1.5">
-                    <option value="low">low</option>
-                    <option value="medium" selected>medium</option>
-                    <option value="high">high</option>
+                    @foreach([\App\Models\Todo::PRIORITY_LOW, \App\Models\Todo::PRIORITY_MEDIUM, \App\Models\Todo::PRIORITY_HIGH] as $p)
+                        <option value="{{ $p }}" @selected(old('priority', \App\Models\Todo::PRIORITY_MEDIUM) === $p)>{{ $p }}</option>
+                    @endforeach
                 </select>
             </div>
             <input type="hidden" name="status" value="open">
             <label class="inline-flex items-center gap-2 text-xs">
-                <input type="checkbox" name="show_in_changelog" value="1">
+                <input type="checkbox" name="show_in_changelog" value="1" @checked(old('show_in_changelog'))>
                 <span>顯示於 Changelog</span>
             </label>
             <button class="w-full bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-ink font-medium">新增</button>
