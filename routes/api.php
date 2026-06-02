@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\MeController;
+use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\TodoController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,12 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/todos/{todo}', [TodoController::class, 'show'])->middleware('ability:todos:read');
     Route::patch('/todos/{todo}', [TodoController::class, 'update'])->middleware('ability:todos:update');
     Route::delete('/todos/{todo}', [TodoController::class, 'destroy'])->middleware('ability:todos:delete');
+
+    Route::get('/posts', [PostController::class, 'index'])->middleware('ability:posts:read');
+    Route::post('/posts', [PostController::class, 'store'])->middleware('ability:posts:create');
+    Route::get('/posts/{post}', [PostController::class, 'show'])->middleware('ability:posts:read');
+    Route::patch('/posts/{post}', [PostController::class, 'update'])->middleware('ability:posts:update');
+    Route::delete('/posts/{post}', [PostController::class, 'destroy'])->middleware('ability:posts:delete');
 });
 
 if (app()->environment('testing')) {
