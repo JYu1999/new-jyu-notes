@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\TodoController;
@@ -32,6 +33,12 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     Route::post('/tweets/{tweet}/translations', [TweetController::class, 'storeTranslation'])->middleware('ability:tweets:create');
     Route::post('/tweets/{tweet}/publish', [TweetController::class, 'publish'])->middleware('ability:tweets:publish');
+
+    Route::get('/categories', [CategoryController::class, 'index'])->middleware('ability:categories:read');
+    Route::post('/categories', [CategoryController::class, 'store'])->middleware('ability:categories:create');
+    Route::get('/categories/{category}', [CategoryController::class, 'show'])->middleware('ability:categories:read');
+    Route::patch('/categories/{category}', [CategoryController::class, 'update'])->middleware('ability:categories:update');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('ability:categories:delete');
 });
 
 if (app()->environment('testing')) {
