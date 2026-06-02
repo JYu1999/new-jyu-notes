@@ -19,6 +19,9 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/posts/{post}', [PostController::class, 'show'])->middleware('ability:posts:read');
     Route::patch('/posts/{post}', [PostController::class, 'update'])->middleware('ability:posts:update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->middleware('ability:posts:delete');
+
+    Route::post('/posts/{post}/translations', [PostController::class, 'storeTranslation'])->middleware('ability:posts:create');
+    Route::post('/posts/{post}/publish', [PostController::class, 'publish'])->middleware('ability:posts:publish');
 });
 
 if (app()->environment('testing')) {
