@@ -64,6 +64,22 @@ class TodoApiTest extends TestCase
         $this->assertNotNull($todo->fresh()->completed_at);
     }
 
+    public function test_partial_update_changes_only_provided_fields(): void
+    {
+        $todo = \App\Models\Todo::create(['title' => 'Original', 'priority' => 'low']);
+        \Laravel\Sanctum\Sanctum::actingAs($this->user(), ['todos:update']);
+
+        // PATCH only status — title/priority must be left intact, completed_at set.
+        $this->patchJson("/api/todos/{$todo->id}", ['status' => 'done'])
+            ->assertOk();
+
+        $fresh = $todo->fresh();
+        $this->assertSame('Original', $fresh->title);
+        $this->assertSame('low', $fresh->priority);
+        $this->assertSame('done', $fresh->status);
+        $this->assertNotNull($fresh->completed_at);
+    }
+
     public function test_delete_with_ability(): void
     {
         $todo = Todo::create(['title' => 'A']);
