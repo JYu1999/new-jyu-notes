@@ -15,7 +15,10 @@ class TodoController extends Controller
     public function index(): View
     {
         return view('admin.todos.index', [
-            'todos' => Todo::query()->orderByRaw("status = 'done'")->latest()->get(),
+            'todos' => Todo::query()
+                ->orderByRaw('CASE WHEN status = ? THEN 1 ELSE 0 END', [Todo::STATUS_DONE])
+                ->latest()
+                ->get(),
         ]);
     }
 
