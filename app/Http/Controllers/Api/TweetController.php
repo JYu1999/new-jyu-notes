@@ -51,4 +51,20 @@ class TweetController extends Controller
         $service->softDelete($tweet);
         return response()->noContent();
     }
+
+    public function storeTranslation(Tweet $tweet, Request $request, TweetService $service): JsonResponse
+    {
+        $data = $request->validate(['locale' => 'required|string|in:zh,en,ja,vi,id']);
+        $translation = $service->createTranslation($tweet, $data['locale']);
+
+        return (new TweetResource($translation->load(['tags'])))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function publish(Tweet $tweet, TweetService $service): TweetResource
+    {
+        $service->updateStatus($tweet, Tweet::STATUS_PUBLISHED);
+        return new TweetResource($tweet->fresh()->load(['tags']));
+    }
 }

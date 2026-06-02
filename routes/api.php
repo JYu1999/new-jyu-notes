@@ -29,6 +29,9 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/tweets/{tweet}', [TweetController::class, 'show'])->middleware('ability:tweets:read');
     Route::patch('/tweets/{tweet}', [TweetController::class, 'update'])->middleware('ability:tweets:update');
     Route::delete('/tweets/{tweet}', [TweetController::class, 'destroy'])->middleware('ability:tweets:delete');
+
+    Route::post('/tweets/{tweet}/translations', [TweetController::class, 'storeTranslation'])->middleware('ability:tweets:create');
+    Route::post('/tweets/{tweet}/publish', [TweetController::class, 'publish'])->middleware('ability:tweets:publish');
 });
 
 if (app()->environment('testing')) {
