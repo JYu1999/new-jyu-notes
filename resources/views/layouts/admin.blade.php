@@ -57,6 +57,7 @@
                         ['route' => 'admin.categories.index', 'label' => 'Categories', 'group' => 'categories'],
                         ['route' => 'admin.media.index', 'label' => 'Media', 'group' => 'media'],
                         ['route' => 'admin.tokens.index', 'label' => 'API Tokens', 'group' => 'tokens'],
+                        ['route' => 'admin.todos.index', 'label' => 'Todos', 'group' => 'todos'],
                     ];
                 @endphp
                 @foreach($items as $i)
