@@ -52,4 +52,22 @@ class ApiTokenServiceTest extends TestCase
 
         $this->assertCount(0, $user->fresh()->tokens);
     }
+
+    public function test_revoke_does_not_delete_another_users_token(): void
+    {
+        $owner = $this->admin();
+        $other = User::create([
+            'name' => 'Other',
+            'email' => 'other@b.c',
+            'password' => bcrypt('x'),
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $ownerToken = app(ApiTokenService::class)->create($owner, 't', ['posts:read'], now()->addHour());
+
+        // `other` attempts to revoke `owner`'s token id — must be a no-op.
+        app(ApiTokenService::class)->revoke($other, $ownerToken->accessToken->id);
+
+        $this->assertCount(1, $owner->fresh()->tokens);
+    }
 }
