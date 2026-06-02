@@ -11,4 +11,5 @@ return [
     'categories' => ['read', 'create', 'update', 'delete'],
     'tags'       => ['read', 'create', 'update', 'delete'],
     'media'      => ['read', 'create', 'delete'],
+    'todos'      => ['read', 'create', 'update', 'delete'],
 ];
