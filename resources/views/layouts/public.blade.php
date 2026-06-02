@@ -32,6 +32,9 @@
                 <a href="{{ route('public.search', app()->getLocale()) }}" class="hover:text-accent {{ request()->routeIs('public.search') ? 'text-accent font-medium' : 'text-ink-2' }}">
                     @lang('nav.search')
                 </a>
+                <a href="{{ route('changelog') }}" class="hover:text-accent {{ request()->routeIs('changelog') ? 'text-accent font-medium' : 'text-ink-2' }}">
+                    Changelog
+                </a>
             </nav>
 
             @php

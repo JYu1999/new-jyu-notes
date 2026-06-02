@@ -117,6 +117,14 @@ Route::middleware(['auth', 'role:admin'])
 
 /*
 |--------------------------------------------------------------------------
+| Changelog (English-only, top-level, outside the locale group)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/changelog', [Public\ChangelogController::class, 'index'])->name('changelog');
+
+/*
+|--------------------------------------------------------------------------
 | Public site (locale prefix)
 |--------------------------------------------------------------------------
 */
