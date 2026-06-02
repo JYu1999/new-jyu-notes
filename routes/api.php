@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\MeController;
+use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\TodoController;
@@ -46,6 +47,10 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/tags/{tag}', [TagController::class, 'show'])->middleware('ability:tags:read');
     Route::patch('/tags/{tag}', [TagController::class, 'update'])->middleware('ability:tags:update');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->middleware('ability:tags:delete');
+
+    Route::get('/media', [MediaController::class, 'index'])->middleware('ability:media:read');
+    Route::post('/media', [MediaController::class, 'store'])->middleware('ability:media:create');
+    Route::delete('/media/{media}', [MediaController::class, 'destroy'])->middleware('ability:media:delete');
 });
 
 if (app()->environment('testing')) {
