@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class PostService
 {
+    /** Fields whose change constitutes a content modification (bumps last_modified_at). */
+    private const CONTENT_FIELDS = ['title', 'slug', 'excerpt', 'body', 'cover_image_path'];
+
     /**
      * Create a new post (and its group if not provided).
      */
@@ -76,14 +79,20 @@ class PostService
                 'published_at' => $this->resolvePublishedAtForUpdate($post, $data),
             ], fn ($v) => $v !== null);
 
-            $updateData['last_modified_at'] = now();
-
             // Allow explicit setting of nullable cover_image_path to empty
             if (array_key_exists('cover_image_path', $data) && $data['cover_image_path'] === null) {
                 $updateData['cover_image_path'] = null;
             }
 
-            $post->update($updateData);
+            $post->fill($updateData);
+
+            // Only a genuine content change counts as a modification. Metadata-only
+            // edits (is_featured, status, tags/categories) must not bump the timestamp.
+            if ($post->isDirty(self::CONTENT_FIELDS)) {
+                $post->last_modified_at = now();
+            }
+
+            $post->save();
 
             if (isset($data['tag_ids'])) {
                 $this->syncTagsAcrossGroup($post, $data['tag_ids']);
@@ -111,12 +120,13 @@ class PostService
 
     public function updateStatus(Post $post, string $status): void
     {
+        // Status changes (publish/draft/hide) are not content modifications, so
+        // last_modified_at is left untouched; published_at records the publish time.
         $post->update([
             'status' => $status,
             'published_at' => $status === Post::STATUS_PUBLISHED && ! $post->published_at
                 ? now()
                 : $post->published_at,
-            'last_modified_at' => now(),
         ]);
     }
 

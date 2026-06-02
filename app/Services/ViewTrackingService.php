@@ -34,7 +34,9 @@ class ViewTrackingService
                 'viewed_at' => now(),
             ]);
 
-            Post::query()
+            // Increment via the query builder so neither updated_at nor
+            // last_modified_at is touched — a view is not a content change.
+            DB::table('posts')
                 ->where('id', $post->id)
                 ->increment('views_count');
         });
