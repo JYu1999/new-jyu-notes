@@ -43,6 +43,6 @@ class ApiTokenController extends Controller
     {
         $service->revoke($request->user(), $id);
 
-        return redirect()->route('admin.tokens.index')->with('status', 'Token 已撤銷');
+        return redirect()->route('admin.tokens.index')->with('success', 'Token 已撤銷');
     }
 }
