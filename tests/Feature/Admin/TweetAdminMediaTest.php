@@ -40,6 +40,7 @@ class TweetAdminMediaTest extends TestCase
         $this->assertSame('uploads/2026/06/a.jpg', $tweet->media[0]['path']);
         $this->assertSame('一張圖', $tweet->media[0]['alt']);
         $this->assertSame('video', $tweet->media[1]['type']);
+        $this->assertNull($tweet->media[1]['alt']);
     }
 
     public function test_update_with_empty_media_string_clears_media(): void
