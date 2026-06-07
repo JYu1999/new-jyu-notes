@@ -187,6 +187,77 @@ window.tweetMediaUpload = function ({ initial, max = 4 }) {
 };
 
 /**
+ * Markdown textarea media insert: toolbar button + drag-drop + paste.
+ * Uploads to /admin/media, inserts markdown (image) or <video> tag at cursor.
+ * Expects x-ref="body" (textarea) and x-ref="file" (hidden file input) in scope.
+ */
+window.markdownMediaInsert = function () {
+    return {
+        uploading: 0,
+        error: null,
+        dragging: false,
+        pick() {
+            this.$refs.file.click();
+        },
+        handleFiles(fileList) {
+            this.error = null;
+            Array.from(fileList).forEach((f) => this.uploadAndInsert(f));
+        },
+        handlePaste(event) {
+            const files = Array.from(event.clipboardData?.files ?? []);
+            if (!files.length) return; // 一般文字貼上不攔截
+            event.preventDefault();
+            this.handleFiles(files);
+        },
+        async uploadAndInsert(file) {
+            const placeholder = `![上傳中：${file.name}…]()`;
+            this.insertAtCursor(placeholder + '\n');
+            this.uploading++;
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch('/admin/media', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: fd,
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error('上傳失敗 (' + res.status + '): ' + txt.slice(0, 100));
+                }
+                const data = await res.json();
+                const md = data.mime_type.startsWith('video/')
+                    ? `<video class="local-video" controls src="${data.url}" preload="metadata"></video>`
+                    : `![](${data.url})`;
+                this.replaceText(placeholder, md);
+            } catch (e) {
+                this.replaceText(placeholder + '\n', '');
+                this.error = e.message || '上傳失敗';
+            } finally {
+                this.uploading--;
+            }
+        },
+        insertAtCursor(text) {
+            const ta = this.$refs.body;
+            const start = ta.selectionStart ?? ta.value.length;
+            const end = ta.selectionEnd ?? start;
+            ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
+            const pos = start + text.length;
+            ta.setSelectionRange(pos, pos);
+            ta.focus();
+        },
+        replaceText(from, to) {
+            // String.replace 以字串為 pattern 時是字面取代第一個出現，無 regex 風險
+            const ta = this.$refs.body;
+            ta.value = ta.value.replace(from, to);
+        },
+    };
+};
+
+/**
  * Infinite scroll: when the sentinel comes into view, fetch the next page
  * and append the returned tweet items to a target list. The server response
  * is expected to be a wrapper div with `data-has-more` and `data-next-page`.
