@@ -210,7 +210,8 @@ window.markdownMediaInsert = function () {
             this.handleFiles(files);
         },
         async uploadAndInsert(file) {
-            const placeholder = `![上傳中：${file.name}…]()`;
+            const token = crypto.randomUUID().slice(0, 8);
+            const placeholder = `![上傳中：${file.name}…](#${token})`;
             this.insertAtCursor(placeholder + '\n');
             this.uploading++;
             try {
