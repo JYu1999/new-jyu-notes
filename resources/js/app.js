@@ -124,6 +124,69 @@ window.coverUpload = function ({ initial }) {
 };
 
 /**
+ * Tweet media upload widget (Twitter-style, max 4 items).
+ * Each item: { path, type: 'image'|'video', alt }.
+ * Uses /admin/media endpoint which returns JSON { url, path, mime_type, ... }.
+ */
+window.tweetMediaUpload = function ({ initial, max = 4 }) {
+    return {
+        items: (initial || []).map((m) => ({ path: m.path, type: m.type, alt: m.alt ?? '' })),
+        uploading: 0,
+        error: null,
+        get mediaBase() {
+            return document.querySelector('meta[name=media-base]')?.content ?? '';
+        },
+        get full() {
+            return this.items.length >= max;
+        },
+        url(item) {
+            return this.mediaBase + '/' + item.path;
+        },
+        async add(fileList) {
+            this.error = null;
+            const incoming = Array.from(fileList);
+            const files = incoming.slice(0, max - this.items.length - this.uploading);
+            if (incoming.length > files.length) {
+                this.error = `最多 ${max} 個媒體`;
+            }
+            await Promise.all(files.map((f) => this.uploadOne(f)));
+        },
+        async uploadOne(file) {
+            this.uploading++;
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch('/admin/media', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: fd,
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error('上傳失敗 (' + res.status + '): ' + txt.slice(0, 100));
+                }
+                const data = await res.json();
+                this.items.push({
+                    path: data.path,
+                    type: data.mime_type.startsWith('video/') ? 'video' : 'image',
+                    alt: '',
+                });
+            } catch (e) {
+                this.error = e.message || '上傳失敗';
+            } finally {
+                this.uploading--;
+            }
+        },
+        remove(index) {
+            this.items.splice(index, 1);
+        },
+    };
+};
+
+/**
  * Infinite scroll: when the sentinel comes into view, fetch the next page
  * and append the returned tweet items to a target list. The server response
  * is expected to be a wrapper div with `data-has-more` and `data-next-page`.

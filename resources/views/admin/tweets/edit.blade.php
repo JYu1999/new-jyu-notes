@@ -8,7 +8,8 @@
     $action = $isCreate ? route('admin.tweets.store') : route('admin.tweets.update', $tweet);
 @endphp
 
-<form method="POST" action="{{ $action }}" class="space-y-6" id="tweet-form">
+<form method="POST" action="{{ $action }}" class="space-y-6" id="tweet-form"
+    x-data="tweetMediaUpload({ initial: @js(old('media', $tweet->media ?? [])) })">
     @csrf
     @if(!$isCreate)@method('PUT')@endif
 
@@ -25,7 +26,8 @@
                     <option value="{{ $val }}" {{ old('status', $tweet->status) === $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <button type="submit" class="bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-ink text-sm font-medium">儲存</button>
+            <button type="submit" :disabled="uploading > 0" :class="uploading > 0 ? 'opacity-50 cursor-wait' : ''"
+                class="bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-ink text-sm font-medium">儲存</button>
         </div>
     </header>
 
@@ -43,6 +45,49 @@
             <div>
                 <textarea name="body" rows="8" maxlength="2000" placeholder="今天想分享什麼…"
                     class="w-full bg-card border border-line rounded-md p-4 font-serif text-base focus:border-accent focus:outline-none" required>{{ old('body', $tweet->body) }}</textarea>
+            </div>
+
+            {{-- Media (max 4, Twitter-style) --}}
+            <div>
+                <label class="block text-xs text-ink-3 mb-2 font-mono uppercase">媒體（最多 4 個）</label>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <template x-for="(item, i) in items" :key="item.path">
+                        <div class="relative border border-line rounded-md overflow-hidden bg-card">
+                            <template x-if="item.type === 'image'">
+                                <img :src="url(item)" class="w-full h-32 object-cover">
+                            </template>
+                            <template x-if="item.type === 'video'">
+                                <video :src="url(item)" class="w-full h-32 object-cover" preload="metadata" muted></video>
+                            </template>
+                            <button type="button" @click="remove(i)"
+                                class="absolute top-1 right-1 bg-paper/90 border border-line rounded px-2 py-0.5 text-xs hover:text-danger">✕</button>
+                            <input type="text" x-model="item.alt" maxlength="200" placeholder="alt 描述（選填）"
+                                class="w-full bg-paper border-t border-line px-2 py-1 text-xs focus:outline-none">
+                            <input type="hidden" :name="`media[${i}][path]`" :value="item.path">
+                            <input type="hidden" :name="`media[${i}][type]`" :value="item.type">
+                            <input type="hidden" :name="`media[${i}][alt]`" :value="item.alt">
+                        </div>
+                    </template>
+
+                    <template x-if="!full">
+                        <label class="cursor-pointer border-2 border-dashed border-line rounded-md h-32 flex items-center justify-center text-xs text-ink-3 hover:border-accent hover:text-accent transition-colors"
+                            :class="uploading > 0 ? 'animate-pulse' : ''"
+                            @dragover.prevent @drop.prevent="add($event.dataTransfer.files)">
+                            <span x-show="uploading === 0">＋ 圖片 / 影片（≤ 10 MB）</span>
+                            <span x-show="uploading > 0" x-cloak>上傳中…</span>
+                            <input type="file" class="hidden" multiple accept="image/*,video/mp4,video/webm"
+                                @change="add($event.target.files); $event.target.value = ''">
+                        </label>
+                    </template>
+                </div>
+
+                {{-- 清空媒體時仍送出 media key，後端才會把欄位清掉（見 TweetAdminMediaTest） --}}
+                <template x-if="items.length === 0">
+                    <input type="hidden" name="media" value="">
+                </template>
+
+                <p x-show="error" x-cloak class="mt-2 text-xs text-danger" x-text="error"></p>
             </div>
 
             <div>
