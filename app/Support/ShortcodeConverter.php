@@ -58,17 +58,21 @@ class ShortcodeConverter
         return $content;
     }
 
-    private function convertYoutube(string $content): string
+    public function convertYoutube(string $content): string
     {
-        // {{< youtubeLite id="abc" label="..." >}} or {{< youtube id="abc" >}}
+        // {{< youtubeLite id="abc" label="..." >}} or {{< youtube id="abc" start="125" >}}
         $content = preg_replace_callback(
             '/\{\{<\s*(?:youtubeLite|youtube)\s+([^>]+)\s*>\}\}/',
             function ($m) {
                 $attrs = $this->parseAttrs($m[1]);
                 $id = $attrs['id'] ?? '';
                 if ($id === '') return $m[0];
-                return "\n\n" . '<div class="youtube-embed"><iframe src="https://www.youtube.com/embed/'
-                    . htmlspecialchars($id)
+                $src = 'https://www.youtube.com/embed/' . htmlspecialchars($id);
+                $start = $attrs['start'] ?? '';
+                if ($start !== '' && ctype_digit($start)) {
+                    $src .= '?start=' . $start;
+                }
+                return "\n\n" . '<div class="youtube-embed"><iframe src="' . $src
                     . '" frameborder="0" allowfullscreen loading="lazy"></iframe></div>' . "\n\n";
             },
             $content
