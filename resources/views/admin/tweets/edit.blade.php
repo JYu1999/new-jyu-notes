@@ -76,7 +76,7 @@
                             @dragover.prevent @drop.prevent="add($event.dataTransfer.files)">
                             <span x-show="uploading === 0">＋ 圖片 / 影片（≤ 10 MB）</span>
                             <span x-show="uploading > 0" x-cloak>上傳中…</span>
-                            <input type="file" class="hidden" multiple accept="image/*,video/mp4,video/webm"
+                            <input type="file" class="hidden" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
                                 @change="add($event.target.files); $event.target.value = ''">
                         </label>
                     </template>
