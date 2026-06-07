@@ -13,6 +13,7 @@ use League\CommonMark\MarkdownConverter;
 class MarkdownRenderer
 {
     private MarkdownConverter $converter;
+    private ShortcodeConverter $shortcodes;
 
     public function __construct()
     {
@@ -31,10 +32,15 @@ class MarkdownRenderer
         $environment->addExtension(new AutolinkExtension());
 
         $this->converter = new MarkdownConverter($environment);
+        $this->shortcodes = new ShortcodeConverter();
     }
 
     public function render(string $markdown): string
     {
+        // 編輯器插入的 {{< youtube ... >}} 在渲染時轉成 iframe。
+        // 完整的 ShortcodeConverter 只在 Hugo 匯入時跑，這裡僅 pre-pass youtube。
+        $markdown = $this->shortcodes->convertYoutube($markdown);
+
         return (string) $this->converter->convert($markdown);
     }
 }
