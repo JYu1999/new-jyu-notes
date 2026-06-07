@@ -271,7 +271,7 @@ window.markdownMediaInsert = function () {
         embedYoutube() {
             if (!this.ytPrompt) return;
             const ta = this.$refs.body;
-            const idx = ta.value.indexOf(this.ytPrompt.url);
+            const idx = ta.value.lastIndexOf(this.ytPrompt.url);
             if (idx !== -1) {
                 const code = youtubeShortcode(this.ytPrompt);
                 ta.value = ta.value.slice(0, idx) + code + ta.value.slice(idx + this.ytPrompt.url.length);
