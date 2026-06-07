@@ -188,16 +188,66 @@ window.tweetMediaUpload = function ({ initial, max = 4 }) {
 };
 
 /**
+ * Shared YouTube paste-detection behavior, spread into Alpine components.
+ * Expects x-ref="body" (textarea) in scope; pairs with the
+ * admin/partials/youtube-embed-prompt blade partial
+ * (ytPrompt / embedYoutube / dismissYtPrompt 名稱須一致).
+ */
+const youtubePasteBehavior = {
+    ytPrompt: null, // { url, id, start } — 待確認的 YouTube embed
+    detectYoutubePaste(event) {
+        const text = event.clipboardData?.getData('text/plain') ?? '';
+        const parsed = parseYoutubeUrl(text);
+        if (!parsed) return; // 一般文字貼上不攔截
+        // 不 preventDefault：照常貼上原始連結（保留原生 undo）。
+        // 貼上本身會觸發 textarea 的 input 事件，須等它過了再開彈窗，
+        // 否則 @input 的 dismiss 會立刻把彈窗關掉。
+        setTimeout(() => {
+            this.ytPrompt = { url: text.trim(), ...parsed };
+        }, 0);
+    },
+    embedYoutube() {
+        if (!this.ytPrompt) return;
+        const ta = this.$refs.body;
+        const idx = ta.value.lastIndexOf(this.ytPrompt.url);
+        if (idx !== -1) {
+            const code = youtubeShortcode(this.ytPrompt);
+            ta.value = ta.value.slice(0, idx) + code + ta.value.slice(idx + this.ytPrompt.url.length);
+            const pos = idx + code.length;
+            ta.setSelectionRange(pos, pos);
+            ta.focus();
+        }
+        this.ytPrompt = null;
+    },
+    dismissYtPrompt() {
+        this.ytPrompt = null;
+    },
+};
+
+/**
+ * YouTube paste prompt for plain textareas without media upload
+ * (e.g. the tweet composer). Expects x-ref="body" in scope.
+ */
+window.youtubePastePrompt = function () {
+    return {
+        ...youtubePasteBehavior,
+        handlePaste(event) {
+            this.detectYoutubePaste(event);
+        },
+    };
+};
+
+/**
  * Markdown textarea media insert: toolbar button + drag-drop + paste.
  * Uploads to /admin/media, inserts markdown (image) or <video> tag at cursor.
  * Expects x-ref="body" (textarea) and x-ref="file" (hidden file input) in scope.
  */
 window.markdownMediaInsert = function () {
     return {
+        ...youtubePasteBehavior,
         uploading: 0,
         error: null,
         dragging: false,
-        ytPrompt: null, // { url, id, start } — 待確認的 YouTube embed
         pick() {
             this.$refs.file.click();
         },
@@ -212,15 +262,7 @@ window.markdownMediaInsert = function () {
                 this.handleFiles(files);
                 return;
             }
-            const text = event.clipboardData?.getData('text/plain') ?? '';
-            const parsed = parseYoutubeUrl(text);
-            if (!parsed) return; // 一般文字貼上不攔截
-            // 不 preventDefault：照常貼上原始連結（保留原生 undo）。
-            // 貼上本身會觸發 textarea 的 input 事件，須等它過了再開彈窗，
-            // 否則 @input 的 dismiss 會立刻把彈窗關掉。
-            setTimeout(() => {
-                this.ytPrompt = { url: text.trim(), ...parsed };
-            }, 0);
+            this.detectYoutubePaste(event);
         },
         async uploadAndInsert(file) {
             const token = crypto.randomUUID().slice(0, 8);
@@ -267,22 +309,6 @@ window.markdownMediaInsert = function () {
             // String.replace 以字串為 pattern 時是字面取代第一個出現，無 regex 風險
             const ta = this.$refs.body;
             ta.value = ta.value.replace(from, to);
-        },
-        embedYoutube() {
-            if (!this.ytPrompt) return;
-            const ta = this.$refs.body;
-            const idx = ta.value.lastIndexOf(this.ytPrompt.url);
-            if (idx !== -1) {
-                const code = youtubeShortcode(this.ytPrompt);
-                ta.value = ta.value.slice(0, idx) + code + ta.value.slice(idx + this.ytPrompt.url.length);
-                const pos = idx + code.length;
-                ta.setSelectionRange(pos, pos);
-                ta.focus();
-            }
-            this.ytPrompt = null;
-        },
-        dismissYtPrompt() {
-            this.ytPrompt = null;
         },
     };
 };
