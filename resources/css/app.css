@@ -156,6 +156,16 @@
 .tweet-body h1, .tweet-body h2, .tweet-body h3 { margin: 0.8em 0 0.4em; font-size: 1.1em; }
 .tweet-body blockquote { margin: 0.6em 0; padding-left: 0.8em; }
 
+/* Colored tag chips (public). Per-tag color via --tag-color. */
+.tag-chip {
+    --tag-mix: 80%;
+    background: color-mix(in srgb, var(--tag-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--tag-color) 30%, transparent);
+    color: color-mix(in srgb, var(--tag-color) var(--tag-mix), var(--color-ink));
+}
+.tag-chip:hover { background: color-mix(in srgb, var(--tag-color) 20%, transparent); }
+[data-theme='dark'] .tag-chip { --tag-mix: 55%; }
+
 /* Custom scrollbar for media carousel */
 .scrollbar-thin::-webkit-scrollbar { height: 6px; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-line-2); border-radius: 4px; }

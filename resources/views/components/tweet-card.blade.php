@@ -98,7 +98,8 @@
                 @php $tt = $tag->translations->firstWhere('locale', $loc); @endphp
                 @if($tt)
                     <a href="{{ route('public.tags.show', [$loc, $tt->slug]) }}"
-                        class="text-[10px] font-mono px-2 py-0.5 bg-paper-2 text-ink-3 hover:text-accent rounded">
+                        class="text-[10px] font-mono px-2 py-0.5 rounded {{ $tag->color ? 'tag-chip' : 'bg-paper-2 text-ink-3 hover:text-accent' }}"
+                        @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
                         #{{ $tt->name }}
                     </a>
                 @endif

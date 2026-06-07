@@ -55,9 +55,11 @@
                         @foreach($popularTags as $tag)
                             @php $tslug = $tag->slug(app()->getLocale()); @endphp
                             @if($tslug)
-                                <a href="{{ route('public.tags.show', [app()->getLocale(), $tslug]) }}" class="font-mono text-xs px-3 py-1.5 bg-card border border-line rounded-full text-ink-2 hover:text-accent hover:border-accent">
+                                <a href="{{ route('public.tags.show', [app()->getLocale(), $tslug]) }}"
+                                    class="font-mono text-xs px-3 py-1.5 border rounded-full {{ $tag->color ? 'tag-chip' : 'bg-card border-line text-ink-2 hover:text-accent hover:border-accent' }}"
+                                    @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
                                     #{{ $tag->name(app()->getLocale()) }}
-                                    <span class="text-ink-3 ml-1">{{ $tag->posts_count ?? '' }}</span>
+                                    <span class="{{ $tag->color ? '' : 'text-ink-3' }} ml-1">{{ $tag->posts_count ?? '' }}</span>
                                 </a>
                             @endif
                         @endforeach

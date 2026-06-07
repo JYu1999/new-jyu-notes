@@ -66,7 +66,9 @@
                         @foreach($tags as $tag)
                             @php $tagSlug = $tag->slug(app()->getLocale()); @endphp
                             @if($tagSlug)
-                                <a href="{{ route('public.tags.show', [app()->getLocale(), $tagSlug]) }}" class="font-mono text-[11px] px-2 py-1 bg-card border border-line rounded-full text-ink-2 hover:text-accent hover:border-accent">
+                                <a href="{{ route('public.tags.show', [app()->getLocale(), $tagSlug]) }}"
+                                    class="font-mono text-[11px] px-2 py-1 border rounded-full {{ $tag->color ? 'tag-chip' : 'bg-card border-line text-ink-2 hover:text-accent hover:border-accent' }}"
+                                    @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
                                     #{{ $tag->name(app()->getLocale()) }}
                                 </a>
                             @endif
