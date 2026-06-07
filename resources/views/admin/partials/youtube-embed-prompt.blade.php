@@ -1,4 +1,4 @@
-{{-- YouTube 貼上偵測彈窗 — 須置於 x-data="markdownMediaInsert()" 且 class 含 relative 的容器內 --}}
+{{-- YouTube 貼上偵測彈窗 — 須置於提供 ytPrompt/embedYoutube/dismissYtPrompt 的 x-data 容器內（markdownMediaInsert 或 youtubePastePrompt），且容器 class 含 relative --}}
 <div x-show="ytPrompt" x-cloak
     @keydown.escape.window="dismissYtPrompt()"
     @click.outside="dismissYtPrompt()"

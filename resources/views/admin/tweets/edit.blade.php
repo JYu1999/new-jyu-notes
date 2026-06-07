@@ -42,9 +42,12 @@
     <div class="grid lg:grid-cols-[1fr_280px] gap-6">
         {{-- Main composer --}}
         <div class="space-y-4 max-w-2xl">
-            <div>
-                <textarea name="body" rows="8" maxlength="2000" placeholder="今天想分享什麼…"
+            <div class="relative" x-data="youtubePastePrompt()">
+                <textarea name="body" rows="8" maxlength="2000" placeholder="今天想分享什麼…" x-ref="body"
+                    @paste="handlePaste($event)"
+                    @input="dismissYtPrompt()"
                     class="w-full bg-card border border-line rounded-md p-4 font-serif text-base focus:border-accent focus:outline-none" required>{{ old('body', $tweet->body) }}</textarea>
+                @include('admin.partials.youtube-embed-prompt')
             </div>
 
             {{-- Media (max 4, Twitter-style) --}}
