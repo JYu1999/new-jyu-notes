@@ -79,3 +79,25 @@ New translations (slug = existing en slug, shared across locales):
 
 - Existing tag admin/API tests must stay green (`./vendor/bin/sail artisan test`, pgsql test DB; ExampleTest failure is pre-existing).
 - Manual check of create + edit forms in admin (swatch select, custom color, clear, submit).
+
+## Addendum (same day): public colored chips + 語言 tag
+
+The original "out of scope" call on public pages is reversed — tags should show their colors publicly.
+
+### Public tag chips
+
+- New `.tag-chip` utility in `resources/css/app.css`, driven by a per-tag `--tag-color` CSS variable:
+  - background `color-mix(in srgb, var(--tag-color) 12%, transparent)`, hover 20%
+  - border-color `color-mix(... 30%, transparent)` (for the bordered pill variants)
+  - text: light mode `color-mix(var(--tag-color) 80%, var(--color-ink))` (slightly darkened); `[data-theme='dark']` switches the mix to 55% toward the cream ink (lightened pastel) — implemented via a `--tag-mix` variable override
+- Applied in all 5 public render sites — home popular tags, posts index sidebar, posts show, `components/post-card`, `components/tweet-card`: when `$tag->color` is set, the chip gets `tag-chip` + `style="--tag-color: <hex>"` replacing the static bg/text/border-color classes; **uncolored tags keep the exact current styling**. Per-site sizing/radius/padding classes unchanged.
+- View test: a public page rendering one colored and one uncolored tag asserts `--tag-color` + `tag-chip` for the former and unchanged classes for the latter.
+
+### 「語言」tag (data, local + production)
+
+- Translations: zh 語言 / en Language / ja 言語 / vi Ngôn ngữ / id Bahasa; slug `language` for all locales; color 梅紫 `#8a5a6b`.
+- Production via `POST /api/tags` with the user-supplied token.
+
+### Changelog
+
+- Update the existing production changelog entry (todo id 7) to also mention public colored chips and the new tag, instead of creating a second same-day entry.

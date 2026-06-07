@@ -252,3 +252,56 @@ Each PATCH response must echo the expected `color` and 5 translations. Re-`GET /
 - [ ] **Step 2: Verify**
 
 Response 201 with the created todo; confirm `show_in_changelog: true` and `status: done`. Remind the user: changelog entry is live, but the picker itself isn't deployed until master is pushed/deployed.
+
+---
+
+## Addendum Tasks (public colored chips + 語言 tag)
+
+### Task 5: Public tag chips (TDD)
+
+**Files:**
+- Test (create): `tests/Feature/Public/TagColorDisplayTest.php`
+- Modify: `resources/css/app.css` (add `.tag-chip` utility)
+- Modify: `resources/views/public/home.blade.php:57`, `resources/views/public/posts/index.blade.php:69`, `resources/views/public/posts/show.blade.php:50`, `resources/views/components/post-card.blade.php:43`, `resources/views/components/tweet-card.blade.php:100`
+
+- [ ] **Step 1: Write failing view test** — render a public page containing one colored tag (`#8a5a6b`) and one uncolored tag; assert colored chip outputs `tag-chip` + `style="--tag-color: #8a5a6b"`, uncolored keeps current static classes.
+- [ ] **Step 2: Run test, verify FAIL** (`./vendor/bin/sail artisan test --filter TagColorDisplayTest`)
+- [ ] **Step 3: Add CSS**
+
+```css
+/* Colored tag chips (public). Per-tag color via --tag-color. */
+.tag-chip {
+    --tag-mix: 80%;
+    background: color-mix(in srgb, var(--tag-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--tag-color) 30%, transparent);
+    color: color-mix(in srgb, var(--tag-color) var(--tag-mix), var(--color-ink));
+}
+.tag-chip:hover { background: color-mix(in srgb, var(--tag-color) 20%, transparent); }
+[data-theme='dark'] .tag-chip { --tag-mix: 55%; }
+```
+
+- [ ] **Step 4: Update the 5 render sites** — conditional classes, e.g. bordered pills (home / posts index / posts show):
+
+```blade
+class="font-mono text-xs px-3 py-1.5 border rounded-full {{ $tag->color ? 'tag-chip' : 'bg-card border-line text-ink-2 hover:text-accent hover:border-accent' }}"
+@if($tag->color) style="--tag-color: {{ $tag->color }}" @endif
+```
+
+and borderless (post-card / tweet-card):
+
+```blade
+class="text-[10px] font-mono px-2 py-0.5 rounded {{ $tag->color ? 'tag-chip' : 'bg-paper-2 text-ink-3 hover:text-accent' }}"
+@if($tag->color) style="--tag-color: {{ $tag->color }}" @endif
+```
+
+- [ ] **Step 5: Test passes; full suite green (ExampleTest pre-existing failure excepted)**
+- [ ] **Step 6: Commit** `feat: show tag colors as tinted chips on public pages`
+
+### Task 6: Create 語言 tag (local + production)
+
+- zh 語言 / en Language / ja 言語 / vi Ngôn ngữ / id Bahasa, slug `language` all locales, color `#8a5a6b`
+- Local: tinker (TagService::create or models directly); Production: `POST /api/tags` (token from user, never committed). Verify both.
+
+### Task 7: Update changelog entry
+
+- `PATCH /api/todos/7` on production: extend description to mention public tinted chips + new 語言 tag.
