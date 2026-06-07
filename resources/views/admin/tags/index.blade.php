@@ -18,9 +18,8 @@
     <h2 class="font-serif text-lg font-semibold">新增標籤</h2>
 
     <div>
-        <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">顏色（hex, 選填）</label>
-        <input type="text" name="color" value="#b2543b" placeholder="#b2543b"
-            class="bg-paper border border-line rounded px-3 py-1.5 text-sm font-mono w-32 focus:border-accent focus:outline-none">
+        <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">顏色（選填）</label>
+        @include('admin.tags._color-picker', ['value' => old('color')])
     </div>
 
     <div class="space-y-2">
@@ -86,8 +85,10 @@
                         {{-- Inline edit --}}
                         <form x-show="editing" x-cloak method="POST" action="{{ route('admin.tags.update', $tag) }}" class="px-4 py-4 bg-paper-2 space-y-3">
                             @csrf @method('PUT')
-                            <input type="text" name="color" value="{{ $tag->color }}" placeholder="#hex"
-                                class="bg-card border border-line rounded px-2 py-1 text-sm font-mono w-28">
+                            <div>
+                                <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">顏色（選填）</label>
+                                @include('admin.tags._color-picker', ['value' => $tag->color])
+                            </div>
                             <div class="space-y-2">
                                 @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $i => $loc)
                                     @php $tr = $tag->translations->firstWhere('locale', $loc); @endphp
