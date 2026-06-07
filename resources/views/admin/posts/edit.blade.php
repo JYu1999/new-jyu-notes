@@ -55,7 +55,7 @@
                 <textarea name="excerpt" rows="2" placeholder="摘要（顯示在卡片預覽）"
                     class="w-full bg-card border border-line rounded-md p-3 text-sm focus:border-accent focus:outline-none">{{ old('excerpt', $post->excerpt) }}</textarea>
             </div>
-            <div x-data="markdownMediaInsert()">
+            <div x-data="markdownMediaInsert()" class="relative">
                 <div class="flex items-center justify-between mb-1">
                     <label class="block text-xs text-ink-3 font-mono uppercase tracking-wide">內文 (Markdown)</label>
                     <button type="button" @click="pick()"
@@ -67,11 +67,13 @@
                     @dragleave="dragging = false"
                     @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files)"
                     @paste="handlePaste($event)"
+                    @input="dismissYtPrompt()"
                     :class="dragging ? 'border-accent' : ''"
                     class="w-full bg-card border border-line rounded-md p-4 font-mono text-sm focus:border-accent focus:outline-none leading-relaxed">{{ old('body', $post->body) }}</textarea>
                 <input type="file" class="hidden" x-ref="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
                     @change="handleFiles($event.target.files); $event.target.value = ''">
                 <p x-show="error" x-cloak class="mt-1 text-xs text-danger" x-text="error"></p>
+                @include('admin.partials.youtube-embed-prompt')
             </div>
         </div>
 

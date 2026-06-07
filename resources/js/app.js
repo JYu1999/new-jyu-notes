@@ -1,4 +1,5 @@
 import Alpine from 'alpinejs';
+import { parseYoutubeUrl, youtubeShortcode } from './youtube';
 
 window.Alpine = Alpine;
 
@@ -196,6 +197,7 @@ window.markdownMediaInsert = function () {
         uploading: 0,
         error: null,
         dragging: false,
+        ytPrompt: null, // { url, id, start } — 待確認的 YouTube embed
         pick() {
             this.$refs.file.click();
         },
@@ -205,9 +207,20 @@ window.markdownMediaInsert = function () {
         },
         handlePaste(event) {
             const files = Array.from(event.clipboardData?.files ?? []);
-            if (!files.length) return; // 一般文字貼上不攔截
-            event.preventDefault();
-            this.handleFiles(files);
+            if (files.length) {
+                event.preventDefault();
+                this.handleFiles(files);
+                return;
+            }
+            const text = event.clipboardData?.getData('text/plain') ?? '';
+            const parsed = parseYoutubeUrl(text);
+            if (!parsed) return; // 一般文字貼上不攔截
+            // 不 preventDefault：照常貼上原始連結（保留原生 undo）。
+            // 貼上本身會觸發 textarea 的 input 事件，須等它過了再開彈窗，
+            // 否則 @input 的 dismiss 會立刻把彈窗關掉。
+            setTimeout(() => {
+                this.ytPrompt = { url: text.trim(), ...parsed };
+            }, 0);
         },
         async uploadAndInsert(file) {
             const token = crypto.randomUUID().slice(0, 8);
@@ -254,6 +267,22 @@ window.markdownMediaInsert = function () {
             // String.replace 以字串為 pattern 時是字面取代第一個出現，無 regex 風險
             const ta = this.$refs.body;
             ta.value = ta.value.replace(from, to);
+        },
+        embedYoutube() {
+            if (!this.ytPrompt) return;
+            const ta = this.$refs.body;
+            const idx = ta.value.indexOf(this.ytPrompt.url);
+            if (idx !== -1) {
+                const code = youtubeShortcode(this.ytPrompt);
+                ta.value = ta.value.slice(0, idx) + code + ta.value.slice(idx + this.ytPrompt.url.length);
+                const pos = idx + code.length;
+                ta.setSelectionRange(pos, pos);
+                ta.focus();
+            }
+            this.ytPrompt = null;
+        },
+        dismissYtPrompt() {
+            this.ytPrompt = null;
         },
     };
 };
