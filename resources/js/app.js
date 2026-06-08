@@ -131,7 +131,7 @@ window.coverUpload = function ({ initial }) {
  */
 window.tweetMediaUpload = function ({ initial, max = 4 }) {
     return {
-        items: (initial || []).map((m) => ({ path: m.path, type: m.type, alt: m.alt ?? '' })),
+        items: (initial || []).map((m) => ({ path: m.path, type: m.type, alt: m.alt ?? '', sensitive: !!m.sensitive })),
         uploading: 0,
         error: null,
         get mediaBase() {
@@ -174,6 +174,7 @@ window.tweetMediaUpload = function ({ initial, max = 4 }) {
                     path: data.path,
                     type: data.mime_type.startsWith('video/') ? 'video' : 'image',
                     alt: '',
+                    sensitive: false,
                 });
             } catch (e) {
                 this.error = e.message || '上傳失敗';
@@ -425,5 +426,28 @@ window.postToc = function () {
         },
     };
 };
+
+/**
+ * Shared fullscreen image lightbox. A single overlay lives in the public
+ * layout; any image can open it via $store.lightbox.show(src, alt).
+ */
+document.addEventListener('alpine:init', () => {
+    Alpine.store('lightbox', {
+        open: false,
+        src: '',
+        alt: '',
+        show(src, alt = '') {
+            this.src = src;
+            this.alt = alt;
+            this.open = true;
+            document.documentElement.style.overflow = 'hidden';
+        },
+        close() {
+            this.open = false;
+            this.src = '';
+            document.documentElement.style.overflow = '';
+        },
+    });
+});
 
 Alpine.start();

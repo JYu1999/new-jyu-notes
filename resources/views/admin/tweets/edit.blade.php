@@ -65,11 +65,18 @@
                             </template>
                             <button type="button" @click="remove(i)"
                                 class="absolute top-1 right-1 bg-paper/90 border border-line rounded px-2 py-0.5 text-xs hover:text-danger">✕</button>
+                            <button type="button" @click="item.sensitive = !item.sensitive"
+                                :class="item.sensitive ? 'bg-danger text-white' : 'bg-paper/90 text-ink-3'"
+                                class="absolute top-1 left-1 border border-line rounded px-2 py-0.5 text-xs hover:opacity-90"
+                                :title="item.sensitive ? '已標記為敏感（點擊取消）' : '標記為敏感內容'">
+                                <span x-text="item.sensitive ? '🔞 敏感' : '標記敏感'"></span>
+                            </button>
                             <input type="text" x-model="item.alt" maxlength="200" placeholder="alt 描述（選填）"
                                 class="w-full bg-paper border-t border-line px-2 py-1 text-xs focus:outline-none">
                             <input type="hidden" :name="`media[${i}][path]`" :value="item.path">
                             <input type="hidden" :name="`media[${i}][type]`" :value="item.type">
                             <input type="hidden" :name="`media[${i}][alt]`" :value="item.alt">
+                            <input type="hidden" :name="`media[${i}][sensitive]`" :value="item.sensitive ? '1' : '0'">
                         </div>
                     </template>
 

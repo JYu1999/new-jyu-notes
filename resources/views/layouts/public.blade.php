@@ -110,5 +110,20 @@
             </div>
         </div>
     </footer>
+
+    {{-- Shared fullscreen image lightbox --}}
+    <div x-data
+        x-show="$store.lightbox.open"
+        x-cloak
+        @keydown.escape.window="$store.lightbox.close()"
+        @click="$store.lightbox.close()"
+        class="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+        style="display: none;">
+        <button type="button" @click.stop="$store.lightbox.close()"
+            class="absolute top-4 right-4 text-white/80 hover:text-white text-3xl leading-none">&times;</button>
+        <img :src="$store.lightbox.src" :alt="$store.lightbox.alt"
+            @click.stop
+            class="max-w-full max-h-full object-contain rounded">
+    </div>
 </body>
 </html>

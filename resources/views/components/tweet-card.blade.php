@@ -53,39 +53,20 @@
 
     {{-- Media: 1 → full, 2 → side-by-side, 3+ → horizontal scroll-snap --}}
     @if($mediaCount === 1)
-        @php $m = $media[0]; @endphp
         <div class="mt-3">
-            @if(($m['type'] ?? 'image') === 'image')
-                <img src="{{ media_url($m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
-                    class="rounded-md w-full h-auto object-cover max-h-96">
-            @else
-                <video src="{{ media_url($m['path']) }}" controls
-                    class="rounded-md w-full max-w-full max-h-96"></video>
-            @endif
+            @include('components.partials.tweet-media', ['m' => $media[0], 'imgClass' => 'rounded-md w-full h-auto object-cover max-h-96'])
         </div>
     @elseif($mediaCount === 2)
         <div class="mt-3 grid grid-cols-2 gap-2">
             @foreach($media as $m)
-                @if(($m['type'] ?? 'image') === 'image')
-                    <img src="{{ media_url($m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
-                        class="rounded-md w-full h-48 object-cover">
-                @else
-                    <video src="{{ media_url($m['path']) }}" controls
-                        class="rounded-md w-full h-48 object-cover"></video>
-                @endif
+                @include('components.partials.tweet-media', ['m' => $m, 'imgClass' => 'rounded-md w-full h-48 object-cover'])
             @endforeach
         </div>
     @elseif($mediaCount > 2)
         <div class="mt-3 -mx-1 flex gap-2 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-thin">
             @foreach($media as $m)
                 <div class="snap-start flex-shrink-0 w-56 sm:w-64">
-                    @if(($m['type'] ?? 'image') === 'image')
-                        <img src="{{ media_url($m['path']) }}" alt="{{ $m['alt'] ?? '' }}"
-                            class="rounded-md w-full h-44 object-cover">
-                    @else
-                        <video src="{{ media_url($m['path']) }}" controls
-                            class="rounded-md w-full h-44 object-cover"></video>
-                    @endif
+                    @include('components.partials.tweet-media', ['m' => $m, 'imgClass' => 'rounded-md w-full h-44 object-cover'])
                 </div>
             @endforeach
         </div>

@@ -175,3 +175,16 @@
     border-radius: 6px;
     margin: 1.2em 0;
 }
+
+/* Tweet 敏感媒體模糊 + 揭露提示 */
+.sensitive-media { position: relative; cursor: pointer; overflow: hidden; }
+.sensitive-media img,
+.sensitive-media video { filter: blur(18px); transform: scale(1.05); transition: filter 0.2s ease; }
+.sensitive-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 0.25rem; text-align: center;
+    background: rgba(0, 0, 0, 0.35); color: #fff; font-size: 0.8rem; letter-spacing: 0.05em;
+    border-radius: 6px; pointer-events: none;
+}
+/* lightbox 可點圖游標 */
+.tweet-media-clickable { cursor: zoom-in; }
