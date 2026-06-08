@@ -12,15 +12,15 @@ class TweetCardSensitiveTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function publishedTweet(array $media): Tweet
+    private function publishedTweet(array $media, string $locale = 'zh'): Tweet
     {
         $admin = User::create([
-            'name' => 'Admin', 'email' => 'a@b.c',
+            'name' => 'Admin', 'email' => 'a'.uniqid().'@b.c',
             'password' => bcrypt('x'), 'role' => User::ROLE_ADMIN,
         ]);
 
         return app(TweetService::class)->create([
-            'body' => 'hello world', 'locale' => 'zh', 'author_id' => $admin->id,
+            'body' => 'hello world', 'locale' => $locale, 'author_id' => $admin->id,
             'status' => 'published', 'published_at' => now()->subDay(),
             'media' => $media,
         ]);
@@ -36,6 +36,19 @@ class TweetCardSensitiveTest extends TestCase
             ->assertOk()
             ->assertSee('sensitive-media', false)
             ->assertSee('敏感內容', false);
+    }
+
+    public function test_sensitive_overlay_text_is_localized(): void
+    {
+        $tweet = $this->publishedTweet([
+            ['path' => 'uploads/a.jpg', 'type' => 'image', 'alt' => 'x', 'sensitive' => true],
+        ], 'en');
+
+        // 英文頁面應顯示英文覆蓋字，而非寫死的中文
+        $this->get(route('public.tweets.show', ['en', $tweet->id]))
+            ->assertOk()
+            ->assertSee('Sensitive content', false)
+            ->assertDontSee('敏感內容', false);
     }
 
     public function test_plain_image_is_lightbox_clickable_without_blur(): void

@@ -24,8 +24,8 @@
 
     @if($sensitive)
         <div class="sensitive-overlay" x-show="!revealed">
-            <span>⚠️ 敏感內容</span>
-            <span>點擊顯示</span>
+            <span>⚠️ {{ __('public.sensitive_warning') }}</span>
+            <span>{{ __('public.sensitive_reveal') }}</span>
         </div>
     @endif
 </div>

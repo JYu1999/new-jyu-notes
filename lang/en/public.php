@@ -48,6 +48,8 @@ return [
     'search_tweets' => 'Tweets',
 
     'views' => 'views',
+    'sensitive_warning' => 'Sensitive content',
+    'sensitive_reveal' => 'Click to view',
 
     'login_to_admin' => 'Admin Login',
     'login_email' => 'Email',

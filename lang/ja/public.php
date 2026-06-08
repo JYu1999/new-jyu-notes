@@ -48,6 +48,8 @@ return [
     'search_tweets' => 'つぶやき',
 
     'views' => '閲覧',
+    'sensitive_warning' => '閲覧注意',
+    'sensitive_reveal' => 'タップで表示',
 
     'login_to_admin' => '管理者ログイン',
     'login_email' => 'メールアドレス',

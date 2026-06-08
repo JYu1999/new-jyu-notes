@@ -48,6 +48,8 @@ return [
     'search_tweets' => 'Catatan',
 
     'views' => 'dilihat',
+    'sensitive_warning' => 'Konten sensitif',
+    'sensitive_reveal' => 'Klik untuk melihat',
 
     'login_to_admin' => 'Masuk Admin',
     'login_email' => 'Email',

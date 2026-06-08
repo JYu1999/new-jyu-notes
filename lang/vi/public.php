@@ -48,6 +48,8 @@ return [
     'search_tweets' => 'Ghi chú',
 
     'views' => 'lượt xem',
+    'sensitive_warning' => 'Nội dung nhạy cảm',
+    'sensitive_reveal' => 'Nhấn để xem',
 
     'login_to_admin' => 'Đăng nhập quản trị',
     'login_email' => 'Email',

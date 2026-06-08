@@ -56,6 +56,8 @@ return [
 
     // Card
     'views' => 'views',
+    'sensitive_warning' => '敏感內容',
+    'sensitive_reveal' => '點擊顯示',
 
     // Auth
     'login_to_admin' => '管理員登入',
