@@ -77,4 +77,26 @@ class TweetAdminMediaTest extends TestCase
 
         $this->assertCount(1, $tweet->refresh()->media);
     }
+
+    public function test_update_persists_and_normalizes_sensitive_flag(): void
+    {
+        $admin = $this->admin();
+        $tweet = app(TweetService::class)->create([
+            'body' => 'hello', 'locale' => 'zh', 'author_id' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.tweets.update', $tweet), [
+            'body' => 'hello',
+            'status' => 'draft',
+            'media' => [
+                ['path' => 'uploads/2026/06/a.jpg', 'type' => 'image', 'alt' => '', 'sensitive' => '1'],
+                ['path' => 'uploads/2026/06/b.jpg', 'type' => 'image', 'alt' => ''],
+            ],
+        ])->assertRedirect(route('admin.tweets.edit', $tweet));
+
+        $tweet->refresh();
+        // 字串 "1" 正規化為 true;未提供 sensitive 預設 false
+        $this->assertTrue($tweet->media[0]['sensitive']);
+        $this->assertFalse($tweet->media[1]['sensitive']);
+    }
 }

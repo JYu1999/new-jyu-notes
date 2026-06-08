@@ -19,6 +19,7 @@ class UpdateRequest extends FormRequest
             'media.*.path' => 'required_with:media|string|max:500',
             'media.*.type' => 'required_with:media|in:image,video',
             'media.*.alt' => 'nullable|string|max:200',
+            'media.*.sensitive' => 'nullable|boolean',
             'tag_ids' => 'sometimes|array',
             'tag_ids.*' => 'integer|exists:tags,id',
         ];

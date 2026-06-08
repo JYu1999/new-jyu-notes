@@ -8,6 +8,22 @@ use Illuminate\Support\Facades\DB;
 
 class TweetService
 {
+    /**
+     * 將 media 陣列每項的 sensitive 正規化為 boolean(預設 false),保留其餘欄位。
+     */
+    private function normalizeMedia(?array $media): ?array
+    {
+        if ($media === null) {
+            return null;
+        }
+
+        return array_map(function (array $item) {
+            $item['sensitive'] = filter_var($item['sensitive'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            return $item;
+        }, $media);
+    }
+
     public function create(array $data): Tweet
     {
         return DB::transaction(function () use ($data) {
@@ -18,7 +34,7 @@ class TweetService
                 'tweet_group_id' => $groupId,
                 'locale' => $data['locale'],
                 'body' => $data['body'],
-                'media' => $data['media'] ?? null,
+                'media' => $this->normalizeMedia($data['media'] ?? null),
                 'status' => $data['status'] ?? Tweet::STATUS_DRAFT,
                 'published_at' => $this->resolvePublishedAt($data),
                 'author_id' => $data['author_id'] ?? auth()->id(),
@@ -42,7 +58,7 @@ class TweetService
             ], fn ($v) => $v !== null);
 
             if (array_key_exists('media', $data)) {
-                $updateData['media'] = $data['media'];
+                $updateData['media'] = $this->normalizeMedia($data['media']);
             }
 
             $tweet->update($updateData);
