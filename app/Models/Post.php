@@ -81,6 +81,20 @@ class Post extends Model
         return $this->hasMany(PostViewLog::class);
     }
 
+    public function outgoingReferences(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class, 'post_references', 'source_post_id', 'target_post_id'
+        )->withTimestamps();
+    }
+
+    public function backlinks(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class, 'post_references', 'target_post_id', 'source_post_id'
+        )->withTimestamps();
+    }
+
     // ===== Translation helpers =====
 
     public function siblings(): HasMany

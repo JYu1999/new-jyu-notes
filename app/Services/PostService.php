@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Post;
 use App\Models\PostGroup;
+use App\Support\PostReferenceExtractor;
 use App\Support\SlugGenerator;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +53,8 @@ class PostService
                     $this->buildCategoryPivot($data['category_ids'], $data['categories_order'] ?? [])
                 );
             }
+
+            $this->syncReferences($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -103,6 +106,8 @@ class PostService
                     $this->buildCategoryPivot($data['category_ids'], $data['categories_order'] ?? [])
                 );
             }
+
+            $this->syncReferences($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -206,6 +211,28 @@ class PostService
                 $p->categories()->sync($categoriesWithOrder);
             }
         });
+    }
+
+    /**
+     * 解析 body 內部文章連結，覆寫此文章的 outgoing references。
+     */
+    public function syncReferences(Post $post): void
+    {
+        $pairs = (new PostReferenceExtractor())->extract((string) $post->body);
+
+        $targetIds = [];
+        foreach ($pairs as $pair) {
+            $target = Post::query()
+                ->where('locale', $pair['locale'])
+                ->where('slug', $pair['slug'])
+                ->first();
+
+            if ($target && $target->id !== $post->id) {
+                $targetIds[$target->id] = true;
+            }
+        }
+
+        $post->outgoingReferences()->sync(array_keys($targetIds));
     }
 
     /**
