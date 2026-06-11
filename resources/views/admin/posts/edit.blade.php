@@ -55,7 +55,7 @@
                 <textarea name="excerpt" rows="2" placeholder="摘要（顯示在卡片預覽）"
                     class="w-full bg-card border border-line rounded-md p-3 text-sm focus:border-accent focus:outline-none">{{ old('excerpt', $post->excerpt) }}</textarea>
             </div>
-            <div x-data="markdownMediaInsert()" class="relative">
+            <div x-data="markdownMediaInsert({ locale: @js($post->locale ?: app()->getLocale()), postId: @js($post->id) })" class="relative">
                 <div class="flex items-center justify-between mb-1">
                     <label class="block text-xs text-ink-3 font-mono uppercase tracking-wide">內文 (Markdown)</label>
                     <button type="button" @click="pick()"
@@ -67,13 +67,28 @@
                     @dragleave="dragging = false"
                     @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files)"
                     @paste="handlePaste($event)"
-                    @input="dismissYtPrompt()"
+                    @input="dismissYtPrompt(); detectMention()"
+                    @keydown="onMentionKeydown($event)"
                     :class="dragging ? 'border-accent' : ''"
                     class="w-full bg-card border border-line rounded-md p-4 font-mono text-sm focus:border-accent focus:outline-none leading-relaxed">{{ old('body', $post->body) }}</textarea>
                 <input type="file" class="hidden" x-ref="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
                     @change="handleFiles($event.target.files); $event.target.value = ''">
                 <p x-show="error" x-cloak class="mt-1 text-xs text-danger" x-text="error"></p>
                 @include('admin.partials.youtube-embed-prompt')
+                {{-- @ 提及文章搜尋下拉 --}}
+                <div x-show="mentionActive && mentionResults.length" x-cloak
+                    class="mt-1 bg-card border border-line rounded-md shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+                    <template x-for="(item, i) in mentionResults" :key="item.id">
+                        <button type="button"
+                            @click="pickMention(item)"
+                            @mouseenter="mentionIndex = i"
+                            :class="i === mentionIndex ? 'bg-paper-2' : ''"
+                            class="w-full text-left px-3 py-2 border-b border-line last:border-0 hover:bg-paper-2">
+                            <div class="text-sm" x-text="item.title"></div>
+                            <div class="text-xs text-ink-3 font-mono" x-text="item.url"></div>
+                        </button>
+                    </template>
+                </div>
             </div>
         </div>
 

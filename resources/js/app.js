@@ -225,6 +225,102 @@ const youtubePasteBehavior = {
     },
 };
 
+const mentionBehavior = {
+    mentionActive: false,
+    mentionQuery: '',
+    mentionResults: [],
+    mentionIndex: 0,
+    mentionStart: -1,
+    _mentionTimer: null,
+
+    // 取得查詢用 locale：新增頁讀 select，編輯頁用初始值
+    mentionLocale() {
+        const sel = document.querySelector('select[name=locale]');
+        return sel ? sel.value : (this.locale || 'zh');
+    },
+
+    // 每次 textarea input 觸發：偵測游標前是否有有效的 @query
+    detectMention() {
+        const ta = this.$refs.body;
+        const pos = ta.selectionStart;
+        const text = ta.value.slice(0, pos);
+        const at = text.lastIndexOf('@');
+        if (at === -1) return this.closeMention();
+
+        // @ 必須位於行首或空白後（避免 email 如 jyu@furuke.com 誤觸）
+        const before = at === 0 ? '\n' : text[at - 1];
+        if (!/\s/.test(before)) return this.closeMention();
+
+        const query = text.slice(at + 1);
+        if (/\s/.test(query)) return this.closeMention(); // 出現空白即結束 mention
+
+        this.mentionStart = at;
+        this.mentionQuery = query;
+        this.mentionActive = true;
+        this.searchMentions(query);
+    },
+
+    searchMentions(q) {
+        clearTimeout(this._mentionTimer);
+        if (q === '') { this.mentionResults = []; return; }
+        this._mentionTimer = setTimeout(async () => {
+            if (!this.mentionActive) return;
+            const params = new URLSearchParams({
+                q,
+                locale: this.mentionLocale(),
+                exclude: this.postId ?? '',
+            });
+            try {
+                const res = await fetch(`/admin/posts/search?${params.toString()}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                });
+                if (!res.ok) { this.mentionResults = []; return; }
+                this.mentionResults = await res.json();
+                this.mentionIndex = 0;
+            } catch (e) {
+                this.mentionResults = [];
+            }
+        }, 250);
+    },
+
+    onMentionKeydown(e) {
+        if (!this.mentionActive || this.mentionResults.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.mentionIndex = (this.mentionIndex + 1) % this.mentionResults.length;
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.mentionIndex = (this.mentionIndex - 1 + this.mentionResults.length) % this.mentionResults.length;
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            this.pickMention(this.mentionResults[this.mentionIndex]);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.closeMention();
+        }
+    },
+
+    pickMention(item) {
+        if (!item) return;
+        const ta = this.$refs.body;
+        const pos = ta.selectionStart;
+        const link = `[${item.title}](${item.url})`;
+        ta.value = ta.value.slice(0, this.mentionStart) + link + ta.value.slice(pos);
+        const caret = this.mentionStart + link.length;
+        ta.setSelectionRange(caret, caret);
+        ta.focus();
+        this.closeMention();
+        ta.dispatchEvent(new Event('input')); // 讓 Alpine 同步 value
+    },
+
+    closeMention() {
+        this.mentionActive = false;
+        this.mentionResults = [];
+        this.mentionQuery = '';
+        this.mentionStart = -1;
+    },
+};
+
 /**
  * YouTube paste prompt for plain textareas without media upload
  * (e.g. the tweet composer). Expects x-ref="body" in scope.
@@ -243,9 +339,12 @@ window.youtubePastePrompt = function () {
  * Uploads to /admin/media, inserts markdown (image) or <video> tag at cursor.
  * Expects x-ref="body" (textarea) and x-ref="file" (hidden file input) in scope.
  */
-window.markdownMediaInsert = function () {
+window.markdownMediaInsert = function ({ locale = 'zh', postId = null } = {}) {
     return {
         ...youtubePasteBehavior,
+        ...mentionBehavior,
+        locale,
+        postId,
         uploading: 0,
         error: null,
         dragging: false,
