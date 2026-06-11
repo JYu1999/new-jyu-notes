@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 class PostRepository
@@ -162,5 +163,29 @@ class PostRepository
             ->orderByDesc('updated_at')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Search the author's own PUBLISHED posts in one locale for the @-mention picker.
+     * Matches title / slug / excerpt (case-insensitive), title matches ranked first.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Post>
+     */
+    public function searchForMention(string $q, string $locale, ?int $exclude = null, int $limit = 8): EloquentCollection
+    {
+        $like = '%'.$q.'%';
+
+        return Post::query()
+            ->where('status', Post::STATUS_PUBLISHED)
+            ->where('locale', $locale)
+            ->when($exclude, fn ($qb) => $qb->where('id', '!=', $exclude))
+            ->where(function ($qb) use ($like) {
+                $qb->where('title', 'ILIKE', $like)
+                    ->orWhere('slug', 'ILIKE', $like)
+                    ->orWhere('excerpt', 'ILIKE', $like);
+            })
+            ->orderByRaw('CASE WHEN title ILIKE ? THEN 0 ELSE 1 END', [$like])
+            ->limit($limit)
+            ->get(['id', 'title', 'slug', 'locale']);
     }
 }

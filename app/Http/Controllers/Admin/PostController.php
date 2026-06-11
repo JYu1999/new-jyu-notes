@@ -111,7 +111,7 @@ class PostController extends Controller
             ->with('success', '已建立新翻譯版本');
     }
 
-    public function search(Request $request): JsonResponse
+    public function search(Request $request, PostRepository $repo): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
         if ($q === '') {
@@ -120,20 +120,8 @@ class PostController extends Controller
 
         $locale = (string) $request->query('locale', app()->getLocale());
         $exclude = $request->integer('exclude');
-        $like = '%'.$q.'%';
 
-        $results = Post::query()
-            ->where('status', Post::STATUS_PUBLISHED)
-            ->where('locale', $locale)
-            ->when($exclude, fn ($qb) => $qb->where('id', '!=', $exclude))
-            ->where(function ($qb) use ($like) {
-                $qb->where('title', 'ilike', $like)
-                    ->orWhere('slug', 'ilike', $like)
-                    ->orWhere('excerpt', 'ilike', $like);
-            })
-            ->orderByRaw('CASE WHEN title ILIKE ? THEN 0 ELSE 1 END', [$like])
-            ->limit(8)
-            ->get(['id', 'title', 'slug', 'locale']);
+        $results = $repo->searchForMention($q, $locale, $exclude > 0 ? $exclude : null);
 
         return response()->json(
             $results->map(fn (Post $p) => [
