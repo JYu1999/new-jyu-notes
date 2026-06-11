@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Post;
+
 class PostReferenceExtractor
 {
     /**
@@ -14,7 +16,8 @@ class PostReferenceExtractor
      */
     public function extract(string $body): array
     {
-        $pattern = '#/(zh|en|ja|vi|id)/posts/([A-Za-z0-9_-]+)/?#';
+        $locales = implode('|', Post::SUPPORTED_LOCALES);
+        $pattern = "#/({$locales})/posts/([A-Za-z0-9_-]+)/?#";
 
         if (! preg_match_all($pattern, $body, $matches, PREG_SET_ORDER)) {
             return [];

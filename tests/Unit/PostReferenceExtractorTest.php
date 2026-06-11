@@ -41,4 +41,13 @@ class PostReferenceExtractorTest extends TestCase
         $body = '[a](/zh/posts/foo) [b](/zh/posts/foo)';
         $this->assertSame([['locale' => 'zh', 'slug' => 'foo']], $this->extract($body));
     }
+
+    public function test_matches_multiple_locales(): void
+    {
+        $out = $this->extract('[a](/zh/posts/foo) and [b](/en/posts/foo)');
+        $this->assertSame([
+            ['locale' => 'zh', 'slug' => 'foo'],
+            ['locale' => 'en', 'slug' => 'foo'],
+        ], $out);
+    }
 }
