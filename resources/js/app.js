@@ -232,6 +232,7 @@ const mentionBehavior = {
     mentionIndex: 0,
     mentionStart: -1,
     _mentionTimer: null,
+    _mentionController: null,
 
     // 取得查詢用 locale：新增頁讀 select，編輯頁用初始值
     mentionLocale() {
@@ -262,9 +263,11 @@ const mentionBehavior = {
 
     searchMentions(q) {
         clearTimeout(this._mentionTimer);
-        if (q === '') { this.mentionResults = []; return; }
+        if (this._mentionController) this._mentionController.abort();
+        if (q === '') { this.closeMention(); return; }
         this._mentionTimer = setTimeout(async () => {
             if (!this.mentionActive) return;
+            this._mentionController = new AbortController();
             const params = new URLSearchParams({
                 q,
                 locale: this.mentionLocale(),
@@ -273,12 +276,13 @@ const mentionBehavior = {
             try {
                 const res = await fetch(`/admin/posts/search?${params.toString()}`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                    signal: this._mentionController.signal,
                 });
                 if (!res.ok) { this.mentionResults = []; return; }
                 this.mentionResults = await res.json();
                 this.mentionIndex = 0;
             } catch (e) {
-                this.mentionResults = [];
+                if (e.name !== 'AbortError') this.mentionResults = [];
             }
         }, 250);
     },
@@ -310,10 +314,10 @@ const mentionBehavior = {
         ta.setSelectionRange(caret, caret);
         ta.focus();
         this.closeMention();
-        ta.dispatchEvent(new Event('input')); // 讓 Alpine 同步 value
     },
 
     closeMention() {
+        if (this._mentionController) this._mentionController.abort();
         this.mentionActive = false;
         this.mentionResults = [];
         this.mentionQuery = '';
