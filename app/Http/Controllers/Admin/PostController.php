@@ -13,7 +13,9 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\TagRepository;
 use App\Services\PostService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PostController extends Controller
@@ -107,5 +109,40 @@ class PostController extends Controller
         $new = $service->createTranslation($post, $request->validated()['locale']);
         return redirect()->route('admin.posts.edit', $new)
             ->with('success', '已建立新翻譯版本');
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $locale = (string) $request->query('locale', app()->getLocale());
+        $exclude = $request->integer('exclude');
+        $like = '%'.$q.'%';
+
+        $results = Post::query()
+            ->where('status', Post::STATUS_PUBLISHED)
+            ->where('locale', $locale)
+            ->when($exclude, fn ($qb) => $qb->where('id', '!=', $exclude))
+            ->where(function ($qb) use ($like) {
+                $qb->where('title', 'ilike', $like)
+                    ->orWhere('slug', 'ilike', $like)
+                    ->orWhere('excerpt', 'ilike', $like);
+            })
+            ->orderByRaw('CASE WHEN title ILIKE ? THEN 0 ELSE 1 END', [$like])
+            ->limit(8)
+            ->get(['id', 'title', 'slug', 'locale']);
+
+        return response()->json(
+            $results->map(fn (Post $p) => [
+                'id' => $p->id,
+                'title' => $p->title,
+                'slug' => $p->slug,
+                'locale' => $p->locale,
+                'url' => "/{$p->locale}/posts/{$p->slug}",
+            ])->all()
+        );
     }
 }

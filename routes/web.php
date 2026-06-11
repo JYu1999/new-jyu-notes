@@ -55,6 +55,7 @@ Route::middleware(['auth', 'role:admin'])
         // Posts
         Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
         Route::get('posts/create', [Admin\PostController::class, 'create'])->name('posts.create');
+        Route::get('posts/search', [Admin\PostController::class, 'search'])->name('posts.search');
         Route::post('posts', [Admin\PostController::class, 'store'])->name('posts.store');
         Route::get('posts/{post}/edit', [Admin\PostController::class, 'edit'])->name('posts.edit');
         Route::put('posts/{post}', [Admin\PostController::class, 'update'])->name('posts.update');
