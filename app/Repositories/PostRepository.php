@@ -173,18 +173,38 @@ class PostRepository
      */
     public function searchForMention(string $q, string $locale, ?int $exclude = null, int $limit = 8): EloquentCollection
     {
-        $like = '%'.$q.'%';
-
-        return Post::query()
+        $base = Post::query()
             ->where('status', Post::STATUS_PUBLISHED)
             ->where('locale', $locale)
-            ->when($exclude, fn ($qb) => $qb->where('id', '!=', $exclude))
-            ->where(function ($qb) use ($like) {
+            ->when($exclude, fn ($qb) => $qb->where('id', '!=', $exclude));
+
+        // 以空白把查詢拆成多個關鍵字：每個關鍵字都要在 title/slug/excerpt 任一命中
+        // （AND，不限順序）。例如「監控 導入」可命中標題「公司導入監控」。
+        $tokens = preg_split('/\s+/', trim($q), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        // 空查詢（剛打完 @）：回傳最近發佈的文章供參考——最近的比較容易被提及。
+        if (empty($tokens)) {
+            return $base
+                ->orderByDesc('published_at')
+                ->limit($limit)
+                ->get(['id', 'title', 'slug', 'locale']);
+        }
+
+        foreach ($tokens as $token) {
+            $like = '%'.$token.'%';
+            $base->where(function ($qb) use ($like) {
                 $qb->where('title', 'ILIKE', $like)
                     ->orWhere('slug', 'ILIKE', $like)
                     ->orWhere('excerpt', 'ILIKE', $like);
-            })
-            ->orderByRaw('CASE WHEN title ILIKE ? THEN 0 ELSE 1 END', [$like])
+            });
+        }
+
+        // 標題命中（以第一個關鍵字判斷）優先，其次新到舊。
+        $firstLike = '%'.$tokens[0].'%';
+
+        return $base
+            ->orderByRaw('CASE WHEN title ILIKE ? THEN 0 ELSE 1 END', [$firstLike])
+            ->orderByDesc('published_at')
             ->limit($limit)
             ->get(['id', 'title', 'slug', 'locale']);
     }

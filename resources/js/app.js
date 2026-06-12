@@ -253,7 +253,8 @@ const mentionBehavior = {
         if (!/\s/.test(before)) return this.closeMention();
 
         const query = text.slice(at + 1);
-        if (/\s/.test(query)) return this.closeMention(); // 出現空白即結束 mention
+        // 允許空白以支援多關鍵字搜尋（如「監控 導入」）；換行或過長則視為一般文字，結束 mention。
+        if (/\n/.test(query) || query.length > 50) return this.closeMention();
 
         this.mentionStart = at;
         this.mentionQuery = query;
@@ -264,7 +265,7 @@ const mentionBehavior = {
     searchMentions(q) {
         clearTimeout(this._mentionTimer);
         if (this._mentionController) this._mentionController.abort();
-        if (q === '') { this.closeMention(); return; }
+        // 空查詢（剛打完 @）不 early-return：交給後端回傳最近文章供參考。
         this._mentionTimer = setTimeout(async () => {
             if (!this.mentionActive) return;
             this._mentionController = new AbortController();

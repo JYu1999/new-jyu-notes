@@ -114,10 +114,6 @@ class PostController extends Controller
     public function search(Request $request, PostRepository $repo): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
-        if ($q === '') {
-            return response()->json([]);
-        }
-
         $locale = (string) $request->query('locale', app()->getLocale());
         $exclude = $request->integer('exclude');
 
