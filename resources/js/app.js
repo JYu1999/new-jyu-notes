@@ -308,7 +308,9 @@ const mentionBehavior = {
         if (!item) return;
         const ta = this.$refs.body;
         const pos = ta.selectionStart;
-        const link = `[${item.title}](${item.url})`;
+        // 跳脫標題中的 [ ]，避免破壞 Markdown 連結語法（如標題含 [2024]）
+        const safeTitle = item.title.replace(/[\[\]]/g, '\\$&');
+        const link = `[${safeTitle}](${item.url})`;
         ta.value = ta.value.slice(0, this.mentionStart) + link + ta.value.slice(pos);
         const caret = this.mentionStart + link.length;
         ta.setSelectionRange(caret, caret);
