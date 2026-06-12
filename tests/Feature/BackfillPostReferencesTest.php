@@ -58,4 +58,20 @@ class BackfillPostReferencesTest extends TestCase
 
         $this->assertSame(0, DB::table('post_references')->count());
     }
+
+    public function test_unresolvable_link_is_reported_as_anomaly(): void
+    {
+        $this->rawPost('source', '[ghost](/zh/posts/does-not-exist)');
+
+        // Two separate artisan() calls are needed because Mockery's doWrite
+        // interception only fires one callback per matched call when multiple
+        // expectsOutputToContain expectations overlap on the same output line.
+        $this->artisan('posts:backfill-references --dry-run')
+            ->assertExitCode(0)
+            ->expectsOutputToContain('找不到對應文章');
+
+        $this->artisan('posts:backfill-references --dry-run')
+            ->assertExitCode(0)
+            ->expectsOutputToContain('zh/does-not-exist');
+    }
 }
