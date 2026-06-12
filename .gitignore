@@ -30,3 +30,6 @@ Thumbs.db
 /hugo-blowfish-blog/public
 /hugo-blowfish-blog/resources
 /hugo-blowfish-blog/.hugo_build.lock
+
+# brainstorming visual companion
+.superpowers/
