@@ -22,6 +22,7 @@ return [
     'other_languages' => 'Bahasa lain:',
     'prev_post' => 'Sebelumnya',
     'next_post' => 'Berikutnya',
+    'mentioned_in' => 'Disebutkan dalam',
 
     'tweets' => 'Catatan',
     'no_tweets' => 'Belum ada catatan.',

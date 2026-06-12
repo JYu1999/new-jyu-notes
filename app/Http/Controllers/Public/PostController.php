@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Public\PostListRequest;
+use App\Models\Post;
 use App\Repositories\CategoryRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\TagRepository;
@@ -58,11 +59,17 @@ class PostController extends Controller
             ->keys()
             ->all();
 
+        $backlinks = $post->backlinks()
+            ->where('posts.status', Post::STATUS_PUBLISHED)
+            ->orderByDesc('posts.published_at')
+            ->get(['posts.id', 'posts.title', 'posts.slug', 'posts.locale', 'posts.excerpt']);
+
         return view('public.posts.show', [
             'post' => $post,
             'translations' => $translations,
             'availableLocales' => $availableLocales,
             'seriesNav' => $service->seriesNavigation($post),
+            'backlinks' => $backlinks,
         ]);
     }
 }

@@ -22,6 +22,7 @@ return [
     'other_languages' => 'Ngôn ngữ khác:',
     'prev_post' => 'Trước',
     'next_post' => 'Tiếp',
+    'mentioned_in' => 'Được nhắc đến trong',
 
     'tweets' => 'Ghi chú',
     'no_tweets' => 'Chưa có ghi chú.',

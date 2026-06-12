@@ -22,6 +22,7 @@ return [
     'other_languages' => '他の言語：',
     'prev_post' => '前の記事',
     'next_post' => '次の記事',
+    'mentioned_in' => 'この記事に言及している記事',
 
     'tweets' => 'つぶやき',
     'no_tweets' => 'つぶやきはまだありません。',

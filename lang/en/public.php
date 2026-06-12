@@ -22,6 +22,7 @@ return [
     'other_languages' => 'Other languages:',
     'prev_post' => 'Previous',
     'next_post' => 'Next',
+    'mentioned_in' => 'Mentioned in',
 
     'tweets' => 'Tweets',
     'no_tweets' => 'No tweets yet.',

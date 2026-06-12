@@ -25,6 +25,7 @@ return [
     'other_languages' => '其他語言：',
     'prev_post' => '上一篇',
     'next_post' => '下一篇',
+    'mentioned_in' => '被以下文章提及',
 
     // Tweets
     'tweets' => '碎念',
