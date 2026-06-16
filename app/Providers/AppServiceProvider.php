@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Database\Eloquent\Relations\Relation::enforceMorphMap([
+            'post' => \App\Models\Post::class,
+            'tweet' => \App\Models\Tweet::class,
+        ]);
     }
 }
