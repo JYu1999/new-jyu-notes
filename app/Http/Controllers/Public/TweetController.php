@@ -33,6 +33,7 @@ class TweetController extends Controller
         return view('public.tweets.show', [
             'tweet' => $tweet,
             'availableLocales' => $availableLocales,
+            'backlinks' => $tweet->publishedBacklinks(),
         ]);
     }
 }
