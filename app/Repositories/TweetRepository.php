@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Tag;
 use App\Models\Tweet;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 class TweetRepository
@@ -38,6 +39,31 @@ class TweetRepository
             ->where('id', $id)
             ->published()
             ->first();
+    }
+
+    /**
+     * 搜尋已發佈推文供 @ 提及自動完成。以 body 多關鍵字 ILIKE 命中;空查詢回最近發佈。
+     *
+     * @return EloquentCollection<int, Tweet>
+     */
+    public function searchForMention(string $q, string $locale, ?int $exclude = null, int $limit = 6): EloquentCollection
+    {
+        $base = Tweet::query()
+            ->where('status', Tweet::STATUS_PUBLISHED)
+            ->where('locale', $locale)
+            ->when($exclude, fn ($qb) => $qb->where('id', '!=', $exclude));
+
+        $tokens = preg_split('/\s+/', trim($q), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if (empty($tokens)) {
+            return $base->orderByDesc('published_at')->limit($limit)->get(['id', 'body', 'locale']);
+        }
+
+        foreach ($tokens as $token) {
+            $base->where('body', 'ILIKE', '%'.$token.'%');
+        }
+
+        return $base->orderByDesc('published_at')->limit($limit)->get(['id', 'body', 'locale']);
     }
 
     public function byTag(Tag $tag, string $locale, int $perPage = 20): LengthAwarePaginator
