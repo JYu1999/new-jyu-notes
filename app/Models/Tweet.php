@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasReferences;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tweet extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasReferences, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
     public const STATUS_PUBLISHED = 'published';
@@ -93,5 +94,14 @@ class Tweet extends Model
     public function scopeLocale(Builder $q, string $locale): Builder
     {
         return $q->where('locale', $locale);
+    }
+
+    /** Plain-text preview of the body (markdown/HTML stripped), for labels. */
+    public function preview(int $limit = 60): string
+    {
+        $rendered = app(\App\Support\MarkdownRenderer::class)->render((string) $this->body);
+        $plain = trim(preg_replace('/\s+/', ' ', strip_tags($rendered)));
+
+        return \Illuminate\Support\Str::limit($plain, $limit);
     }
 }

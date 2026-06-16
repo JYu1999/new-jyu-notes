@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasReferences;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasReferences, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
     public const STATUS_PUBLISHED = 'published';
@@ -79,20 +80,6 @@ class Post extends Model
     public function viewLogs(): HasMany
     {
         return $this->hasMany(PostViewLog::class);
-    }
-
-    public function outgoingReferences(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            self::class, 'post_references', 'source_post_id', 'target_post_id'
-        )->withTimestamps();
-    }
-
-    public function backlinks(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            self::class, 'post_references', 'target_post_id', 'source_post_id'
-        )->withTimestamps();
     }
 
     // ===== Translation helpers =====
