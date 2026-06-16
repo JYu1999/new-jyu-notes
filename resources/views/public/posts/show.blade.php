@@ -14,7 +14,7 @@
 
 <div class="max-w-6xl mx-auto px-6 py-12 grid lg:grid-cols-[1fr_220px] gap-12">
     {{-- Main article --}}
-    <article class="max-w-3xl">
+    <article class="max-w-3xl min-w-0">
         @if($catTrans)
             <div class="text-[11px] uppercase tracking-widest text-accent font-mono mb-4">
                 <a href="{{ route('public.categories.show', [$loc, $catTrans->slug]) }}" class="hover:text-accent-ink">{{ $catTrans->name }}</a>

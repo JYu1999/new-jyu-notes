@@ -109,7 +109,7 @@
     line-height: 1.55;
 }
 .prose-blog pre code { background: transparent; padding: 0; color: inherit; font-size: inherit; }
-.prose-blog img { border-radius: 6px; margin: 1.2em 0; max-width: 100%; }
+.prose-blog img { border-radius: 6px; margin: 1.2em 0; max-width: 100%; height: auto; }
 .prose-blog ul, .prose-blog ol { margin: 1em 0; padding-left: 1.4em; }
 .prose-blog li { margin: 0.4em 0; }
 .prose-blog table { border-collapse: collapse; margin: 1.2em 0; width: 100%; font-size: 0.95em; font-family: var(--font-sans); }
