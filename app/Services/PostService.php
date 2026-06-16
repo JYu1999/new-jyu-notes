@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Post;
 use App\Models\PostGroup;
+use App\Services\ReferenceSyncer;
 use App\Support\SlugGenerator;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +53,8 @@ class PostService
                     $this->buildCategoryPivot($data['category_ids'], $data['categories_order'] ?? [])
                 );
             }
+
+            (new ReferenceSyncer())->sync($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -103,6 +106,8 @@ class PostService
                     $this->buildCategoryPivot($data['category_ids'], $data['categories_order'] ?? [])
                 );
             }
+
+            (new ReferenceSyncer())->sync($post);
 
             return $post->fresh(['tags', 'categories']);
         });

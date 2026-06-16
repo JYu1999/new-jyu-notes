@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Tweet;
 use App\Models\TweetGroup;
+use App\Services\ReferenceSyncer;
 use Illuminate\Support\Facades\DB;
 
 class TweetService
@@ -44,6 +45,8 @@ class TweetService
                 $this->syncTagsAcrossGroup($tweet, $data['tag_ids']);
             }
 
+            (new ReferenceSyncer())->sync($tweet);
+
             return $tweet->fresh(['tags']);
         });
     }
@@ -66,6 +69,8 @@ class TweetService
             if (isset($data['tag_ids'])) {
                 $this->syncTagsAcrossGroup($tweet, $data['tag_ids']);
             }
+
+            (new ReferenceSyncer())->sync($tweet);
 
             return $tweet->fresh(['tags']);
         });
