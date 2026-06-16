@@ -78,14 +78,18 @@
                 {{-- @ 提及文章搜尋下拉 --}}
                 <div x-show="mentionActive && mentionResults.length" x-cloak
                     class="mt-1 bg-card border border-line rounded-md shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-                    <template x-for="(item, i) in mentionResults" :key="item.id">
+                    <template x-for="(item, i) in mentionResults" :key="item.type + ':' + item.id">
                         <button type="button"
                             @click="pickMention(item)"
                             @mouseenter="mentionIndex = i"
                             :class="i === mentionIndex ? 'bg-paper-2' : ''"
-                            class="w-full text-left px-3 py-2 border-b border-line last:border-0 hover:bg-paper-2">
-                            <div class="text-sm" x-text="item.title"></div>
-                            <div class="text-xs text-ink-3 font-mono" x-text="item.url"></div>
+                            class="w-full text-left px-3 py-2 border-b border-line last:border-0 hover:bg-paper-2 flex items-start gap-2">
+                            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-paper-2 text-ink-3 shrink-0"
+                                x-text="item.type === 'tweet' ? '推' : '文'"></span>
+                            <span class="min-w-0">
+                                <span class="block text-sm truncate" x-text="item.label"></span>
+                                <span class="block text-xs text-ink-3 font-mono truncate" x-text="item.url"></span>
+                            </span>
                         </button>
                     </template>
                 </div>

@@ -227,6 +227,8 @@ const youtubePasteBehavior = {
 
 const mentionBehavior = {
     mentionActive: false,
+    mentionExcludeType: null,
+    mentionExcludeId: null,
     mentionQuery: '',
     mentionResults: [],
     mentionIndex: 0,
@@ -272,10 +274,11 @@ const mentionBehavior = {
             const params = new URLSearchParams({
                 q,
                 locale: this.mentionLocale(),
-                exclude: this.postId ?? '',
+                exclude_type: this.mentionExcludeType ?? '',
+                exclude_id: this.mentionExcludeId ?? '',
             });
             try {
-                const res = await fetch(`/admin/posts/search?${params.toString()}`, {
+                const res = await fetch(`/admin/mentions/search?${params.toString()}`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                     signal: this._mentionController.signal,
                 });
@@ -310,7 +313,7 @@ const mentionBehavior = {
         const ta = this.$refs.body;
         const pos = ta.selectionStart;
         // 跳脫標題中的 [ ]，避免破壞 Markdown 連結語法（如標題含 [2024]）
-        const safeTitle = item.title.replace(/[\[\]]/g, '\\$&');
+        const safeTitle = item.label.replace(/[\[\]]/g, '\\$&');
         const link = `[${safeTitle}](${item.url})`;
         ta.value = ta.value.slice(0, this.mentionStart) + link + ta.value.slice(pos);
         const caret = this.mentionStart + link.length;
@@ -352,6 +355,8 @@ window.markdownMediaInsert = function ({ locale = 'zh', postId = null } = {}) {
         ...mentionBehavior,
         locale,
         postId,
+        mentionExcludeType: 'post',
+        mentionExcludeId: postId,
         uploading: 0,
         error: null,
         dragging: false,
@@ -416,6 +421,23 @@ window.markdownMediaInsert = function ({ locale = 'zh', postId = null } = {}) {
             // String.replace 以字串為 pattern 時是字面取代第一個出現，無 regex 風險
             const ta = this.$refs.body;
             ta.value = ta.value.replace(from, to);
+        },
+    };
+};
+
+/**
+ * Tweet composer: YouTube paste prompt + @ mention autocomplete.
+ * Expects x-ref="body" (textarea) in scope.
+ */
+window.tweetComposer = function ({ locale = 'zh', tweetId = null } = {}) {
+    return {
+        ...youtubePasteBehavior,
+        ...mentionBehavior,
+        locale,
+        mentionExcludeType: 'tweet',
+        mentionExcludeId: tweetId,
+        handlePaste(event) {
+            this.detectYoutubePaste(event);
         },
     };
 };
