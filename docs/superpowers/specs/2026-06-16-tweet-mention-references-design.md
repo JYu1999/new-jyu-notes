@@ -55,13 +55,15 @@
 在 `AppServiceProvider::boot()` 註冊 morph map,讓 `*_type` 存短字串而非完整 class name:
 
 ```php
-Relation::enforceMorphMap([
+Relation::morphMap([
     'post'  => \App\Models\Post::class,
     'tweet' => \App\Models\Tweet::class,
 ]);
 ```
 
 好處:DB 值穩定(class 改名不影響資料)、與 extractor 回傳的 `type`(`'post'`/`'tweet'`)直接對齊。
+
+> 用 **非強制** 的 `morphMap`(不是 `enforceMorphMap`):本專案 `personal_access_tokens`(Sanctum)以 `tokenable` morph 指向 `App\Models\User`,且 `User` 用 `Notifiable`。`enforceMorphMap` 會對未列入 map 的 `User` 拋 `ClassMorphViolationException`,打斷 token 驗證。`morphMap` 只把 Post/Tweet 映射為短字串,其餘模型維持 class-name 預設,既有 token 資料(`tokenable_type='App\Models\User'`)不受影響。
 
 ### 資料遷移
 

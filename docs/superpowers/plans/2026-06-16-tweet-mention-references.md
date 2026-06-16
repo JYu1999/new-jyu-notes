@@ -180,11 +180,15 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Replace the `boot()` body (`//`) with:
 
 ```php
-\Illuminate\Database\Eloquent\Relations\Relation::enforceMorphMap([
+// Non-enforcing: maps Post/Tweet to short type strings while leaving other
+// polymorphic models (Sanctum's tokenable User) on their class-name default.
+\Illuminate\Database\Eloquent\Relations\Relation::morphMap([
     'post' => \App\Models\Post::class,
     'tweet' => \App\Models\Tweet::class,
 ]);
 ```
+
+> Use `morphMap`, NOT `enforceMorphMap`: `personal_access_tokens` (Sanctum) has a `tokenable` morph to `App\Models\User`; `enforceMorphMap` throws `ClassMorphViolationException` for any model not in the map (User), breaking token auth.
 
 - [ ] **Step 2: Verify it loads**
 
