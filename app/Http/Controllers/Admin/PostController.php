@@ -13,9 +13,7 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\TagRepository;
 use App\Services\PostService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PostController extends Controller
@@ -111,22 +109,4 @@ class PostController extends Controller
             ->with('success', '已建立新翻譯版本');
     }
 
-    public function search(Request $request, PostRepository $repo): JsonResponse
-    {
-        $q = trim((string) $request->query('q', ''));
-        $locale = (string) $request->query('locale', app()->getLocale());
-        $exclude = $request->integer('exclude');
-
-        $results = $repo->searchForMention($q, $locale, $exclude > 0 ? $exclude : null);
-
-        return response()->json(
-            $results->map(fn (Post $p) => [
-                'id' => $p->id,
-                'title' => $p->title,
-                'slug' => $p->slug,
-                'locale' => $p->locale,
-                'url' => "/{$p->locale}/posts/{$p->slug}",
-            ])->all()
-        );
-    }
 }
