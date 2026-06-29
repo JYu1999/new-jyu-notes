@@ -43,12 +43,14 @@ class TweetController extends Controller
     public function update(Tweet $tweet, UpdateRequest $request, TweetService $service): TweetResource
     {
         $tweet = $service->update($tweet, $request->validated()); // validated() has no status
+
         return new TweetResource($tweet->load(['tags']));
     }
 
     public function destroy(Tweet $tweet, TweetService $service): Response
     {
         $service->softDelete($tweet);
+
         return response()->noContent();
     }
 
@@ -65,6 +67,7 @@ class TweetController extends Controller
     public function publish(Tweet $tweet, TweetService $service): TweetResource
     {
         $service->updateStatus($tweet, Tweet::STATUS_PUBLISHED);
+
         return new TweetResource($tweet->fresh()->load(['tags']));
     }
 }

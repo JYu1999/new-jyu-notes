@@ -50,6 +50,7 @@ class ShortcodeConverter
                     str_contains($type, 'danger'), str_contains($type, 'error') => 'alert-danger',
                     default => 'alert-info',
                 };
+
                 return "\n\n<aside class=\"alert {$class}\">\n\n{$body}\n\n</aside>\n\n";
             },
             $content
@@ -66,14 +67,17 @@ class ShortcodeConverter
             function ($m) {
                 $attrs = $this->parseAttrs($m[1]);
                 $id = $attrs['id'] ?? '';
-                if ($id === '') return $m[0];
-                $src = 'https://www.youtube.com/embed/' . htmlspecialchars($id);
+                if ($id === '') {
+                    return $m[0];
+                }
+                $src = 'https://www.youtube.com/embed/'.htmlspecialchars($id);
                 $start = $attrs['start'] ?? '';
                 if ($start !== '' && ctype_digit($start)) {
-                    $src .= '?start=' . $start;
+                    $src .= '?start='.$start;
                 }
-                return "\n\n" . '<div class="youtube-embed"><iframe src="' . $src
-                    . '" frameborder="0" allowfullscreen loading="lazy"></iframe></div>' . "\n\n";
+
+                return "\n\n".'<div class="youtube-embed"><iframe src="'.$src
+                    .'" frameborder="0" allowfullscreen loading="lazy"></iframe></div>'."\n\n";
             },
             $content
         );
@@ -88,6 +92,7 @@ class ShortcodeConverter
             '/\{\{<\s*local-video\s+"([^"]+)"\s*(?:"([^"]*)")?\s*>\}\}/',
             function ($m) {
                 $file = $m[1];
+
                 return "\n\n<video class=\"local-video\" controls src=\"{$file}\" preload=\"metadata\"></video>\n\n";
             },
             $content
@@ -103,6 +108,7 @@ class ShortcodeConverter
             '/\{\{<\s*carousel\s*([^>]*)\s*>\}\}(.*?)\{\{<\s*\/carousel\s*>\}\}/s',
             function ($m) {
                 $body = trim($m[2]);
+
                 return "\n\n<div class=\"carousel\">\n\n{$body}\n\n</div>\n\n";
             },
             $content
@@ -120,8 +126,11 @@ class ShortcodeConverter
                 $attrs = $this->parseAttrs($m[1]);
                 $user = $attrs['user'] ?? '';
                 $id = $attrs['id'] ?? '';
-                if ($user === '' || $id === '') return $m[0];
+                if ($user === '' || $id === '') {
+                    return $m[0];
+                }
                 $url = "https://x.com/{$user}/status/{$id}";
+
                 return "\n\n<blockquote class=\"x-embed\"><a href=\"{$url}\" target=\"_blank\" rel=\"noopener\">{$url}</a></blockquote>\n\n";
             },
             $content
@@ -150,7 +159,10 @@ class ShortcodeConverter
             function ($m) {
                 $attrs = $this->parseAttrs($m[1]);
                 $link = $attrs['link'] ?? '';
-                if ($link === '') return $m[0];
+                if ($link === '') {
+                    return $m[0];
+                }
+
                 return "<a href=\"{$link}\">{$link}</a>";
             },
             $content
@@ -166,18 +178,19 @@ class ShortcodeConverter
 
             // Markdown image: ![alt](optional/path/<filename>)  →  ![alt](<newUrl>)
             $content = preg_replace(
-                '#(\!\[[^\]]*\]\()(?:[^()\s]*?/)?' . $quoted . '(\))#',
-                '$1' . $to . '$2',
+                '#(\!\[[^\]]*\]\()(?:[^()\s]*?/)?'.$quoted.'(\))#',
+                '$1'.$to.'$2',
                 $content
             );
 
             // HTML attribute: src="optional/path/<filename>" or href="..."
             $content = preg_replace(
-                '#(\b(?:src|href)\s*=\s*")(?:[^"\s]*?/)?' . $quoted . '(")#',
-                '$1' . $to . '$2',
+                '#(\b(?:src|href)\s*=\s*")(?:[^"\s]*?/)?'.$quoted.'(")#',
+                '$1'.$to.'$2',
                 $content
             );
         }
+
         return $content;
     }
 
@@ -192,6 +205,7 @@ class ShortcodeConverter
                 $result[$pair[1]] = $pair[2];
             }
         }
+
         return $result;
     }
 }

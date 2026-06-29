@@ -55,6 +55,7 @@ class TweetController extends Controller
     public function store(StoreRequest $request, TweetService $service): RedirectResponse
     {
         $tweet = $service->create($request->validated());
+
         return redirect()->route('admin.tweets.edit', $tweet)->with('success', '已建立');
     }
 
@@ -73,12 +74,14 @@ class TweetController extends Controller
     public function update(Tweet $tweet, UpdateRequest $request, TweetService $service): RedirectResponse
     {
         $service->update($tweet, $request->validated());
+
         return redirect()->route('admin.tweets.edit', $tweet)->with('success', '已更新');
     }
 
     public function destroy(Tweet $tweet, TweetService $service): RedirectResponse
     {
         $service->softDelete($tweet);
+
         return redirect()->route('admin.tweets.index')->with('success', '已移至垃圾桶');
     }
 
@@ -86,18 +89,21 @@ class TweetController extends Controller
     {
         $tweet = Tweet::withTrashed()->findOrFail($id);
         $service->restore($tweet);
+
         return redirect()->route('admin.tweets.index')->with('success', '已還原');
     }
 
     public function updateStatus(Tweet $tweet, UpdateStatusRequest $request, TweetService $service): RedirectResponse
     {
         $service->updateStatus($tweet, $request->validated()['status']);
+
         return back()->with('success', '狀態已更新');
     }
 
     public function createTranslation(Tweet $tweet, CreateTranslationRequest $request, TweetService $service): RedirectResponse
     {
         $new = $service->createTranslation($tweet, $request->validated()['locale']);
+
         return redirect()->route('admin.tweets.edit', $new)
             ->with('success', '已建立新翻譯版本');
     }

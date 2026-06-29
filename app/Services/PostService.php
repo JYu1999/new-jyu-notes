@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Post;
 use App\Models\PostGroup;
-use App\Services\ReferenceSyncer;
+use App\Models\Tweet;
 use App\Support\SlugGenerator;
 use Illuminate\Support\Facades\DB;
 
@@ -54,7 +54,7 @@ class PostService
                 );
             }
 
-            (new ReferenceSyncer())->sync($post);
+            (new ReferenceSyncer)->sync($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -107,7 +107,7 @@ class PostService
                 );
             }
 
-            (new ReferenceSyncer())->sync($post);
+            (new ReferenceSyncer)->sync($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -151,6 +151,7 @@ class PostService
                 if ($existing->trashed()) {
                     $existing->restore();
                 }
+
                 return $existing;
             }
 
@@ -158,7 +159,7 @@ class PostService
                 'post_group_id' => $existingPost->post_group_id,
                 'locale' => $newLocale,
                 'slug' => SlugGenerator::forPost($existingPost->title, $newLocale),
-                'title' => $existingPost->title . ' (' . strtoupper($newLocale) . ')',
+                'title' => $existingPost->title.' ('.strtoupper($newLocale).')',
                 'excerpt' => $existingPost->excerpt,
                 'body' => $existingPost->body,
                 'cover_image_path' => $existingPost->cover_image_path,
@@ -258,7 +259,9 @@ class PostService
      */
     public function equivalentUrlInLocale(?string $url, string $targetLocale): ?string
     {
-        if (! $url) return null;
+        if (! $url) {
+            return null;
+        }
 
         $path = parse_url($url, PHP_URL_PATH) ?? '';
 
@@ -273,6 +276,7 @@ class PostService
                     return "/{$targetLocale}/posts/{$sibling->slug}";
                 }
             }
+
             // No translation → fall back to posts list (NOT the same URL, would 404)
             return "/{$targetLocale}/posts";
         }
@@ -281,19 +285,20 @@ class PostService
         if (preg_match('#^/(zh|en|ja|vi|id)/tweets/(\d+)/?$#', $path, $m)) {
             $sourceLocale = $m[1];
             $id = (int) $m[2];
-            $tweet = \App\Models\Tweet::query()->where('locale', $sourceLocale)->where('id', $id)->first();
+            $tweet = Tweet::query()->where('locale', $sourceLocale)->where('id', $id)->first();
             if ($tweet) {
                 $sibling = $tweet->translation($targetLocale);
-                if ($sibling && $sibling->status === \App\Models\Tweet::STATUS_PUBLISHED) {
+                if ($sibling && $sibling->status === Tweet::STATUS_PUBLISHED) {
                     return "/{$targetLocale}/tweets/{$sibling->id}";
                 }
             }
+
             return "/{$targetLocale}/tweets";
         }
 
         // Other locale-prefixed pages: swap locale prefix
         if (preg_match('#^/(zh|en|ja|vi|id)(/.*)?$#', $path, $m)) {
-            return "/{$targetLocale}" . ($m[2] ?? '');
+            return "/{$targetLocale}".($m[2] ?? '');
         }
 
         return "/{$targetLocale}";
@@ -305,6 +310,7 @@ class PostService
         foreach ($categoryIds as $cid) {
             $result[$cid] = ['order_in_category' => $orders[$cid] ?? null];
         }
+
         return $result;
     }
 
@@ -316,6 +322,7 @@ class PostService
         if (($data['status'] ?? null) === Post::STATUS_PUBLISHED) {
             return now();
         }
+
         return null;
     }
 
@@ -329,6 +336,7 @@ class PostService
         if ($newStatus === Post::STATUS_PUBLISHED && ! $post->published_at) {
             return now();
         }
+
         return null;
     }
 }

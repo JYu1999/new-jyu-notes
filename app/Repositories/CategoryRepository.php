@@ -13,7 +13,9 @@ class CategoryRepository
             ->with('translations')
             ->withCount(['posts as posts_count' => function ($pq) use ($locale) {
                 $pq->where('status', 'published');
-                if ($locale) $pq->where('locale', $locale);
+                if ($locale) {
+                    $pq->where('locale', $locale);
+                }
             }]);
 
         if ($locale) {
@@ -28,8 +30,7 @@ class CategoryRepository
     {
         return Category::query()
             ->with('translations')
-            ->whereHas('translations', fn ($q) =>
-                $q->where('locale', $locale)->where('slug', $slug)
+            ->whereHas('translations', fn ($q) => $q->where('locale', $locale)->where('slug', $slug)
             )
             ->first();
     }

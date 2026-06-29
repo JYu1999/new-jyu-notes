@@ -15,6 +15,7 @@ class TagRepository
             // so the sidebar doesn't leak names from other languages.
             $q->whereHas('translations', fn ($qq) => $qq->where('locale', $locale));
         }
+
         return $q->get();
     }
 
@@ -31,8 +32,7 @@ class TagRepository
     {
         return Tag::query()
             ->with('translations')
-            ->whereHas('translations', fn ($q) =>
-                $q->where('locale', $locale)->where('slug', $slug)
+            ->whereHas('translations', fn ($q) => $q->where('locale', $locale)->where('slug', $slug)
             )
             ->first();
     }
@@ -44,8 +44,7 @@ class TagRepository
     {
         return Tag::query()
             ->with('translations')
-            ->whereHas('translations', fn ($q) =>
-                $q->where('locale', $locale)->where('name', $name)
+            ->whereHas('translations', fn ($q) => $q->where('locale', $locale)->where('name', $name)
             )
             ->first();
     }

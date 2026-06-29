@@ -13,6 +13,7 @@ class ApiTokenService
      * Mint a personal access token after validating every ability.
      *
      * @param  string[]  $abilities
+     *
      * @throws \InvalidArgumentException when an ability is not in the matrix
      */
     public function create(User $user, string $name, array $abilities, ?CarbonInterface $expiresAt = null): NewAccessToken
