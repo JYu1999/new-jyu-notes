@@ -59,6 +59,7 @@ class PostController extends Controller
     public function store(StoreRequest $request, PostService $service): RedirectResponse
     {
         $post = $service->create($request->validated());
+
         return redirect()
             ->route('admin.posts.edit', $post)
             ->with('success', '已建立');
@@ -80,12 +81,14 @@ class PostController extends Controller
     public function update(Post $post, UpdateRequest $request, PostService $service): RedirectResponse
     {
         $service->update($post, $request->validated());
+
         return redirect()->route('admin.posts.edit', $post)->with('success', '已更新');
     }
 
     public function destroy(Post $post, PostService $service): RedirectResponse
     {
         $service->softDelete($post);
+
         return redirect()->route('admin.posts.index')->with('success', '已移至垃圾桶');
     }
 
@@ -93,20 +96,22 @@ class PostController extends Controller
     {
         $post = Post::withTrashed()->findOrFail($id);
         $service->restore($post);
+
         return redirect()->route('admin.posts.index')->with('success', '已還原');
     }
 
     public function updateStatus(Post $post, UpdateStatusRequest $request, PostService $service): RedirectResponse
     {
         $service->updateStatus($post, $request->validated()['status']);
+
         return back()->with('success', '狀態已更新');
     }
 
     public function createTranslation(Post $post, CreateTranslationRequest $request, PostService $service): RedirectResponse
     {
         $new = $service->createTranslation($post, $request->validated()['locale']);
+
         return redirect()->route('admin.posts.edit', $new)
             ->with('success', '已建立新翻譯版本');
     }
-
 }

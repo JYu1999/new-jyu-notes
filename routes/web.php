@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect()->to('/' . app()->getLocale());
+    return redirect()->to('/'.app()->getLocale());
 })->name('public.root');
 
 /*
@@ -90,13 +90,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('categories/{category}', [Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
 
         // Pages
-        Route::get('pages',                     [Admin\PageController::class, 'index'])->name('pages.index');
-        Route::get('pages/create',              [Admin\PageController::class, 'create'])->name('pages.create');
-        Route::post('pages',                    [Admin\PageController::class, 'store'])->name('pages.store');
-        Route::get('pages/{page}/edit',         [Admin\PageController::class, 'edit'])->name('pages.edit');
-        Route::put('pages/{page}',              [Admin\PageController::class, 'update'])->name('pages.update');
-        Route::delete('pages/{page}',           [Admin\PageController::class, 'destroy'])->name('pages.destroy');
-        Route::post('pages/{id}/restore',       [Admin\PageController::class, 'restore'])->name('pages.restore');
+        Route::get('pages', [Admin\PageController::class, 'index'])->name('pages.index');
+        Route::get('pages/create', [Admin\PageController::class, 'create'])->name('pages.create');
+        Route::post('pages', [Admin\PageController::class, 'store'])->name('pages.store');
+        Route::get('pages/{page}/edit', [Admin\PageController::class, 'edit'])->name('pages.edit');
+        Route::put('pages/{page}', [Admin\PageController::class, 'update'])->name('pages.update');
+        Route::delete('pages/{page}', [Admin\PageController::class, 'destroy'])->name('pages.destroy');
+        Route::post('pages/{id}/restore', [Admin\PageController::class, 'restore'])->name('pages.restore');
         Route::post('pages/{page}/translation', [Admin\PageController::class, 'createTranslation'])->name('pages.create-translation');
 
         // Media

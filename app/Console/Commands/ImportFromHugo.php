@@ -3,9 +3,13 @@
 namespace App\Console\Commands;
 
 use App\Models\Category;
+use App\Models\CategoryTranslation;
+use App\Models\Page;
+use App\Models\PageGroup;
 use App\Models\Post;
 use App\Models\PostGroup;
 use App\Models\Tag;
+use App\Models\TagTranslation;
 use App\Models\Tweet;
 use App\Models\TweetGroup;
 use App\Models\User;
@@ -14,6 +18,7 @@ use App\Support\ShortcodeConverter;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Yaml;
 
 class ImportFromHugo extends Command
@@ -51,10 +56,15 @@ class ImportFromHugo extends Command
     ];
 
     private ShortcodeConverter $shortcoder;
+
     private MediaService $media;
+
     private ?User $admin = null;
+
     private array $tagsBySlug = [];      // slug => Tag
+
     private array $catsBySlug = [];      // slug => Category
+
     private array $tweetIdByBundle = []; // [bundleSlug][locale] => tweet id (for internal link rewriting)
 
     public function __construct(ShortcodeConverter $shortcoder, MediaService $media)
@@ -73,17 +83,20 @@ class ImportFromHugo extends Command
 
         if (! is_dir($hugoRoot)) {
             $this->error("Hugo root not found: {$hugoRoot}");
+
             return self::FAILURE;
         }
         $contentDir = "{$hugoRoot}/content";
         if (! is_dir($contentDir)) {
             $this->error("Hugo content/ not found at: {$contentDir}");
+
             return self::FAILURE;
         }
 
         $this->admin = User::query()->first();
         if (! $this->admin) {
             $this->error('No admin user found. Run `php artisan db:seed --class=AdminUserSeeder` first.');
+
             return self::FAILURE;
         }
 
@@ -115,6 +128,7 @@ class ImportFromHugo extends Command
         }
 
         $this->info("Done. Imported {$postCount} post groups, {$tweetCount} tweet groups, {$pageCount} pages.");
+
         return self::SUCCESS;
     }
 
@@ -128,17 +142,25 @@ class ImportFromHugo extends Command
         $count = 0;
 
         foreach (scandir($contentDir) as $entry) {
-            if (in_array($entry, ['.', '..'], true)) continue;
-            if (in_array($entry, $reserved, true)) continue;
+            if (in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
+            if (in_array($entry, $reserved, true)) {
+                continue;
+            }
 
             $full = "{$contentDir}/{$entry}";
-            if (! is_dir($full)) continue;
+            if (! is_dir($full)) {
+                continue;
+            }
 
             $slug = $entry;
             $locales = $this->findLocaleFiles($full);
-            if (! $locales) continue;
+            if (! $locales) {
+                continue;
+            }
 
-            $group = $this->option('dry-run') ? new \App\Models\PageGroup() : \App\Models\PageGroup::create();
+            $group = $this->option('dry-run') ? new PageGroup : PageGroup::create();
 
             foreach ($locales as $locale => $filePath) {
                 $this->importPageFile($group, $locale, $slug, $filePath, $full);
@@ -151,7 +173,7 @@ class ImportFromHugo extends Command
         return $count;
     }
 
-    private function importPageFile(\App\Models\PageGroup $group, string $locale, string $slug, string $filePath, string $bundleDir): ?\App\Models\Page
+    private function importPageFile(PageGroup $group, string $locale, string $slug, string $filePath, string $bundleDir): ?Page
     {
         $raw = file_get_contents($filePath);
         [$fm, $body] = $this->splitFrontMatter($raw);
@@ -165,14 +187,15 @@ class ImportFromHugo extends Command
         $coverPath = $this->ingestCoverImage($bundleDir, $storageSubdir);
 
         $publishedAt = $this->parseDate($fm['date'] ?? null);
-        $status = ($fm['draft'] ?? false) ? \App\Models\Page::STATUS_DRAFT : \App\Models\Page::STATUS_PUBLISHED;
+        $status = ($fm['draft'] ?? false) ? Page::STATUS_DRAFT : Page::STATUS_PUBLISHED;
 
         if ($this->option('dry-run')) {
             $this->line("Page[{$locale}]: {$slug} ({$status})");
+
             return null;
         }
 
-        $page = \App\Models\Page::create([
+        $page = Page::create([
             'page_group_id' => $group->id,
             'locale' => $locale,
             'slug' => $slug,
@@ -193,6 +216,7 @@ class ImportFromHugo extends Command
         }
 
         $this->line("Page[{$locale}]: {$slug}");
+
         return $page;
     }
 
@@ -204,11 +228,12 @@ class ImportFromHugo extends Command
         foreach (self::TAG_DICTIONARY as $row) {
             if ($this->option('dry-run')) {
                 $this->line("would create tag: {$row['slug']}");
+
                 continue;
             }
 
             // Look up existing tag by its English slug translation; if none, create new.
-            $existing = \App\Models\TagTranslation::query()
+            $existing = TagTranslation::query()
                 ->where('locale', 'en')
                 ->where('slug', $row['slug'])
                 ->first();
@@ -216,7 +241,7 @@ class ImportFromHugo extends Command
             $tag = $existing ? $existing->tag : Tag::create([]);
 
             foreach (['zh', 'en', 'ja'] as $locale) {
-                \App\Models\TagTranslation::updateOrCreate(
+                TagTranslation::updateOrCreate(
                     ['tag_id' => $tag->id, 'locale' => $locale],
                     ['name' => $row[$locale], 'slug' => $row['slug']],
                 );
@@ -224,7 +249,7 @@ class ImportFromHugo extends Command
 
             $this->tagsBySlug[$row['slug']] = $tag;
             foreach (['zh', 'en', 'ja'] as $locale) {
-                $this->tagsBySlug[$locale . ':' . $row[$locale]] = $tag;
+                $this->tagsBySlug[$locale.':'.$row[$locale]] = $tag;
             }
         }
     }
@@ -234,13 +259,19 @@ class ImportFromHugo extends Command
      */
     private function importCategoryDefinitions(string $dir): void
     {
-        if (! is_dir($dir)) return;
+        if (! is_dir($dir)) {
+            return;
+        }
 
         foreach (scandir($dir) as $entry) {
-            if ($entry === '.' || $entry === '..') continue;
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
             $slug = $entry;
             $full = "{$dir}/{$entry}";
-            if (! is_dir($full)) continue;
+            if (! is_dir($full)) {
+                continue;
+            }
 
             $files = [
                 'zh' => "{$full}/_index.md",
@@ -250,20 +281,24 @@ class ImportFromHugo extends Command
 
             $primary = is_file($files['zh']) ? $files['zh']
                 : (is_file($files['en']) ? $files['en'] : (is_file($files['ja']) ? $files['ja'] : null));
-            if (! $primary) continue;
+            if (! $primary) {
+                continue;
+            }
 
             $category = $this->option('dry-run')
                 ? new Category(['sort_method' => 'manual'])
                 : Category::create(['sort_method' => 'manual']);
 
             foreach ($files as $locale => $path) {
-                if (! is_file($path)) continue;
+                if (! is_file($path)) {
+                    continue;
+                }
                 [$fm, $body] = $this->splitFrontMatter(file_get_contents($path));
                 $name = $fm['title'] ?? $slug;
                 $description = $fm['description'] ?? trim($body) ?: null;
 
                 if (! $this->option('dry-run')) {
-                    \App\Models\CategoryTranslation::create([
+                    CategoryTranslation::create([
                         'category_id' => $category->id,
                         'locale' => $locale,
                         'name' => $name,
@@ -283,26 +318,36 @@ class ImportFromHugo extends Command
      */
     private function importPosts(string $dir): int
     {
-        if (! is_dir($dir)) return 0;
+        if (! is_dir($dir)) {
+            return 0;
+        }
 
         $count = 0;
         foreach (scandir($dir) as $entry) {
-            if (in_array($entry, ['.', '..'], true)) continue;
+            if (in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
             $full = "{$dir}/{$entry}";
-            if (! is_dir($full)) continue;
+            if (! is_dir($full)) {
+                continue;
+            }
 
             $slug = $entry;
             $locales = $this->findLocaleFiles($full);
-            if (! $locales) continue;
+            if (! $locales) {
+                continue;
+            }
 
             $postGroup = $this->option('dry-run')
-                ? new PostGroup()
+                ? new PostGroup
                 : PostGroup::create();
 
             $primaryPost = null;
             foreach ($locales as $locale => $filePath) {
                 $post = $this->importPostFile($postGroup, $locale, $slug, $filePath, $full);
-                if ($post && ! $primaryPost) $primaryPost = $post;
+                if ($post && ! $primaryPost) {
+                    $primaryPost = $post;
+                }
             }
 
             // Sync tags + categories from front matter (primary locale)
@@ -312,6 +357,7 @@ class ImportFromHugo extends Command
 
             $count++;
         }
+
         return $count;
     }
 
@@ -320,8 +366,11 @@ class ImportFromHugo extends Command
         $out = [];
         foreach (self::LOCALE_MAP as $filename => $locale) {
             $p = "{$dir}/{$filename}";
-            if (is_file($p)) $out[$locale] = $p;
+            if (is_file($p)) {
+                $out[$locale] = $p;
+            }
         }
+
         return $out;
     }
 
@@ -349,6 +398,7 @@ class ImportFromHugo extends Command
 
         if ($this->option('dry-run')) {
             $this->line("Post[{$locale}]: {$slug} ({$status})");
+
             return null;
         }
 
@@ -377,15 +427,16 @@ class ImportFromHugo extends Command
         }
 
         $this->line("Post[{$locale}]: {$slug}");
+
         return $post;
     }
 
     /**
      * Build asset URL rewrite map for shortcode converter and inline-image references.
      *
-     * @param  string  $bundleDir       absolute path of the Hugo bundle directory
-     * @param  string  $storageSubdir   target subdirectory under storage/public (e.g. "imports/posts/<slug>")
-     * @return array<string, string>    map of bare filename → web URL
+     * @param  string  $bundleDir  absolute path of the Hugo bundle directory
+     * @param  string  $storageSubdir  target subdirectory under storage/public (e.g. "imports/posts/<slug>")
+     * @return array<string, string> map of bare filename → web URL
      */
     private function buildAssetRewrites(string $bundleDir, string $storageSubdir): array
     {
@@ -401,6 +452,7 @@ class ImportFromHugo extends Command
                 }
             }
         }
+
         return $rewrites;
     }
 
@@ -408,13 +460,16 @@ class ImportFromHugo extends Command
     {
         // 1) Explicit Hugo conventions
         $explicit = ['featured.png', 'featured.jpg', 'featured.jpeg', 'featured.webp',
-                     'cover.png', 'cover.jpg', 'cover.jpeg', 'cover.webp',
-                     'book-cover.png', 'book-cover.jpg', 'book-cover.jpeg', 'book-cover.webp'];
+            'cover.png', 'cover.jpg', 'cover.jpeg', 'cover.webp',
+            'book-cover.png', 'book-cover.jpg', 'book-cover.jpeg', 'book-cover.webp'];
         foreach ($explicit as $name) {
             $path = "{$bundleDir}/{$name}";
             if (is_file($path)) {
-                if ($this->option('dry-run')) return "{$storageSubdir}/{$name}";
+                if ($this->option('dry-run')) {
+                    return "{$storageSubdir}/{$name}";
+                }
                 $media = $this->media->registerLocalFile($path, $storageSubdir, $this->admin);
+
                 return $media?->path;
             }
         }
@@ -424,8 +479,11 @@ class ImportFromHugo extends Command
         sort($images);
         if (! empty($images)) {
             $first = $images[0];
-            if ($this->option('dry-run')) return "{$storageSubdir}/" . basename($first);
+            if ($this->option('dry-run')) {
+                return "{$storageSubdir}/".basename($first);
+            }
             $media = $this->media->registerLocalFile($first, $storageSubdir, $this->admin);
+
             return $media?->path;
         }
 
@@ -439,14 +497,18 @@ class ImportFromHugo extends Command
     {
         // Re-read the primary locale's front matter
         $primaryFile = $locales['zh'] ?? $locales['en'] ?? $locales['ja'] ?? null;
-        if (! $primaryFile) return;
-        [$fm, ] = $this->splitFrontMatter(file_get_contents($primaryFile));
+        if (! $primaryFile) {
+            return;
+        }
+        [$fm] = $this->splitFrontMatter(file_get_contents($primaryFile));
 
         // Tags
         $tagIds = [];
         foreach ((array) ($fm['tags'] ?? []) as $tagName) {
             $tag = $this->resolveTagByName($primaryPost->locale, $tagName);
-            if ($tag) $tagIds[] = $tag->id;
+            if ($tag) {
+                $tagIds[] = $tag->id;
+            }
         }
 
         // Categories
@@ -471,7 +533,9 @@ class ImportFromHugo extends Command
             }
         }
 
-        if ($this->option('dry-run')) return;
+        if ($this->option('dry-run')) {
+            return;
+        }
 
         // Apply to all locales in group
         $allPosts = Post::query()
@@ -485,61 +549,68 @@ class ImportFromHugo extends Command
 
     private function resolveTagByName(string $locale, string $tagName): ?Tag
     {
-        $key = $locale . ':' . $tagName;
+        $key = $locale.':'.$tagName;
         if (isset($this->tagsBySlug[$key])) {
             return $this->tagsBySlug[$key];
         }
 
         // Search across all locales
-        $translation = \App\Models\TagTranslation::query()
+        $translation = TagTranslation::query()
             ->where('name', $tagName)
             ->first();
         if ($translation) {
             $tag = $translation->tag;
             $this->tagsBySlug[$key] = $tag;
+
             return $tag;
         }
 
         // Auto-create a tag with this name for the given locale
-        if ($this->option('dry-run')) return null;
+        if ($this->option('dry-run')) {
+            return null;
+        }
 
         $tag = Tag::create([]);
-        $slug = \Illuminate\Support\Str::slug($tagName, '-');
+        $slug = Str::slug($tagName, '-');
         if ($slug === '') {
-            $slug = 'tag-' . $tag->id;
+            $slug = 'tag-'.$tag->id;
         }
-        \App\Models\TagTranslation::create([
+        TagTranslation::create([
             'tag_id' => $tag->id,
             'locale' => $locale,
             'name' => $tagName,
             'slug' => $slug,
         ]);
         $this->tagsBySlug[$key] = $tag;
+
         return $tag;
     }
 
     private function findOrCreateCategoryByName(string $name, string $locale): ?Category
     {
-        $translation = \App\Models\CategoryTranslation::query()
+        $translation = CategoryTranslation::query()
             ->where('name', $name)
             ->first();
         if ($translation) {
             return $translation->category;
         }
 
-        if ($this->option('dry-run')) return null;
+        if ($this->option('dry-run')) {
+            return null;
+        }
 
         $cat = Category::create(['sort_method' => 'manual']);
-        $slug = \Illuminate\Support\Str::slug($name, '-');
+        $slug = Str::slug($name, '-');
         if ($slug === '') {
-            $slug = 'series-' . $cat->id;
+            $slug = 'series-'.$cat->id;
         }
-        \App\Models\CategoryTranslation::create([
+        CategoryTranslation::create([
             'category_id' => $cat->id,
             'locale' => $locale,
             'name' => $name,
             'slug' => $slug,
         ]);
+
         return $cat;
     }
 
@@ -548,27 +619,37 @@ class ImportFromHugo extends Command
      */
     private function importTweets(string $dir): int
     {
-        if (! is_dir($dir)) return 0;
+        if (! is_dir($dir)) {
+            return 0;
+        }
 
         $count = 0;
         foreach (scandir($dir) as $entry) {
-            if (in_array($entry, ['.', '..'], true)) continue;
+            if (in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
             $full = "{$dir}/{$entry}";
-            if (! is_dir($full)) continue;
+            if (! is_dir($full)) {
+                continue;
+            }
             // Skip non-tweet top-level files
             if (! is_file("{$full}/index.md") && ! is_file("{$full}/index.en.md") && ! is_file("{$full}/index.ja.md")) {
                 continue;
             }
 
             $locales = $this->findLocaleFiles($full);
-            if (! $locales) continue;
+            if (! $locales) {
+                continue;
+            }
 
-            $group = $this->option('dry-run') ? new TweetGroup() : TweetGroup::create();
+            $group = $this->option('dry-run') ? new TweetGroup : TweetGroup::create();
             $primary = null;
 
             foreach ($locales as $locale => $filePath) {
                 $tweet = $this->importTweetFile($group, $locale, $filePath, $full);
-                if ($tweet && ! $primary) $primary = $tweet;
+                if ($tweet && ! $primary) {
+                    $primary = $tweet;
+                }
             }
 
             if ($primary) {
@@ -577,6 +658,7 @@ class ImportFromHugo extends Command
 
             $count++;
         }
+
         return $count;
     }
 
@@ -596,9 +678,13 @@ class ImportFromHugo extends Command
         $media = [];
         foreach (glob("{$bundleDir}/*.{png,jpg,jpeg,webp,gif,mp4,webm}", GLOB_BRACE) ?: [] as $file) {
             $filename = basename($file);
-            if (str_starts_with($filename, 'featured.')) continue;
+            if (str_starts_with($filename, 'featured.')) {
+                continue;
+            }
             // Skip if body already embeds this file (avoid Bug 4: duplicate render)
-            if (stripos($body, $filename) !== false) continue;
+            if (stripos($body, $filename) !== false) {
+                continue;
+            }
 
             $mime = mime_content_type($file) ?: '';
             $type = str_starts_with($mime, 'video/') ? 'video' : 'image';
@@ -620,6 +706,7 @@ class ImportFromHugo extends Command
 
         if ($this->option('dry-run')) {
             $this->line("Tweet[{$locale}]: {$slug} ({$status})");
+
             return null;
         }
 
@@ -646,22 +733,29 @@ class ImportFromHugo extends Command
         $this->tweetIdByBundle[$slug][$locale] = $tweet->id;
 
         $this->line("Tweet[{$locale}]: {$slug}");
+
         return $tweet;
     }
 
     private function syncTweetFrontMatterAssociations(Tweet $primary, array $locales): void
     {
         $primaryFile = $locales['zh'] ?? $locales['en'] ?? $locales['ja'] ?? null;
-        if (! $primaryFile) return;
-        [$fm, ] = $this->splitFrontMatter(file_get_contents($primaryFile));
+        if (! $primaryFile) {
+            return;
+        }
+        [$fm] = $this->splitFrontMatter(file_get_contents($primaryFile));
 
         $tagIds = [];
         foreach ((array) ($fm['tags'] ?? []) as $tagName) {
             $tag = $this->resolveTagByName($primary->locale, $tagName);
-            if ($tag) $tagIds[] = $tag->id;
+            if ($tag) {
+                $tagIds[] = $tag->id;
+            }
         }
 
-        if ($this->option('dry-run')) return;
+        if ($this->option('dry-run')) {
+            return;
+        }
 
         $allTweets = Tweet::query()
             ->where('tweet_group_id', $primary->tweet_group_id)
@@ -699,7 +793,7 @@ class ImportFromHugo extends Command
         $tweetExcerptById = [];
         foreach (Tweet::query()->select('id', 'body')->get() as $t) {
             $plain = trim(preg_replace('/\s+/', ' ', strip_tags($t->body)));
-            $tweetExcerptById[$t->id] = \Illuminate\Support\Str::limit($plain, 60);
+            $tweetExcerptById[$t->id] = Str::limit($plain, 60);
         }
 
         foreach (Post::query()->get() as $post) {
@@ -716,7 +810,7 @@ class ImportFromHugo extends Command
             }
         }
 
-        foreach (\App\Models\Page::query()->get() as $page) {
+        foreach (Page::query()->get() as $page) {
             $newBody = $this->rewriteBodyLinks($page->body, $page->locale, $postTitleByLocaleSlug, $tweetExcerptById);
             if ($newBody !== $page->body) {
                 DB::table('pages')->where('id', $page->id)->update(['body' => $newBody]);
@@ -737,15 +831,19 @@ class ImportFromHugo extends Command
                     if ($title && (trim($text) === "/posts/{$slug}/" || trim($text) === "/posts/{$slug}")) {
                         $text = $title;
                     }
+
                     return "[{$text}]({$href})";
                 }
                 // tweets
                 $id = $this->resolveTweetId($slug, $locale);
-                if (! $id) return $m[0];
+                if (! $id) {
+                    return $m[0];
+                }
                 $excerpt = $tweetExcerpts[$id] ?? null;
                 if ($excerpt && (trim($text) === "/tweets/{$slug}/" || trim($text) === "/tweets/{$slug}")) {
                     $text = $excerpt;
                 }
+
                 return "[{$text}](/{$locale}/tweets/{$id})";
             },
             $body
@@ -756,9 +854,12 @@ class ImportFromHugo extends Command
             '#href="/(posts|tweets)/([A-Za-z0-9_\-]+)/?"#',
             function ($m) use ($locale) {
                 [$kind, $slug] = [$m[1], $m[2]];
-                if ($kind === 'posts') return 'href="/' . $locale . '/posts/' . $slug . '"';
+                if ($kind === 'posts') {
+                    return 'href="/'.$locale.'/posts/'.$slug.'"';
+                }
                 $id = $this->resolveTweetId($slug, $locale);
-                return $id ? 'href="/' . $locale . '/tweets/' . $id . '"' : $m[0];
+
+                return $id ? 'href="/'.$locale.'/tweets/'.$id.'"' : $m[0];
             },
             $body
         );
@@ -773,13 +874,18 @@ class ImportFromHugo extends Command
                     if (preg_match('#^/([a-z]{2,5})/posts/#', $href, $hm)) {
                         $loc = $hm[1];
                         $title = $postTitles[$loc][$slug] ?? null;
-                        if ($title) return '<a href="' . $href . '">' . htmlspecialchars($title) . '</a>';
+                        if ($title) {
+                            return '<a href="'.$href.'">'.htmlspecialchars($title).'</a>';
+                        }
                     }
                 }
                 if ($kind === 'tweets') {
                     $excerpt = $tweetExcerpts[(int) $slug] ?? null;
-                    if ($excerpt) return '<a href="' . $href . '">' . htmlspecialchars($excerpt) . '</a>';
+                    if ($excerpt) {
+                        return '<a href="'.$href.'">'.htmlspecialchars($excerpt).'</a>';
+                    }
                 }
+
                 return $m[0];
             },
             $body
@@ -800,6 +906,7 @@ class ImportFromHugo extends Command
                 return $this->tweetIdByBundle[$bundleSlug][$loc];
             }
         }
+
         return null;
     }
 
@@ -820,12 +927,15 @@ class ImportFromHugo extends Command
         } catch (\Throwable $e) {
             $fm = [];
         }
+
         return [is_array($fm) ? $fm : [], $m[2] ?? ''];
     }
 
     private function parseDate($val): ?Carbon
     {
-        if ($val === null || $val === '') return null;
+        if ($val === null || $val === '') {
+            return null;
+        }
         try {
             if ($val instanceof \DateTimeInterface) {
                 return Carbon::instance($val);
@@ -833,6 +943,7 @@ class ImportFromHugo extends Command
             if (is_int($val)) {
                 return Carbon::createFromTimestamp($val);
             }
+
             return Carbon::parse((string) $val);
         } catch (\Throwable $e) {
             return null;

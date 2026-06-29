@@ -66,8 +66,8 @@ class TodoApiTest extends TestCase
 
     public function test_partial_update_changes_only_provided_fields(): void
     {
-        $todo = \App\Models\Todo::create(['title' => 'Original', 'priority' => 'low']);
-        \Laravel\Sanctum\Sanctum::actingAs($this->user(), ['todos:update']);
+        $todo = Todo::create(['title' => 'Original', 'priority' => 'low']);
+        Sanctum::actingAs($this->user(), ['todos:update']);
 
         // PATCH only status — title/priority must be left intact, completed_at set.
         $this->patchJson("/api/todos/{$todo->id}", ['status' => 'done'])

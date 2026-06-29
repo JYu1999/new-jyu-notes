@@ -32,6 +32,7 @@ class PageController extends Controller
     public function store(StoreRequest $req, PageService $svc): RedirectResponse
     {
         $page = $svc->create($req->validated());
+
         return redirect()->route('admin.pages.edit', $page)->with('success', '已建立');
     }
 
@@ -47,12 +48,14 @@ class PageController extends Controller
     public function update(Page $page, UpdateRequest $req, PageService $svc): RedirectResponse
     {
         $svc->update($page, $req->validated());
+
         return redirect()->route('admin.pages.edit', $page)->with('success', '已更新');
     }
 
     public function destroy(Page $page, PageService $svc): RedirectResponse
     {
         $svc->softDelete($page);
+
         return redirect()->route('admin.pages.index')->with('success', '已移至垃圾桶');
     }
 
@@ -60,12 +63,14 @@ class PageController extends Controller
     {
         $page = Page::withTrashed()->findOrFail($id);
         $svc->restore($page);
+
         return redirect()->route('admin.pages.index')->with('success', '已還原');
     }
 
     public function createTranslation(Page $page, CreateTranslationRequest $req, PageService $svc): RedirectResponse
     {
         $new = $svc->createTranslation($page, $req->validated()['locale']);
+
         return redirect()->route('admin.pages.edit', $new)->with('success', '已建立新翻譯版本');
     }
 }

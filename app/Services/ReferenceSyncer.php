@@ -14,7 +14,7 @@ class ReferenceSyncer
      */
     public function sync(Model $source): void
     {
-        $entries = (new ReferenceExtractor())->extract((string) ($source->body ?? ''));
+        $entries = (new ReferenceExtractor)->extract((string) ($source->body ?? ''));
 
         $targets = []; // dedupe key "type:id" => ['type' => , 'id' => ]
         foreach ($entries as $entry) {

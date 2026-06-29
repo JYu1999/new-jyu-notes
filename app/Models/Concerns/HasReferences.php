@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\Reference;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 
@@ -24,7 +25,7 @@ trait HasReferences
      * Mixed-type source models that publicly mention this model,
      * newest first. Both Post and Tweet expose status + published_at.
      *
-     * @return Collection<int, \Illuminate\Database\Eloquent\Model>
+     * @return Collection<int, Model>
      */
     public function publishedBacklinks(): Collection
     {

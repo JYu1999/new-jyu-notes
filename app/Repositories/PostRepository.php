@@ -94,7 +94,7 @@ class PostRepository
                 'category_post.order_in_category'
             )->join('category_post', function ($j) use ($category) {
                 $j->on('category_post.post_id', '=', 'posts.id')
-                  ->where('category_post.category_id', $category->id);
+                    ->where('category_post.category_id', $category->id);
             })->select('posts.*', 'category_post.order_in_category'),
             Category::SORT_DATE_ASC => $q->orderBy('published_at'),
             default => $q->orderByDesc('published_at'),
@@ -124,7 +124,7 @@ class PostRepository
         if ($search) {
             $q->where(function ($qq) use ($search) {
                 $qq->where('title', 'ILIKE', "%{$search}%")
-                   ->orWhere('excerpt', 'ILIKE', "%{$search}%");
+                    ->orWhere('excerpt', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -169,7 +169,7 @@ class PostRepository
      * Search the author's own PUBLISHED posts in one locale for the @-mention picker.
      * Matches title / slug / excerpt (case-insensitive), title matches ranked first.
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Post>
+     * @return EloquentCollection<int, Post>
      */
     public function searchForMention(string $q, string $locale, ?int $exclude = null, int $limit = 8): EloquentCollection
     {

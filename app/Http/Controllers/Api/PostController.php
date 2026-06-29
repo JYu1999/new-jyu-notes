@@ -43,12 +43,14 @@ class PostController extends Controller
     public function update(Post $post, UpdateRequest $request, PostService $service): PostResource
     {
         $post = $service->update($post, $request->validated()); // validated() has no status
+
         return new PostResource($post->load(['tags', 'categories']));
     }
 
     public function destroy(Post $post, PostService $service): Response
     {
         $service->softDelete($post);
+
         return response()->noContent();
     }
 
@@ -65,6 +67,7 @@ class PostController extends Controller
     public function publish(Post $post, PostService $service): PostResource
     {
         $service->updateStatus($post, Post::STATUS_PUBLISHED);
+
         return new PostResource($post->fresh()->load(['tags', 'categories']));
     }
 }

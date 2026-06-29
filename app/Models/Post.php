@@ -17,7 +17,9 @@ class Post extends Model
     use HasFactory, HasReferences, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_PUBLISHED = 'published';
+
     public const STATUS_HIDDEN = 'hidden';
 
     public const STATUSES = [

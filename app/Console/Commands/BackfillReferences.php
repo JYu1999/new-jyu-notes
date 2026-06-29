@@ -19,7 +19,7 @@ class BackfillReferences extends Command
     public function handle(ReferenceSyncer $syncer): int
     {
         $dryRun = (bool) $this->option('dry-run');
-        $extractor = new ReferenceExtractor();
+        $extractor = new ReferenceExtractor;
 
         $this->info($dryRun ? '== DRY RUN（不會寫入資料庫）==' : '== Backfill content_references ==');
 
