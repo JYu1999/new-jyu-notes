@@ -28,6 +28,14 @@ class Post extends Model
 
     public const SUPPORTED_LOCALES = ['zh', 'en', 'ja', 'vi', 'id'];
 
+    private const READING_SPEEDS = [
+        'zh' => ['type' => 'character', 'speed' => 400],  // 400 字/分鐘 (Brysbaert 2019)
+        'en' => ['type' => 'word',      'speed' => 230],  // 200-250 words/分鐘，取中間值 (Brysbaert 2019)
+        'ja' => ['type' => 'character', 'speed' => 500],  // 400-600 文字/分鐘，取中間值
+        'vi' => ['type' => 'word',      'speed' => 230],  // 200-250 words/分鐘，與英文類似
+        'id' => ['type' => 'word',      'speed' => 230],  // 200-250 words/分鐘，與英文類似
+    ];
+
     protected $fillable = [
         'post_group_id',
         'locale',
@@ -107,6 +115,23 @@ class Post extends Model
         return self::query()
             ->where('post_group_id', $this->post_group_id)
             ->get();
+    }
+
+    // ===== Accessors =====
+
+    public function getReadingTimeAttribute(): int
+    {
+        $text = strip_tags($this->body ?? '');
+        $config = self::READING_SPEEDS[$this->locale]
+            ?? throw new \RuntimeException("Missing reading speed config for locale: {$this->locale}");
+
+        if ($config['type'] === 'character') {
+            $count = mb_strlen(preg_replace('/\s+/', '', $text));
+        } else {
+            $count = str_word_count($text);
+        }
+
+        return max(1, (int) ceil($count / $config['speed']));
     }
 
     // ===== Scopes =====
