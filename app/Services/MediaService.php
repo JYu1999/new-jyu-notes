@@ -59,7 +59,9 @@ class MediaService
         Storage::disk(config('media.disk'))->put($targetPath, file_get_contents($sourcePath));
 
         $existing = Media::where('path', $targetPath)->first();
-        if ($existing) return $existing;
+        if ($existing) {
+            return $existing;
+        }
 
         $size = filesize($sourcePath) ?: 0;
         $mime = mime_content_type($sourcePath) ?: 'application/octet-stream';

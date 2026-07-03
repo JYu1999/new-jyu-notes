@@ -3,8 +3,10 @@
 namespace App\Support;
 
 use App\Models\Category;
+use App\Models\CategoryTranslation;
 use App\Models\Post;
 use App\Models\Tag;
+use App\Models\TagTranslation;
 use Illuminate\Support\Str;
 
 class SlugGenerator
@@ -19,7 +21,7 @@ class SlugGenerator
         $suffix = 2;
 
         while (self::postSlugExists($locale, $slug, $ignorePostId)) {
-            $slug = $base . '-' . $suffix++;
+            $slug = $base.'-'.$suffix++;
         }
 
         return $slug;
@@ -35,7 +37,7 @@ class SlugGenerator
         $suffix = 2;
 
         while (self::tagSlugExists($locale, $slug, $ignoreTagId)) {
-            $slug = $base . '-' . $suffix++;
+            $slug = $base.'-'.$suffix++;
         }
 
         return $slug;
@@ -51,7 +53,7 @@ class SlugGenerator
         $suffix = 2;
 
         while (self::categorySlugExists($locale, $slug, $ignoreCategoryId)) {
-            $slug = $base . '-' . $suffix++;
+            $slug = $base.'-'.$suffix++;
         }
 
         return $slug;
@@ -65,7 +67,7 @@ class SlugGenerator
         ]);
 
         if ($slug === '') {
-            $slug = 'untitled-' . substr(md5($text . microtime()), 0, 8);
+            $slug = 'untitled-'.substr(md5($text.microtime()), 0, 8);
         }
 
         return Str::limit($slug, 100, '');
@@ -77,24 +79,27 @@ class SlugGenerator
         if ($ignoreId !== null) {
             $q->where('id', '!=', $ignoreId);
         }
+
         return $q->exists();
     }
 
     private static function tagSlugExists(string $locale, string $slug, ?int $ignoreId): bool
     {
-        $q = \App\Models\TagTranslation::query()->where('locale', $locale)->where('slug', $slug);
+        $q = TagTranslation::query()->where('locale', $locale)->where('slug', $slug);
         if ($ignoreId !== null) {
             $q->where('tag_id', '!=', $ignoreId);
         }
+
         return $q->exists();
     }
 
     private static function categorySlugExists(string $locale, string $slug, ?int $ignoreId): bool
     {
-        $q = \App\Models\CategoryTranslation::query()->where('locale', $locale)->where('slug', $slug);
+        $q = CategoryTranslation::query()->where('locale', $locale)->where('slug', $slug);
         if ($ignoreId !== null) {
             $q->where('category_id', '!=', $ignoreId);
         }
+
         return $q->exists();
     }
 }

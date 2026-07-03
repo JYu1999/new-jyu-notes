@@ -15,6 +15,7 @@ class DetectLocale
         $cookieLocale = $request->cookie('locale');
         if (in_array($cookieLocale, $supported, true)) {
             app()->setLocale($cookieLocale);
+
             return $next($request);
         }
 
@@ -22,11 +23,13 @@ class DetectLocale
             $short = strtolower(substr($lang, 0, 2));
             if (in_array($short, $supported, true)) {
                 app()->setLocale($short);
+
                 return $next($request);
             }
         }
 
         app()->setLocale(config('app.locale'));
+
         return $next($request);
     }
 }

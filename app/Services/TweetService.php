@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Tweet;
 use App\Models\TweetGroup;
-use App\Services\ReferenceSyncer;
 use Illuminate\Support\Facades\DB;
 
 class TweetService
@@ -45,7 +44,7 @@ class TweetService
                 $this->syncTagsAcrossGroup($tweet, $data['tag_ids']);
             }
 
-            (new ReferenceSyncer())->sync($tweet);
+            (new ReferenceSyncer)->sync($tweet);
 
             return $tweet->fresh(['tags']);
         });
@@ -70,7 +69,7 @@ class TweetService
                 $this->syncTagsAcrossGroup($tweet, $data['tag_ids']);
             }
 
-            (new ReferenceSyncer())->sync($tweet);
+            (new ReferenceSyncer)->sync($tweet);
 
             return $tweet->fresh(['tags']);
         });
@@ -109,6 +108,7 @@ class TweetService
                 if ($existing->trashed()) {
                     $existing->restore();
                 }
+
                 return $existing;
             }
 
@@ -148,6 +148,7 @@ class TweetService
         if (($data['status'] ?? null) === Tweet::STATUS_PUBLISHED) {
             return now();
         }
+
         return null;
     }
 
@@ -160,6 +161,7 @@ class TweetService
         if ($newStatus === Tweet::STATUS_PUBLISHED && ! $tweet->published_at) {
             return now();
         }
+
         return null;
     }
 }

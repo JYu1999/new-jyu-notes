@@ -10,10 +10,13 @@ class Todo extends Model
     use HasFactory;
 
     public const STATUS_OPEN = 'open';
+
     public const STATUS_DONE = 'done';
 
     public const PRIORITY_LOW = 'low';
+
     public const PRIORITY_MEDIUM = 'medium';
+
     public const PRIORITY_HIGH = 'high';
 
     protected $fillable = [

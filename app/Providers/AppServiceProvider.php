@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Post;
+use App\Models\Tweet;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,9 +25,9 @@ class AppServiceProvider extends ServiceProvider
         // Non-enforcing: maps Post/Tweet to short type strings for content_references
         // while leaving other polymorphic models (e.g. Sanctum's tokenable User) on
         // their default class-name morph. enforceMorphMap() would throw for User.
-        \Illuminate\Database\Eloquent\Relations\Relation::morphMap([
-            'post' => \App\Models\Post::class,
-            'tweet' => \App\Models\Tweet::class,
+        Relation::morphMap([
+            'post' => Post::class,
+            'tweet' => Tweet::class,
         ]);
     }
 }

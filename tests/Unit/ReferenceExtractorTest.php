@@ -9,7 +9,7 @@ class ReferenceExtractorTest extends TestCase
 {
     private function extract(string $body): array
     {
-        return (new ReferenceExtractor())->extract($body);
+        return (new ReferenceExtractor)->extract($body);
     }
 
     public function test_matches_post_markdown_link(): void

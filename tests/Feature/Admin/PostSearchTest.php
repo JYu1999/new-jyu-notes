@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Post;
 use App\Models\User;
+use App\Services\PostService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,7 +24,7 @@ class PostSearchTest extends TestCase
 
     private function makePost(array $attrs): Post
     {
-        return app(\App\Services\PostService::class)->create(array_merge([
+        return app(PostService::class)->create(array_merge([
             'locale' => 'zh',
             'title' => 'Untitled',
             'body' => 'b',

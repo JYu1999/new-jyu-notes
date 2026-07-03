@@ -47,7 +47,7 @@ class ImportMediaRewriteTest extends TestCase
         $input = new ArrayInput([]);
         $input->bind($cmd->getDefinition());
         $cmd->setInput($input);
-        $cmd->setOutput(new OutputStyle($input, new NullOutput()));
+        $cmd->setOutput(new OutputStyle($input, new NullOutput));
 
         $admin = User::create([
             'name' => 'A',

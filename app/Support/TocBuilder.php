@@ -25,11 +25,11 @@ class TocBuilder
                 $text = trim(strip_tags($inner));
 
                 // Build a slug; ensure uniqueness within the document.
-                $base = Str::slug($text) ?: 'h' . (count($headings) + 1);
+                $base = Str::slug($text) ?: 'h'.(count($headings) + 1);
                 $id = $base;
                 $i = 2;
                 while (isset($seen[$id])) {
-                    $id = $base . '-' . $i++;
+                    $id = $base.'-'.$i++;
                 }
                 $seen[$id] = true;
 
@@ -41,10 +41,10 @@ class TocBuilder
 
                 // Preserve any existing attributes (e.g. class); insert id at the front.
                 $attrs = trim((string) $attrs);
-                $idAttr = 'id="' . htmlspecialchars($id, ENT_QUOTES) . '"';
-                $attrStr = $attrs === '' ? ' ' . $idAttr : ' ' . $idAttr . ' ' . $attrs;
+                $idAttr = 'id="'.htmlspecialchars($id, ENT_QUOTES).'"';
+                $attrStr = $attrs === '' ? ' '.$idAttr : ' '.$idAttr.' '.$attrs;
 
-                return '<h' . $level . $attrStr . '>' . $inner . '</h' . $level . '>';
+                return '<h'.$level.$attrStr.'>'.$inner.'</h'.$level.'>';
             },
             $html
         );

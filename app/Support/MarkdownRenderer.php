@@ -13,6 +13,7 @@ use League\CommonMark\MarkdownConverter;
 class MarkdownRenderer
 {
     private MarkdownConverter $converter;
+
     private ShortcodeConverter $shortcodes;
 
     public function __construct()
@@ -25,14 +26,14 @@ class MarkdownRenderer
 
         // Use the GFM components individually so we can skip DisallowedRawHtmlExtension,
         // which would otherwise escape iframe / title / etc. — needed for our YouTube embeds.
-        $environment->addExtension(new CommonMarkCoreExtension());
-        $environment->addExtension(new TableExtension());
-        $environment->addExtension(new StrikethroughExtension());
-        $environment->addExtension(new TaskListExtension());
-        $environment->addExtension(new AutolinkExtension());
+        $environment->addExtension(new CommonMarkCoreExtension);
+        $environment->addExtension(new TableExtension);
+        $environment->addExtension(new StrikethroughExtension);
+        $environment->addExtension(new TaskListExtension);
+        $environment->addExtension(new AutolinkExtension);
 
         $this->converter = new MarkdownConverter($environment);
-        $this->shortcodes = new ShortcodeConverter();
+        $this->shortcodes = new ShortcodeConverter;
     }
 
     public function render(string $markdown): string

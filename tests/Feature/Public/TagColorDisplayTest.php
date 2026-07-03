@@ -27,13 +27,13 @@ class TagColorDisplayTest extends TestCase
         $group = PostGroup::create([]);
 
         return Post::create([
-            'post_group_id'  => $group->id,
-            'locale'         => 'zh',
-            'slug'           => 'test-tag-color-post',
-            'title'          => 'Tag Color Test Post',
-            'body'           => 'Hello world.',
-            'status'         => Post::STATUS_PUBLISHED,
-            'published_at'   => now(),
+            'post_group_id' => $group->id,
+            'locale' => 'zh',
+            'slug' => 'test-tag-color-post',
+            'title' => 'Tag Color Test Post',
+            'body' => 'Hello world.',
+            'status' => Post::STATUS_PUBLISHED,
+            'published_at' => now(),
             'last_modified_at' => now(),
         ]);
     }
@@ -77,7 +77,7 @@ class TagColorDisplayTest extends TestCase
     public function test_page_with_both_colored_and_uncolored_tags_renders_correctly(): void
     {
         $post = $this->makePublishedPost();
-        $coloredTag   = $this->makeTag('彩色', 'colored-2', '#8a5a6b');
+        $coloredTag = $this->makeTag('彩色', 'colored-2', '#8a5a6b');
         $uncoloredTag = $this->makeTag('無色', 'uncolored-2', null);
         $post->tags()->attach([$coloredTag->id, $uncoloredTag->id]);
 
