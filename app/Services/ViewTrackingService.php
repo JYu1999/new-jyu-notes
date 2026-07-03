@@ -44,7 +44,8 @@ class ViewTrackingService
 
     private function fingerprint(string $ip, string $userAgent): string
     {
-        $dailySalt = now()->format('Ymd') . config('app.key');
-        return hash('sha256', $ip . '|' . $userAgent . '|' . $dailySalt);
+        $dailySalt = now()->format('Ymd').config('app.key');
+
+        return hash('sha256', $ip.'|'.$userAgent.'|'.$dailySalt);
     }
 }

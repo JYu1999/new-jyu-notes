@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\TweetRepository;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TweetController extends Controller
 {
-    public function index(TweetRepository $tweets, \Illuminate\Http\Request $request): View
+    public function index(TweetRepository $tweets, Request $request): View
     {
         $paginator = $tweets->paginate(app()->getLocale(), 20);
 

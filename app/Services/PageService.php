@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\Page;
 use App\Models\PageGroup;
-use App\Support\SlugGenerator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PageService
 {
@@ -54,6 +54,7 @@ class PageService
             }
 
             $page->update($updateData);
+
             return $page->fresh();
         });
     }
@@ -78,7 +79,10 @@ class PageService
                 ->first();
 
             if ($existingTrans) {
-                if ($existingTrans->trashed()) $existingTrans->restore();
+                if ($existingTrans->trashed()) {
+                    $existingTrans->restore();
+                }
+
                 return $existingTrans;
             }
 
@@ -86,7 +90,7 @@ class PageService
                 'page_group_id' => $existing->page_group_id,
                 'locale' => $newLocale,
                 'slug' => $this->forSlug($existing->title, $newLocale),
-                'title' => $existing->title . ' (' . strtoupper($newLocale) . ')',
+                'title' => $existing->title.' ('.strtoupper($newLocale).')',
                 'body' => $existing->body,
                 'cover_image_path' => $existing->cover_image_path,
                 'status' => Page::STATUS_DRAFT,
@@ -97,15 +101,16 @@ class PageService
 
     private function forSlug(string $title, string $locale, ?int $ignoreId = null): string
     {
-        $base = \Illuminate\Support\Str::slug($title) ?: 'page-' . substr(md5($title), 0, 8);
+        $base = Str::slug($title) ?: 'page-'.substr(md5($title), 0, 8);
         $slug = $base;
         $suffix = 2;
         while (Page::query()
             ->where('locale', $locale)->where('slug', $slug)
             ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
             ->exists()) {
-            $slug = $base . '-' . $suffix++;
+            $slug = $base.'-'.$suffix++;
         }
+
         return $slug;
     }
 }

@@ -14,7 +14,9 @@ class Page extends Model
     use HasFactory, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_PUBLISHED = 'published';
+
     public const STATUS_HIDDEN = 'hidden';
 
     public const STATUSES = [
@@ -47,7 +49,10 @@ class Page extends Model
 
     public function translation(string $locale): ?self
     {
-        if ($locale === $this->locale) return $this;
+        if ($locale === $this->locale) {
+            return $this;
+        }
+
         return self::query()
             ->where('page_group_id', $this->page_group_id)
             ->where('locale', $locale)

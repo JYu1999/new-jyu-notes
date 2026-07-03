@@ -7,6 +7,8 @@ use App\Http\Middleware\TrackPostView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,8 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'set-locale' => SetLocale::class,
             'role' => EnsureUserRole::class,
             'track-post-view' => TrackPostView::class,
-            'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
-            'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
+            'abilities' => CheckAbilities::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('auth.login.show'));

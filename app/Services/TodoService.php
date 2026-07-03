@@ -9,7 +9,7 @@ class TodoService
 {
     public function create(array $data): Todo
     {
-        return $this->fillAndSave(new Todo(), $data);
+        return $this->fillAndSave(new Todo, $data);
     }
 
     public function update(Todo $todo, array $data): Todo

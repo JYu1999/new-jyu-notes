@@ -26,7 +26,7 @@ class SearchService
             return ['posts' => collect(), 'tweets' => collect()];
         }
 
-        $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $trimmed) . '%';
+        $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $trimmed).'%';
 
         $posts = collect();
         $tweets = collect();
@@ -37,9 +37,9 @@ class SearchService
                 ->published()
                 ->where(function ($q) use ($like, $trimmed) {
                     $q->where('title', 'ILIKE', $like)
-                      ->orWhere('excerpt', 'ILIKE', $like)
-                      ->orWhere('body', 'ILIKE', $like)
-                      ->orWhereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed]);
+                        ->orWhere('excerpt', 'ILIKE', $like)
+                        ->orWhere('body', 'ILIKE', $like)
+                        ->orWhereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed]);
                 })
                 ->orderByDesc('published_at')
                 ->limit(20)
@@ -52,7 +52,7 @@ class SearchService
                 ->published()
                 ->where(function ($q) use ($like, $trimmed) {
                     $q->where('body', 'ILIKE', $like)
-                      ->orWhereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed]);
+                        ->orWhereRaw("search_vector @@ websearch_to_tsquery('simple', ?)", [$trimmed]);
                 })
                 ->orderByDesc('published_at')
                 ->limit(20)

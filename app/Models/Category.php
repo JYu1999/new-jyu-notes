@@ -12,7 +12,9 @@ class Category extends Model
     use HasFactory;
 
     public const SORT_MANUAL = 'manual';
+
     public const SORT_DATE_DESC = 'date_desc';
+
     public const SORT_DATE_ASC = 'date_asc';
 
     public const SORT_METHODS = [
