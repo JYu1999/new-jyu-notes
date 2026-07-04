@@ -26,7 +26,7 @@
         <div class="flex items-center gap-4 text-xs text-ink-3 font-mono mb-8">
             <span>{{ $post->published_at?->format('Y/m/d') }}</span>
             <span>·</span>
-            <span>{{ $post->reading_time }} min read</span>
+            <span>{{ $post->reading_time }} {{ __('public.min_read') }}</span>
             <span>·</span>
             <span>{{ $post->views_count }} {{ __('public.views') }}</span>
             @if($post->author)

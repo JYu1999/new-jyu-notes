@@ -49,6 +49,7 @@ return [
     'search_tweets' => 'Tweets',
 
     'views' => 'views',
+    'min_read' => 'min read',
     'sensitive_warning' => 'Sensitive content',
     'sensitive_reveal' => 'Click to view',
 

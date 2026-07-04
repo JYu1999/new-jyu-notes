@@ -49,6 +49,7 @@ return [
     'search_tweets' => 'つぶやき',
 
     'views' => '閲覧',
+    'min_read' => '分で読めます',
     'sensitive_warning' => '閲覧注意',
     'sensitive_reveal' => 'タップで表示',
 

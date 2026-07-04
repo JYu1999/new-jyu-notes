@@ -32,7 +32,7 @@
 
     <div class="mt-auto flex items-center justify-between text-xs text-ink-3 font-mono">
         <span>{{ $post->published_at?->format('Y/m/d') }}</span>
-        <span>{{ $post->reading_time }} min read</span>
+        <span>{{ $post->reading_time }} {{ __('public.min_read') }}</span>
         <span>{{ $post->views_count }} {{ __('public.views') }}</span>
     </div>
 

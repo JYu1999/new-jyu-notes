@@ -57,6 +57,7 @@ return [
 
     // Card
     'views' => 'views',
+    'min_read' => 'min read',
     'sensitive_warning' => '敏感內容',
     'sensitive_reveal' => '點擊顯示',
 

@@ -49,6 +49,7 @@ return [
     'search_tweets' => 'Ghi chú',
 
     'views' => 'lượt xem',
+    'min_read' => 'phút đọc',
     'sensitive_warning' => 'Nội dung nhạy cảm',
     'sensitive_reveal' => 'Nhấn để xem',
 
