@@ -49,6 +49,7 @@ return [
     'search_tweets' => 'Catatan',
 
     'views' => 'dilihat',
+    'min_read' => 'mnt baca',
     'sensitive_warning' => 'Konten sensitif',
     'sensitive_reveal' => 'Klik untuk melihat',
 
