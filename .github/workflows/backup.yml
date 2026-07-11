@@ -39,6 +39,9 @@ jobs:
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-18
+          # runner 預裝 PG16 cluster，/usr/bin/pg_dump 的 pg_wrapper 會解析到 16；
+          # 把 18 的 bin 放進 PATH 前面，讓 pg_dump/pg_restore 都用 18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
 
       - name: Install rclone
         run: sudo apt-get install -y rclone
