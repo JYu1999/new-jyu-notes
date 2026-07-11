@@ -9,6 +9,8 @@
 2. **Backblaze B2**：
    - 建立 private bucket（例：`jyu1999-backup`）。
    - Lifecycle settings：`Keep prior versions for 30 days`（媒體誤刪保護）。
+   - 注意：workflow 的 30 天輪替刪除 dump 後，B2 會再保留舊版本 30 天，
+     所以 dump 實際佔用儲存約 60 天，屬預期行為。
    - App Keys → 建立 application key，**限定只能存取該 bucket**。
 3. **Cloudflare R2**：R2 → Manage API Tokens → 建立 **Object Read only**
    token，記下 Access Key ID / Secret Access Key 與帳號的 S3 endpoint
@@ -69,6 +71,9 @@ rclone sync "b2:jyu1999-backup/media" "r2:<media-bucket>" --progress
 # 或從本地副本推回：
 rclone sync ~/Backups/jyu1999/media "r2:<media-bucket>" --progress
 ```
+
+> 注意：用 bucket-scoped token 寫入 R2 時，rclone 可能因嘗試檢查/建立 bucket 而
+> 收到 AccessDenied，此時在指令加上 `--s3-no-check-bucket` 即可。
 
 媒體 URL 由 `media.jyu1999.com` 服務，bucket 換位置時記得更新
 `AWS_*` 環境變數與該網域的來源設定。

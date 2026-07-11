@@ -5,6 +5,8 @@ on:
     - cron: '0 19 * * *' # 台北時間 03:00
   workflow_dispatch:
 
+permissions: {}
+
 concurrency:
   group: backup
   cancel-in-progress: false
@@ -22,6 +24,7 @@ jobs:
       RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      RCLONE_CONFIG_R2_REGION: auto
       # remote "b2"：以 B2 native API 寫入備份 bucket
       RCLONE_CONFIG_B2_TYPE: b2
       RCLONE_CONFIG_B2_ACCOUNT: ${{ secrets.B2_KEY_ID }}
