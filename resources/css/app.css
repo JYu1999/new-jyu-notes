@@ -114,8 +114,12 @@
 .prose-blog ol { margin: 1em 0; padding-left: 1.4em; list-style-type: decimal; }
 .prose-blog ul ul { list-style-type: circle; }
 .prose-blog ul ul ul { list-style-type: square; }
+.prose-blog ul ul ul ul { list-style-type: disc; }
+.prose-blog ul ul ul ul ul { list-style-type: circle; }
 .prose-blog ol ol { list-style-type: lower-alpha; }
 .prose-blog ol ol ol { list-style-type: lower-roman; }
+.prose-blog ol ol ol ol { list-style-type: decimal; }
+.prose-blog ol ol ol ol ol { list-style-type: lower-alpha; }
 .prose-blog li { margin: 0.4em 0; }
 .prose-blog table { border-collapse: collapse; margin: 1.2em 0; width: 100%; font-size: 0.95em; font-family: var(--font-sans); }
 .prose-blog th, .prose-blog td { border: 1px solid var(--color-line); padding: 0.6em 0.8em; text-align: left; }
