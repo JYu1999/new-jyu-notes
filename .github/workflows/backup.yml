@@ -1,0 +1,72 @@
+name: Backup
+
+on:
+  schedule:
+    - cron: '0 19 * * *' # 台北時間 03:00
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      # rclone 用環境變數定義 remote，不落地 config 檔
+      # remote "r2"：以 S3 API 唯讀存取 Cloudflare R2
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      RCLONE_CONFIG_R2_REGION: auto
+      # remote "b2"：以 B2 native API 寫入備份 bucket
+      RCLONE_CONFIG_B2_TYPE: b2
+      RCLONE_CONFIG_B2_ACCOUNT: ${{ secrets.B2_KEY_ID }}
+      RCLONE_CONFIG_B2_KEY: ${{ secrets.B2_APP_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+
+    steps:
+      - name: Install postgresql-client-18 (PGDG)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-18
+
+      - name: Install rclone
+        run: sudo apt-get install -y rclone
+
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          DUMP_FILE="db-$(date -u +%F).dump"
+          echo "DUMP_FILE=${DUMP_FILE}" >> "$GITHUB_ENV"
+          pg_dump "$DATABASE_URL" \
+            --format=custom \
+            --no-owner \
+            --no-privileges \
+            --file="$DUMP_FILE"
+
+      - name: Verify dump integrity
+        run: pg_restore --list "$DUMP_FILE" > /dev/null
+
+      - name: Upload dump to B2
+        run: rclone copyto "$DUMP_FILE" "b2:${B2_BUCKET}/db/${DUMP_FILE}" --stats-one-line
+
+      - name: Sync media R2 -> B2
+        run: |
+          rclone sync "r2:${R2_BUCKET}" "b2:${B2_BUCKET}/media" \
+            --fast-list \
+            --transfers 16 \
+            --stats-one-line
+
+      - name: Prune dumps older than 30 days
+        run: rclone delete "b2:${B2_BUCKET}/db" --min-age 30d --stats-one-line
