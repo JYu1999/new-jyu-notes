@@ -16,7 +16,11 @@ DEST="${1:-$HOME/Backups/jyu1999}"
 
 mkdir -p "$DEST/db" "$DEST/media"
 
-latest=$(rclone lsf "b2:${B2_BUCKET}/db" --files-only | sort | tail -n 1)
+if ! listing=$(rclone lsf "b2:${B2_BUCKET}/db" --files-only); then
+  echo "錯誤：無法列出 b2:${B2_BUCKET}/db（請檢查 rclone 的 b2 remote 設定與 B2_BUCKET）" >&2
+  exit 1
+fi
+latest=$(sort <<<"$listing" | tail -n 1)
 if [[ -z "$latest" ]]; then
   echo "錯誤：b2:${B2_BUCKET}/db 底下找不到任何 dump" >&2
   exit 1
