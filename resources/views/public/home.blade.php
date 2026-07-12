@@ -14,7 +14,7 @@
         </p>
     </section>
 
-    <div class="grid lg:grid-cols-[2fr_1fr] gap-10">
+    <div class="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-10">
         {{-- Featured posts --}}
         <section>
             <div class="flex items-baseline justify-between mb-6">

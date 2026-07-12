@@ -82,7 +82,7 @@
 }
 .prose-blog h2 { font-size: 1.6em; }
 .prose-blog h3 { font-size: 1.3em; }
-.prose-blog a { color: var(--color-accent-ink); text-decoration: underline; text-decoration-thickness: 1px; }
+.prose-blog a { color: var(--color-accent-ink); text-decoration: underline; text-decoration-thickness: 1px; overflow-wrap: anywhere; }
 .prose-blog a:hover { color: var(--color-accent); }
 .prose-blog blockquote {
     border-left: 3px solid var(--color-accent);
