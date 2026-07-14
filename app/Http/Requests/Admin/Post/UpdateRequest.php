@@ -32,8 +32,6 @@ class UpdateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->has('is_featured')) {
-            $this->merge(['is_featured' => $this->boolean('is_featured')]);
-        }
+        $this->merge(['is_featured' => $this->boolean('is_featured')]);
     }
 }
