@@ -37,9 +37,16 @@ class ChangelogController extends Controller
         foreach (preg_split('/\R/', File::get($path)) as $line) {
             $line = rtrim($line);
 
-            if (preg_match('/^##\s+(\d{4}-\d{2}-\d{2})\s*$/', $line, $match) === 1) {
-                $currentDate = $match[1];
-                $groups->put($currentDate, $groups->get($currentDate, collect()));
+            if (preg_match('/^##\s+(\d{4})-(\d{2})-(\d{2})\s*$/', $line, $match) === 1) {
+                $year = (int) $match[1];
+                $month = (int) $match[2];
+                $day = (int) $match[3];
+
+                // Validate that the date is a real calendar date
+                if (checkdate($month, $day, $year)) {
+                    $currentDate = $match[1].'-'.$match[2].'-'.$match[3];
+                    $groups->put($currentDate, $groups->get($currentDate, collect()));
+                }
 
                 continue;
             }

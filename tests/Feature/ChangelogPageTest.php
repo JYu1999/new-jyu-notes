@@ -98,4 +98,21 @@ class ChangelogPageTest extends TestCase
     {
         $this->get('/changelog')->assertOk()->assertSee('No entries yet.');
     }
+
+    public function test_ignores_calendar_invalid_date_headings_and_does_not_crash(): void
+    {
+        $this->putContent(<<<'MD'
+        ## 2026-13-01
+        - This should not appear
+
+        ## 2026-05-19
+        - Valid Entry
+        MD);
+
+        $this->get('/changelog')
+            ->assertOk()
+            ->assertSee('Valid Entry')
+            ->assertDontSee('This should not appear')
+            ->assertDontSee('December 31, 2026'); // month 13 should not roll over
+    }
 }
