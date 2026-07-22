@@ -5,18 +5,11 @@ use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\TagController;
-use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\TweetController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/me', MeController::class);
-
-    Route::get('/todos', [TodoController::class, 'index'])->middleware('ability:todos:read');
-    Route::post('/todos', [TodoController::class, 'store'])->middleware('ability:todos:create');
-    Route::get('/todos/{todo}', [TodoController::class, 'show'])->middleware('ability:todos:read');
-    Route::patch('/todos/{todo}', [TodoController::class, 'update'])->middleware('ability:todos:update');
-    Route::delete('/todos/{todo}', [TodoController::class, 'destroy'])->middleware('ability:todos:delete');
 
     Route::get('/posts', [PostController::class, 'index'])->middleware('ability:posts:read');
     Route::post('/posts', [PostController::class, 'store'])->middleware('ability:posts:create');
