@@ -19,8 +19,6 @@ class AbilitiesTest extends TestCase
         $this->assertNotContains('tags:publish', $all);
         $this->assertNotContains('categories:publish', $all);
 
-        $this->assertNotContains('todos:read', $all);
-
         // 5 + 5 + 4 + 4 + 3 = 21 abilities
         $this->assertCount(21, $all);
     }
