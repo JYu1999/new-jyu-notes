@@ -1,3 +1,6 @@
+## 2026-08-04
+- Changelog now lives in CHANGELOG.md, updated as part of each PR instead of a todo list(Author: yi-rong)
+
 ## 2026-07-12
 - Fix homepage layout collapsing when a tweet contains a very long URL
 
