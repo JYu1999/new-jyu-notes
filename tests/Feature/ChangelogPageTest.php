@@ -2,28 +2,42 @@
 
 namespace Tests\Feature;
 
-use App\Models\Todo;
-use App\Services\TodoService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
 class ChangelogPageTest extends TestCase
 {
-    use RefreshDatabase;
+    private string $changelogFile;
 
-    private function doneFlagged(string $title, string $date): void
+    protected function setUp(): void
     {
-        $todo = app(TodoService::class)->create([
-            'title' => $title, 'status' => Todo::STATUS_DONE, 'show_in_changelog' => true,
-        ]);
-        DB::table('todos')->where('id', $todo->id)->update(['completed_at' => $date]);
+        parent::setUp();
+
+        $this->changelogFile = storage_path('framework/testing/changelog-'.uniqid().'.md');
+        config(['changelog.path' => $this->changelogFile]);
+    }
+
+    protected function tearDown(): void
+    {
+        File::delete($this->changelogFile);
+
+        parent::tearDown();
+    }
+
+    private function putContent(string $content): void
+    {
+        File::put($this->changelogFile, $content);
     }
 
     public function test_changelog_shows_grouped_entries(): void
     {
-        $this->doneFlagged('A Feature', '2026-05-19 10:00:00');
-        $this->doneFlagged('C Feature', '2026-05-18 10:00:00');
+        $this->putContent(<<<'MD'
+        ## 2026-05-19
+        - A Feature
+
+        ## 2026-05-18
+        - C Feature
+        MD);
 
         $this->get('/changelog')
             ->assertOk()
@@ -33,15 +47,67 @@ class ChangelogPageTest extends TestCase
             ->assertSee('C Feature');
     }
 
-    public function test_excludes_unflagged_and_open(): void
+    public function test_orders_newest_date_first_even_if_file_lists_them_out_of_order(): void
     {
-        app(TodoService::class)->create(['title' => 'Secret chore', 'status' => Todo::STATUS_DONE, 'show_in_changelog' => false]);
-        app(TodoService::class)->create(['title' => 'Planned thing', 'status' => Todo::STATUS_OPEN, 'show_in_changelog' => true]);
+        $this->putContent(<<<'MD'
+        ## 2026-05-18
+        - Old Entry
+
+        ## 2026-05-19
+        - New Entry
+        MD);
+
+        $content = $this->get('/changelog')->getContent();
+
+        $this->assertTrue(strpos($content, 'New Entry') < strpos($content, 'Old Entry'));
+    }
+
+    public function test_same_day_entries_preserve_file_order(): void
+    {
+        $this->putContent(<<<'MD'
+        ## 2026-05-19
+        - First Entry
+        - Second Entry
+        MD);
+
+        $content = $this->get('/changelog')->getContent();
+
+        $this->assertTrue(strpos($content, 'First Entry') < strpos($content, 'Second Entry'));
+    }
+
+    public function test_ignores_content_outside_a_date_heading_and_malformed_headers(): void
+    {
+        $this->putContent(<<<'MD'
+        Random preamble text that is not a bullet.
+
+        ## not-a-date
+        - Should not appear
+
+        ## 2026-05-19
+        - Valid Entry
+        MD);
 
         $this->get('/changelog')
             ->assertOk()
-            ->assertDontSee('Secret chore')
-            ->assertDontSee('Planned thing');
+            ->assertSee('Valid Entry')
+            ->assertDontSee('Should not appear')
+            ->assertDontSee('Random preamble');
+    }
+
+    public function test_ignores_calendar_invalid_date_headings_and_does_not_crash(): void
+    {
+        $this->putContent(<<<'MD'
+        ## 2026-13-01
+        - Should not appear
+
+        ## 2026-05-19
+        - Valid Entry
+        MD);
+
+        $this->get('/changelog')
+            ->assertOk()
+            ->assertSee('Valid Entry')
+            ->assertDontSee('Should not appear');
     }
 
     public function test_empty_state(): void
