@@ -58,6 +58,6 @@ class ChangelogController extends Controller
             }
         }
 
-        return $groups->sortKeysDesc();
+        return $groups->reject(fn (Collection $items) => $items->isEmpty())->sortKeysDesc();
     }
 }

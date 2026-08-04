@@ -130,4 +130,33 @@ class ChangelogPageTest extends TestCase
             ->assertSee('Valid Entry')
             ->assertDontSee('Should not appear');
     }
+
+    public function test_a_date_heading_with_no_bullets_does_not_render_as_an_empty_section(): void
+    {
+        $this->putContent(<<<'MD'
+        ## 2026-08-05
+
+        ## 2026-05-19
+        - Real entry
+        MD);
+
+        $content = $this->get('/changelog')->getContent();
+
+        $this->assertStringNotContainsString('August 5, 2026', $content);
+        $this->assertStringContainsString('May 19, 2026', $content);
+        $this->assertStringContainsString('Real entry', $content);
+    }
+
+    public function test_file_with_only_headings_and_no_bullets_shows_empty_state(): void
+    {
+        $this->putContent(<<<'MD'
+        ## 2026-08-05
+
+        ## 2026-05-19
+        MD);
+
+        $this->get('/changelog')
+            ->assertOk()
+            ->assertSee('No entries yet.');
+    }
 }
