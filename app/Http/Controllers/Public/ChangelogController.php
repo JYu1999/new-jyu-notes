@@ -40,10 +40,13 @@ class ChangelogController extends Controller
         foreach (preg_split('/\R/', File::get($path)) as $line) {
             $line = rtrim($line);
 
-            if (preg_match('/^##\s+(\d{4})-(\d{2})-(\d{2})\s*$/', $line, $match) === 1
-                && checkdate((int) $match[2], (int) $match[3], (int) $match[1])) {
-                $currentDate = $match[1].'-'.$match[2].'-'.$match[3];
-                $groups->put($currentDate, $groups->get($currentDate, collect()));
+            if (preg_match('/^##\s+(\d{4})-(\d{2})-(\d{2})\s*$/', $line, $match) === 1) {
+                if (checkdate((int) $match[2], (int) $match[3], (int) $match[1])) {
+                    $currentDate = $match[1].'-'.$match[2].'-'.$match[3];
+                    $groups->put($currentDate, $groups->get($currentDate, collect()));
+                } else {
+                    $currentDate = null;
+                }
 
                 continue;
             }

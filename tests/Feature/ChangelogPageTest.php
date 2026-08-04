@@ -114,4 +114,20 @@ class ChangelogPageTest extends TestCase
     {
         $this->get('/changelog')->assertOk()->assertSee('No entries yet.');
     }
+
+    public function test_bullets_after_an_invalid_heading_are_not_attributed_to_the_prior_section(): void
+    {
+        $this->putContent(<<<'MD'
+        ## 2026-05-19
+        - Valid Entry
+
+        ## 2026-13-01
+        - Should not appear
+        MD);
+
+        $this->get('/changelog')
+            ->assertOk()
+            ->assertSee('Valid Entry')
+            ->assertDontSee('Should not appear');
+    }
 }
