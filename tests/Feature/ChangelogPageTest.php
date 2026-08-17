@@ -185,4 +185,12 @@ class ChangelogPageTest extends TestCase
             ->assertSee('Valid Entry')
             ->assertDontSee('Should not appear');
     }
+
+    // 檔案存在但內容為空字串，顯示「No entries yet.」
+    public function test_empty_content_string_shows_empty_state(): void
+    {
+        $this->putContent('');
+
+        $this->get('/changelog')->assertOk()->assertSee('No entries yet.');
+    }
 }
