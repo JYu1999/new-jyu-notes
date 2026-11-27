@@ -51,6 +51,7 @@ class Post extends Model
         'featured_order',
         'views_count',
         'published_at',
+        'scheduled_at',
         'last_modified_at',
         'author_id',
     ];
@@ -61,6 +62,7 @@ class Post extends Model
             'is_featured' => 'boolean',
             'views_count' => 'integer',
             'published_at' => 'datetime',
+            'scheduled_at' => 'datetime',
             'last_modified_at' => 'datetime',
         ];
     }
@@ -142,6 +144,17 @@ class Post extends Model
     public function scopePublished(Builder $q): Builder
     {
         return $q->where('status', self::STATUS_PUBLISHED);
+    }
+
+    /** Drafts waiting to be published automatically (JYU-549). */
+    public function scopeScheduled(Builder $q): Builder
+    {
+        return $q->where('status', self::STATUS_DRAFT)->whereNotNull('scheduled_at');
+    }
+
+    public function isScheduled(): bool
+    {
+        return $this->status === self::STATUS_DRAFT && $this->scheduled_at !== null;
     }
 
     public function scopeLocale(Builder $q, string $locale): Builder

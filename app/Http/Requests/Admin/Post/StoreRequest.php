@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Admin\Post;
 
+use App\Http\Requests\Admin\Post\Concerns\SchedulesPublishing;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreRequest extends FormRequest
 {
+    use SchedulesPublishing;
+
     public function authorize(): bool
     {
         return $this->user()?->isAdmin() ?? false;
@@ -29,13 +32,20 @@ class StoreRequest extends FormRequest
             'category_ids' => 'array',
             'category_ids.*' => 'integer|exists:categories,id',
             'categories_order' => 'array',
+            ...$this->scheduleRules(),
         ];
     }
 
     protected function prepareForValidation(): void
     {
+        $this->normalizeScheduledAt();
         $this->merge([
             'is_featured' => $this->boolean('is_featured'),
         ]);
+    }
+
+    public function messages(): array
+    {
+        return $this->scheduleMessages();
     }
 }
