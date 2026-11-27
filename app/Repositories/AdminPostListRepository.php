@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Post;
+use App\Services\FeaturedOrderService;
 use App\Services\TranslationStatusService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,7 +16,7 @@ use Illuminate\Support\Collection;
  */
 class AdminPostListRepository
 {
-    public const STATUSES = ['all', 'published', 'draft', 'hidden', 'trashed'];
+    public const STATUSES = ['all', 'published', 'draft', 'hidden', 'featured', 'trashed'];
 
     public const SORTS = ['updated', 'published', 'views'];
 
@@ -121,6 +122,7 @@ class AdminPostListRepository
             'published' => (int) ($byStatus['published'] ?? 0),
             'draft' => (int) ($byStatus['draft'] ?? 0),
             'hidden' => (int) ($byStatus['hidden'] ?? 0),
+            'featured' => app(FeaturedOrderService::class)->articles()->count(),
             'trashed' => Post::onlyTrashed()->count(),
         ];
     }

@@ -48,6 +48,7 @@ class Post extends Model
         'cover_image_path',
         'status',
         'is_featured',
+        'featured_order',
         'views_count',
         'published_at',
         'last_modified_at',
@@ -156,7 +157,8 @@ class Post extends Model
     /** Order of featured posts on the home page and the featured list. */
     public function scopeOrderForFeatured(Builder $q): Builder
     {
-        return $q->orderByDesc('published_at')->orderByDesc('id');
+        // Manual order from the admin "精選" tab (JYU-547); newest first as a tie-break.
+        return $q->orderByRaw('featured_order asc nulls last')->orderByDesc('published_at')->orderByDesc('id');
     }
 
     public function scopeSortBy(Builder $q, string $sort): Builder
