@@ -48,6 +48,15 @@ window.homeFeed = function ({ url, type, next }) {
         next,
         loading: false,
         error: false,
+        // Infinite scroll: load the next page when the "load more" button nears the viewport.
+        // The button stays as a fallback (no IntersectionObserver, or after an error).
+        init() {
+            if (!('IntersectionObserver' in window) || !this.$refs.more) return;
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && !this.error) this.loadMore();
+            }, { rootMargin: '400px 0px' });
+            observer.observe(this.$refs.more);
+        },
         async fetchPage(params) {
             this.loading = true;
             this.error = false;
@@ -86,6 +95,11 @@ window.homeFeed = function ({ url, type, next }) {
             if (!data) return;
             this.$refs.list.insertAdjacentHTML('beforeend', data.html);
             this.next = data.next;
+            // If the page is still short (button still near the viewport), keep loading.
+            this.$nextTick(() => {
+                const more = this.$refs.more;
+                if (this.next && more && more.getBoundingClientRect().top < window.innerHeight + 400) this.loadMore();
+            });
         },
     };
 };

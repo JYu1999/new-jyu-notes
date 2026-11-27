@@ -53,18 +53,21 @@ class HomePageTest extends TestCase
 
     // ── intro ──────────────────────────────────────────────────────────
 
-    public function test_shows_self_introduction_and_work_button(): void
+    public function test_shows_greeting_and_work_button_only(): void
     {
         $html = $this->get('/zh')->assertOk()->getContent();
 
-        $this->assertStringContainsString('嗨，我是 JYu。', $html);
-        $this->assertStringContainsString('寫軟體工程、職涯、閱讀，還有生活。', $html);
-        $this->assertMatchesRegularExpression('/<a [^>]*class="[^"]*ui-btn-primary[^"]*"[^>]*>\s*作品與經歷/u', $html);
+        $this->assertMatchesRegularExpression('/<h1[^>]*>嗨，我是 JYu<\/h1>/u', $html);
+        $this->assertMatchesRegularExpression('/<a [^>]*class="[^"]*ui-btn-primary[^"]*"[^>]*>\s*作品與經歷（施工中👷）/u', $html);
+        // Removed per feedback: tagline paragraph, second headline line, job title.
+        $this->assertStringNotContainsString('寫軟體工程、職涯、閱讀，還有生活', $html);
+        $this->assertStringNotContainsString('兩者會互相引用', $html);
+        $this->assertStringNotContainsString('Laravel / PostgreSQL / DevOps', $html);
     }
 
     public function test_intro_is_translated(): void
     {
-        $this->get('/en')->assertOk()->assertSee("Hi, I'm JYu.")->assertSee('Work & experience');
+        $this->get('/en')->assertOk()->assertSee("Hi, I'm JYu")->assertSee('Work & experience (under construction 👷)');
     }
 
     // ── topics ─────────────────────────────────────────────────────────
@@ -233,11 +236,80 @@ class HomePageTest extends TestCase
         $this->assertMatchesRegularExpression('/<a [^>]*class="[^"]*ui-btn-lg[^"]*\bhidden\b[^"]*"/', $html);
     }
 
-    public function test_tweet_with_only_a_video_embed_shows_video_box(): void
+    public function test_tweets_in_latest_render_markdown(): void
     {
-        $this->makeTweet(['body' => '{{< youtube id="abc123" >}}']);
+        $this->makeTweet(['body' => "**粗體** 與 [連結](https://example.com)\n\n- 清單項目"]);
 
-        $this->get('/zh')->assertOk()->assertSee('aria-label="播放影片"', false);
+        $html = $this->get('/zh')->getContent();
+        preg_match('/<section id="latest".*?<\/section>/s', $html, $m);
+
+        $this->assertStringContainsString('<strong>粗體</strong>', $m[0]);
+        $this->assertStringContainsString('<li>清單項目</li>', $m[0]);
+    }
+
+    public function test_long_tweet_shows_at_least_500_characters_then_can_expand(): void
+    {
+        $body = str_repeat('長', 450)."\n\n".str_repeat('文', 200);
+        $this->makeTweet(['body' => $body]);
+
+        $html = $this->get('/zh')->getContent();
+
+        // The whole body is in the page (nothing cut server-side); it starts collapsed with an expand button.
+        $this->assertStringContainsString(str_repeat('文', 200), $html);
+        $this->assertMatchesRegularExpression('/data-feed-body[^>]*:class="expanded \? \'\' : \'max-h-\[26rem\] overflow-hidden\'"/', $html);
+        $this->assertStringContainsString('展開全文', $html);
+    }
+
+    public function test_short_tweet_is_not_collapsed(): void
+    {
+        $this->makeTweet(['body' => str_repeat('短', 300)]);
+
+        $this->get('/zh')->assertDontSee('展開全文');
+    }
+
+    public function test_post_in_latest_shows_cover_image(): void
+    {
+        $this->makePost(['cover_image_path' => 'uploads/feed-cover.jpg']);
+
+        $html = $this->get('/zh')->getContent();
+        preg_match('/<section id="latest".*?<\/section>/s', $html, $m);
+
+        $this->assertStringContainsString('uploads/feed-cover.jpg', $m[0]);
+    }
+
+    public function test_youtube_shortcode_in_tweet_becomes_embed(): void
+    {
+        $this->makeTweet(['body' => '{{< youtube id="dQw4w9WgXcQ" >}}']);
+
+        $html = $this->get('/zh')->getContent();
+
+        $this->assertMatchesRegularExpression('/<iframe[^>]*youtube[^>]*dQw4w9WgXcQ/', $html);
+    }
+
+    public function test_sensitive_image_is_blurred_with_warning_and_click_to_reveal(): void
+    {
+        $this->makeTweet(['media' => [['type' => 'image', 'path' => 'uploads/s.jpg', 'sensitive' => true]]]);
+
+        $html = $this->get('/zh')->getContent();
+
+        $this->assertStringContainsString('sensitive-media', $html);
+        $this->assertStringContainsString('這張圖片已模糊處理', $html);
+        $this->assertStringContainsString('點一下移除模糊', $html);
+        $this->assertStringContainsString('revealed = true', $html);
+    }
+
+    public function test_latest_loads_more_automatically_while_scrolling(): void
+    {
+        foreach (range(1, 12) as $_) {
+            $this->makePost();
+        }
+
+        $html = $this->get('/zh')->getContent();
+
+        // homeFeed() sets up an IntersectionObserver on x-ref="more"; the button remains as a fallback.
+        $this->assertMatchesRegularExpression('/x-data="homeFeed\(/', $html);
+        $this->assertStringContainsString('x-ref="more"', $html);
+        $this->assertStringContainsString('載入更多…', $html);
     }
 
     public function test_invalid_feed_type_is_rejected(): void

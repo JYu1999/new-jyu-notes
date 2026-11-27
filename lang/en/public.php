@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'home_intro' => 'Long-form writing lives in Posts, quick thoughts in Tweets. They link to each other, so you can follow the thread.',
     'home_featured_posts' => 'Featured Posts',
     'home_recent_tweets' => 'Recent Tweets',
     'home_popular_tags' => 'Popular Tags',
@@ -50,8 +49,8 @@ return [
 
     'views' => 'views',
     'min_read' => 'min read',
-    'sensitive_warning' => 'Sensitive content',
-    'sensitive_reveal' => 'Click to view',
+    'sensitive_warning' => 'This image is blurred',
+    'sensitive_reveal' => 'Tap to remove the blur',
 
     'login_to_admin' => 'Admin Login',
     'login_email' => 'Email',
@@ -74,10 +73,8 @@ return [
     'n_posts' => ':n posts',
 
     // Home page (JYU-534)
-    'home_hello' => 'Hi, I\'m JYu.',
-    'home_headline' => 'I write about software engineering, careers, reading, and life.',
-    'home_work_cta' => 'Work & experience',
-    'home_role' => 'Software engineer · Laravel / PostgreSQL / DevOps',
+    'home_hello' => 'Hi, I\'m JYu',
+    'home_work_cta' => 'Work & experience (under construction 👷)',
     'home_topics' => 'Topics',
     'home_all_tags' => 'All tags',
     'home_featured' => 'Featured',

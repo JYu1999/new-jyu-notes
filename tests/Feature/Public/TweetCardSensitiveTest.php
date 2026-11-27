@@ -35,7 +35,7 @@ class TweetCardSensitiveTest extends TestCase
         $this->get(route('public.tweets.show', ['zh', $tweet->id]))
             ->assertOk()
             ->assertSee('sensitive-media', false)
-            ->assertSee('敏感內容', false);
+            ->assertSee('這張圖片已模糊處理', false);
     }
 
     public function test_sensitive_overlay_text_is_localized(): void
@@ -47,8 +47,8 @@ class TweetCardSensitiveTest extends TestCase
         // 英文頁面應顯示英文覆蓋字，而非寫死的中文
         $this->get(route('public.tweets.show', ['en', $tweet->id]))
             ->assertOk()
-            ->assertSee('Sensitive content', false)
-            ->assertDontSee('敏感內容', false);
+            ->assertSee('This image is blurred', false)
+            ->assertDontSee('這張圖片已模糊處理', false);
     }
 
     public function test_plain_image_is_lightbox_clickable_without_blur(): void
