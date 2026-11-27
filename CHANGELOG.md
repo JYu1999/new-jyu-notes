@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Changing the URL (slug) of a published post keeps the old link working: it permanently redirects to the new address
 - Schedule a post to publish at a chosen date and time from the editor's publish options; scheduled posts are labelled with their time in the admin list, publish themselves when the time comes, and the schedule can be cancelled to keep the post as a draft
 - New focus-mode post editor: switch or add language versions from the header, autosave for drafts, Write / Split / Preview modes (preview matches the public post page), a formatting toolbar, word count with reading time, ⌘S to save and ⌘⇧P to preview, plus a side panel with status, featured, slug, excerpt length, categories, tags, references in both directions and every translation's status; pasting a YouTube link can embed it from a chosen start time
 - Choose the order of featured posts by dragging them in the admin "Featured" tab; newly featured posts go last, and the home page follows this order

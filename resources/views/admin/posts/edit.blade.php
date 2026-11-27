@@ -271,7 +271,7 @@
                         <input type="text" name="slug" value="{{ old('slug', $post->slug) }}" placeholder="自動產生" aria-label="Slug"
                             class="flex-1 min-w-0 h-full px-1 bg-transparent border-0 font-mono text-xs focus:outline-none">
                     </label>
-                    <span class="text-xs text-ink-3">留空時由標題自動產生</span>
+                    <span data-slug-hint class="text-xs text-ink-3">由標題自動產生，發布後修改會保留舊網址轉址</span>
                 </section>
 
                 <section class="p-4 flex flex-col gap-2" x-data="{ n: {{ mb_strlen((string) old('excerpt', $post->excerpt)) }} }">

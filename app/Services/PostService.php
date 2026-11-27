@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Post;
 use App\Models\PostGroup;
+use App\Models\PostSlugRedirect;
 use App\Models\Tweet;
 use App\Support\SlugGenerator;
 use Illuminate\Support\Collection;
@@ -58,6 +59,8 @@ class PostService
 
             (new ReferenceSyncer)->sync($post);
             app(FeaturedOrderService::class)->sync($post);
+            // A real post now owns this URL; drop any redirect that used it.
+            PostSlugRedirect::query()->where('locale', $post->locale)->where('old_slug', $post->slug)->delete();
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -92,6 +95,7 @@ class PostService
 
             $post->fill($updateData);
             $this->applySchedule($post, $data);
+            $this->keepOldSlug($post);
 
             // Only a genuine content change counts as a modification. Metadata-only
             // edits (is_featured, status, tags/categories) must not bump the timestamp.
@@ -225,6 +229,29 @@ class PostService
         }
 
         return $due->count();
+    }
+
+    /**
+     * When a post that has been published gets a new slug, remember the old one
+     * so /{locale}/posts/{old} keeps working with a 301 (JYU-550). Drafts that
+     * were never published have no public URL to preserve.
+     */
+    private function keepOldSlug(Post $post): void
+    {
+        if (! $post->isDirty('slug')) {
+            return;
+        }
+
+        $old = $post->getOriginal('slug');
+        if ($old && $post->getOriginal('published_at') !== null) {
+            PostSlugRedirect::query()->updateOrCreate(
+                ['locale' => $post->locale, 'old_slug' => $old],
+                ['post_id' => $post->id],
+            );
+        }
+
+        // The new slug is a live URL again, not a redirect.
+        PostSlugRedirect::query()->where('locale', $post->locale)->where('old_slug', $post->slug)->delete();
     }
 
     private function isScheduling(array $data): bool

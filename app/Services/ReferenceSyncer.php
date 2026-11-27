@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Post;
+use App\Models\PostSlugRedirect;
 use App\Models\Tweet;
 use App\Support\ReferenceExtractor;
 use Illuminate\Database\Eloquent\Model;
@@ -48,7 +49,12 @@ class ReferenceSyncer
             return Post::query()
                 ->where('locale', $entry['locale'])
                 ->where('slug', $entry['slug'])
-                ->first();
+                ->first()
+                // Links written with a post's old slug still point at it (JYU-550).
+                ?? PostSlugRedirect::query()
+                    ->where('locale', $entry['locale'])
+                    ->where('old_slug', $entry['slug'])
+                    ->first()?->post;
         }
 
         if ($entry['type'] === 'tweet') {

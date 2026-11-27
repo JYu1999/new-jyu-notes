@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\PostSlugRedirect;
 use App\Models\Tag;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -95,6 +96,17 @@ class PostRepository
             ])
             ->take($limit)
             ->values();
+    }
+
+    /** Current slug of a published post that used to live at $oldSlug (JYU-550). */
+    public function redirectedSlug(string $locale, string $oldSlug): ?string
+    {
+        return PostSlugRedirect::query()
+            ->where('locale', $locale)
+            ->where('old_slug', $oldSlug)
+            ->whereHas('post', fn ($q) => $q->published()->where('locale', $locale))
+            ->with('post:id,slug')
+            ->first()?->post?->slug;
     }
 
     public function findPublishedBySlug(string $locale, string $slug): ?Post

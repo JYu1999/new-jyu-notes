@@ -69,6 +69,12 @@ class Post extends Model
 
     // ===== Relationships =====
 
+    /** Previous slugs that redirect here (JYU-550). */
+    public function slugRedirects(): HasMany
+    {
+        return $this->hasMany(PostSlugRedirect::class);
+    }
+
     public function group(): BelongsTo
     {
         return $this->belongsTo(PostGroup::class, 'post_group_id');
