@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Public\SearchRequest;
+use App\Http\Requests\Public\SearchSuggestRequest;
 use App\Services\SearchService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 
 class SearchController extends Controller
@@ -30,5 +32,16 @@ class SearchController extends Controller
         }
 
         return view('public.search', $data);
+    }
+
+    /** JSON for the ⌘K search panel (JYU-538). */
+    public function suggest(SearchSuggestRequest $request, SearchService $search): JsonResponse
+    {
+        $scope = $request->validated('scope') ?? 'locale';
+
+        return response()->json($search->suggest(
+            (string) ($request->validated('q') ?? ''),
+            $scope === 'all' ? null : app()->getLocale(),
+        ));
     }
 }

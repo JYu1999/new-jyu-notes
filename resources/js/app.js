@@ -584,6 +584,147 @@ window.infiniteScroll = function ({ url, startPage, hasMore, listSelector }) {
 };
 
 /**
+ * ⌘K search panel (JYU-538). Opens on the `open-search` event (⌘K / Ctrl+K) and on
+ * clicks of [data-search-trigger] links; results come from /{locale}/search/suggest.
+ */
+const RECENT_KEY = 'search-recent';
+window.searchPanel = function ({ url, pageUrl, noResults, found, labels }) {
+    return {
+        open: false,
+        q: '',
+        scope: 'locale',
+        type: 'all',
+        results: [],
+        counts: { all: 0, post: 0, tweet: 0 },
+        active: 0,
+        loading: false,
+        searched: false,
+        recent: [],
+        noResults,
+        found,
+        returnFocus: null,
+        controller: null,
+        tabs: ['all', 'post', 'tweet'].map((key) => ({ key, label: labels[key] })),
+        init() {
+            try {
+                this.recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').slice(0, 5);
+            } catch (e) { this.recent = []; }
+
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('[data-search-trigger]');
+                if (!trigger || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                e.preventDefault();
+                this.show();
+            });
+        },
+        get filtered() {
+            return this.type === 'all' ? this.results : this.results.filter((r) => r.type === this.type);
+        },
+        show() {
+            if (this.open) return;
+            this.returnFocus = document.activeElement;
+            this.open = true;
+            document.documentElement.style.overflow = 'hidden';
+            // x-show + x-transition reveal the panel on the next frame; focus once it's visible.
+            const focusInput = (tries = 10) => {
+                const input = this.$refs.input;
+                input.focus();
+                if (document.activeElement !== input && tries > 0) requestAnimationFrame(() => focusInput(tries - 1));
+            };
+            this.$nextTick(() => requestAnimationFrame(() => focusInput()));
+        },
+        close() {
+            if (!this.open) return;
+            this.open = false;
+            document.documentElement.style.overflow = '';
+            this.returnFocus?.focus?.();
+        },
+        async search() {
+            const q = this.q.trim();
+            this.active = 0;
+            if (!q) {
+                this.results = [];
+                this.counts = { all: 0, post: 0, tweet: 0 };
+                this.searched = false;
+                return;
+            }
+            this.controller?.abort();
+            this.controller = new AbortController();
+            this.loading = true;
+            try {
+                const params = new URLSearchParams({ q });
+                if (this.scope === 'all') params.set('scope', 'all');
+                const res = await fetch(`${url}?${params}`, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    signal: this.controller.signal,
+                });
+                if (!res.ok) throw new Error(String(res.status));
+                const data = await res.json();
+                if (q !== this.q.trim()) return; // a newer query is on its way
+                this.results = data.results;
+                this.counts = data.counts;
+                this.searched = true;
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    this.results = [];
+                    this.searched = true;
+                }
+            } finally {
+                this.loading = false;
+            }
+        },
+        toggleScope() {
+            this.scope = this.scope === 'all' ? 'locale' : 'all';
+            this.search();
+            this.$refs.input.focus();
+        },
+        remember() {
+            const q = this.q.trim();
+            if (!q) return;
+            this.recent = [q, ...this.recent.filter((r) => r !== q)].slice(0, 5);
+            try { localStorage.setItem(RECENT_KEY, JSON.stringify(this.recent)); } catch (e) { /* ignore */ }
+        },
+        clearRecent() {
+            this.recent = [];
+            try { localStorage.removeItem(RECENT_KEY); } catch (e) { /* ignore */ }
+        },
+        onKey(e) {
+            const list = this.filtered;
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                this.close();
+            } else if (e.key === 'ArrowDown' && list.length) {
+                e.preventDefault();
+                this.active = (this.active + 1) % list.length;
+                this.scrollActive();
+            } else if (e.key === 'ArrowUp' && list.length) {
+                e.preventDefault();
+                this.active = (this.active - 1 + list.length) % list.length;
+                this.scrollActive();
+            } else if (e.key === 'Enter' && e.target === this.$refs.input) {
+                e.preventDefault();
+                const hit = list[this.active];
+                this.remember();
+                if (hit) {
+                    window.location.href = hit.url;
+                } else if (this.q.trim()) {
+                    window.location.href = `${pageUrl}?q=${encodeURIComponent(this.q.trim())}`;
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const keys = this.tabs.map((t) => t.key);
+                const i = keys.indexOf(this.type);
+                this.type = keys[(i + (e.shiftKey ? keys.length - 1 : 1)) % keys.length];
+                this.active = 0;
+            }
+        },
+        scrollActive() {
+            this.$nextTick(() => document.getElementById('sp-opt-' + this.active)?.scrollIntoView({ block: 'nearest' }));
+        },
+    };
+};
+
+/**
  * Tweets page "load older" (JYU-537). The button is a real link to the next
  * page (keeps filters), so it works without JS; with JS the next page's items
  * are appended in place.

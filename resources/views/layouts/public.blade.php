@@ -29,6 +29,8 @@
 
     @include('partials.public-footer')
 
+    @include('partials.search-panel')
+
     {{-- Shared fullscreen image lightbox --}}
     <div x-data
         x-show="$store.lightbox.open"
