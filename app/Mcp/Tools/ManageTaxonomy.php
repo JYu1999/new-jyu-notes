@@ -7,7 +7,6 @@ use App\Services\CategoryService;
 use App\Services\PostService;
 use App\Services\TagService;
 use App\Services\TweetService;
-use App\Support\AiPermissions;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -18,14 +17,10 @@ use Laravel\Mcp\Server\Attributes\Name;
 #[Description('Organise content: create a tag, create a category, or set the tags of a post / tweet (by tag name; replaces its tags). Nothing can be deleted.')]
 class ManageTaxonomy extends BlogTool
 {
-    protected string $permission = AiPermissions::ORGANIZE;
+    protected string $action = 'taxonomy';
 
-    public function handle(Request $request): Response
+    protected function run(Request $request): Response
     {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
-
         $data = $request->validate([
             'action' => 'required|in:create_tag,create_category,set_tags',
             'name' => 'required_if:action,create_tag,create_category|nullable|string|max:100',
@@ -62,6 +57,15 @@ class ManageTaxonomy extends BlogTool
             : app(TweetService::class)->update($model, ['tag_ids' => $ids]);
 
         return Response::json(['updated' => $this->detail($model)['tags'] ?? []]);
+    }
+
+    protected function describe(array $args): string
+    {
+        return match ($args['action'] ?? null) {
+            'create_tag' => '新增標籤 #'.($args['name'] ?? ''),
+            'create_category' => '新增分類「'.($args['name'] ?? '').'」',
+            default => '設定'.$this->label($args).'的標籤：'.implode('、', array_map(fn ($t) => '#'.$t, $args['tags'] ?? [])),
+        };
     }
 
     public function schema(JsonSchema $schema): array

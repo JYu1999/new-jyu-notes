@@ -5,7 +5,6 @@ namespace App\Mcp\Tools;
 use App\Models\Post;
 use App\Services\PostService;
 use App\Services\TweetService;
-use App\Support\AiPermissions;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -16,14 +15,10 @@ use Laravel\Mcp\Server\Attributes\Name;
 #[Description('Create (or update) the draft translation of a post or tweet in another language, with your translated title, excerpt and body. The original is never changed.')]
 class CreateTranslation extends BlogTool
 {
-    protected string $permission = AiPermissions::DRAFT;
+    protected string $action = 'translate';
 
-    public function handle(Request $request): Response
+    protected function run(Request $request): Response
     {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
-
         $data = $request->validate([
             'type' => 'required|in:post,tweet',
             'id' => 'required|integer',
@@ -58,7 +53,14 @@ class CreateTranslation extends BlogTool
             $translation = $service->update($translation, ['body' => mb_substr($data['body'], 0, 2000)]);
         }
 
+        $this->subject = $translation;
+
         return Response::json(['translation' => $this->summary($translation)]);
+    }
+
+    protected function describe(array $args): string
+    {
+        return '建立'.$this->label($args).'的'.strtoupper((string) ($args['locale'] ?? '')).'翻譯草稿';
     }
 
     public function schema(JsonSchema $schema): array

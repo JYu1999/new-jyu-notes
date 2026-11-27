@@ -7,7 +7,6 @@ use App\Models\Post;
 use App\Services\PageService;
 use App\Services\PostService;
 use App\Services\TweetService;
-use App\Support\AiPermissions;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -18,14 +17,10 @@ use Laravel\Mcp\Server\Attributes\Name;
 #[Description('Edit the title, body, excerpt or slug of a post, tweet or page. Status cannot be changed here (use request_publish). Every change is kept in the version history and can be restored.')]
 class UpdateContent extends BlogTool
 {
-    protected string $permission = AiPermissions::DRAFT;
+    protected string $action = 'draft';
 
-    public function handle(Request $request): Response
+    protected function run(Request $request): Response
     {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
-
         $data = $request->validate([
             'type' => 'required|in:post,tweet,page',
             'id' => 'required|integer',
@@ -51,6 +46,11 @@ class UpdateContent extends BlogTool
         };
 
         return Response::json(['updated' => $this->summary($model)]);
+    }
+
+    protected function describe(array $args): string
+    {
+        return '更新'.$this->label($args);
     }
 
     public function schema(JsonSchema $schema): array

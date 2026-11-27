@@ -11,12 +11,13 @@ use Laravel\Passport\Client;
 /** An AI connected over OAuth / MCP and what it may do (JYU-554). */
 class AiConnection extends Model
 {
-    protected $fillable = ['user_id', 'oauth_client_id', 'name', 'permissions', 'expires_at', 'last_used_at', 'revoked_at'];
+    protected $fillable = ['user_id', 'oauth_client_id', 'name', 'permissions', 'policy', 'expires_at', 'last_used_at', 'revoked_at'];
 
     protected function casts(): array
     {
         return [
             'permissions' => 'array',
+            'policy' => 'array',
             'expires_at' => 'datetime',
             'last_used_at' => 'datetime',
             'revoked_at' => 'datetime',
@@ -33,9 +34,9 @@ class AiConnection extends Model
         return $this->belongsTo(Client::class, 'oauth_client_id');
     }
 
-    public function publishRequests(): HasMany
+    public function actionRequests(): HasMany
     {
-        return $this->hasMany(AiPublishRequest::class);
+        return $this->hasMany(AiActionRequest::class);
     }
 
     public function scopeActive(Builder $q): Builder

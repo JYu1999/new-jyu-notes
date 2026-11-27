@@ -4,7 +4,6 @@ namespace App\Mcp\Tools;
 
 use App\Services\PostService;
 use App\Services\TweetService;
-use App\Support\AiPermissions;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -15,14 +14,10 @@ use Laravel\Mcp\Server\Attributes\Name;
 #[Description('Create a new post or tweet as a draft (never published). Body is Markdown. Existing tags can be attached by name.')]
 class CreateDraft extends BlogTool
 {
-    protected string $permission = AiPermissions::DRAFT;
+    protected string $action = 'draft';
 
-    public function handle(Request $request): Response
+    protected function run(Request $request): Response
     {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
-
         $data = $request->validate([
             'type' => 'required|in:post,tweet',
             'locale' => 'required|in:zh,en,ja,vi,id',
@@ -43,7 +38,14 @@ class CreateDraft extends BlogTool
                 'locale' => $data['locale'], 'body' => mb_substr($data['body'], 0, 2000), 'status' => 'draft', 'tag_ids' => $tagIds,
             ]);
 
+        $this->subject = $model;
+
         return Response::json(['created' => $this->summary($model)]);
+    }
+
+    protected function describe(array $args): string
+    {
+        return '建立'.(($args['type'] ?? '') === 'tweet' ? '碎念' : '文章').'草稿〈'.mb_strimwidth((string) ($args['title'] ?? $args['body'] ?? ''), 0, 40, '…').'〉';
     }
 
     public function schema(JsonSchema $schema): array

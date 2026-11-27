@@ -4,7 +4,6 @@ namespace App\Mcp\Tools;
 
 use App\Models\User;
 use App\Services\MediaService;
-use App\Support\AiPermissions;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
@@ -17,14 +16,11 @@ use Laravel\Mcp\Server\Attributes\Name;
 #[Description('Upload an image or video (base64, max 10 MB: jpg, png, webp, gif, mp4, webm) to the media library. Returns the URL and Markdown to use in a body.')]
 class UploadMedia extends BlogTool
 {
-    protected string $permission = AiPermissions::ORGANIZE;
+    protected string $action = 'media';
 
-    public function handle(Request $request, MediaService $media): Response
+    protected function run(Request $request): Response
     {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
-
+        $media = app(MediaService::class);
         $data = $request->validate([
             'filename' => 'required|string|max:200',
             'data' => 'required|string',
@@ -54,6 +50,11 @@ class UploadMedia extends BlogTool
             : '!['.($data['alt'] ?? '').']('.$url.')';
 
         return Response::json(['id' => $saved->id, 'path' => $saved->path, 'url' => $url, 'markdown' => $markdown]);
+    }
+
+    protected function describe(array $args): string
+    {
+        return '上傳媒體 '.($args['filename'] ?? '');
     }
 
     public function schema(JsonSchema $schema): array

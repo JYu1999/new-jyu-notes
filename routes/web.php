@@ -109,6 +109,10 @@ Route::middleware(['auth', 'role:admin'])
 
         // AI connections (JYU-554).
         Route::get('agents', [Admin\AgentController::class, 'index'])->name('agents.index');
+        Route::get('agents/activity', [Admin\AgentController::class, 'activity'])->name('agents.activity');
+        Route::put('agents/policy', [Admin\AgentController::class, 'updatePolicy'])->name('agents.policy');
+        Route::put('agents/connections/{connection}/policy', [Admin\AgentController::class, 'updateConnectionPolicy'])->name('agents.connections.policy');
+        Route::delete('agents/connections/{connection}', [Admin\AgentController::class, 'revoke'])->name('agents.connections.revoke');
 
         // Version history of posts, tweets and pages (JYU-553).
         Route::get('{type}/{id}/revisions', [Admin\RevisionController::class, 'index'])
