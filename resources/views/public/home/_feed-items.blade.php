@@ -46,6 +46,7 @@
                             class="mt-1 inline-flex items-center min-h-9 text-sm font-semibold text-accent hover:text-accent-ink">{{ __('public.tweets_expand') }}</button>
                     @endif
                 </div>
+                @include('components.partials.link-preview', ['tweet' => $m])
                 @include('components.partials.tweet-media-grid', ['media' => $m->media ?? []])
             @endif
             @if($m->tags->isNotEmpty() || $isPost)

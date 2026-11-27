@@ -72,6 +72,10 @@
         @endif
     @endif
 
+    @unless($preview)
+        @include('components.partials.link-preview', ['tweet' => $tweet])
+    @endunless
+
     @include('components.partials.tweet-media-grid', ['media' => $media])
 
     @if(! $isList && $tweet->tags->isNotEmpty())

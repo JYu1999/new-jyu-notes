@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\FetchLinkPreviews;
 use App\Models\Tweet;
 use App\Models\TweetGroup;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,7 @@ class TweetService
             }
 
             (new ReferenceSyncer)->sync($tweet);
+            FetchLinkPreviews::dispatchAfterResponse($tweet->id);
 
             return $tweet->fresh(['tags']);
         });
@@ -70,6 +72,9 @@ class TweetService
             }
 
             (new ReferenceSyncer)->sync($tweet);
+            if (array_key_exists('body', $data)) {
+                FetchLinkPreviews::dispatchAfterResponse($tweet->id);
+            }
 
             return $tweet->fresh(['tags']);
         });
