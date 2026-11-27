@@ -107,6 +107,12 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('pages/{id}/restore', [Admin\PageController::class, 'restore'])->name('pages.restore');
         Route::post('pages/{page}/translation', [Admin\PageController::class, 'createTranslation'])->name('pages.create-translation');
 
+        // Version history of posts, tweets and pages (JYU-553).
+        Route::get('{type}/{id}/revisions', [Admin\RevisionController::class, 'index'])
+            ->whereIn('type', ['posts', 'tweets', 'pages'])->whereNumber('id')->name('revisions.index');
+        Route::post('{type}/{id}/revisions/{revision}/restore', [Admin\RevisionController::class, 'restore'])
+            ->whereIn('type', ['posts', 'tweets', 'pages'])->whereNumber('id')->name('revisions.restore');
+
         // Media
         Route::get('media', [Admin\MediaController::class, 'index'])->name('media.index');
         Route::post('media', [Admin\MediaController::class, 'store'])->name('media.store');

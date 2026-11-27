@@ -80,6 +80,12 @@
             <span data-scheduled-chip class="inline-flex items-center h-7 px-2.5 rounded-full bg-accent-soft text-accent-ink text-xs font-semibold">已排程 · {{ $scheduledLabel }}</span>
         @endif
 
+        @unless($isCreate)
+            {{-- Version history (JYU-553) --}}
+            <a href="{{ route('admin.revisions.index', ['type' => 'posts', 'id' => $post->id]) }}" data-history-link
+                class="inline-flex items-center h-8 px-2.5 rounded-lg text-sm text-ink-2 hover:bg-paper-2 hover:text-ink">版本紀錄 · {{ $post->revisions()->count() }}</a>
+        @endunless
+
         <div role="group" aria-label="檢視模式" class="flex gap-0.5 p-0.5 rounded-lg bg-paper-2">
             @foreach(['write' => '寫作', 'split' => '左右對照', 'preview' => '預覽'] as $key => $label)
                 <button type="button" data-mode="{{ $key }}" @click="setMode('{{ $key }}')" :aria-pressed="mode === '{{ $key }}' ? 'true' : 'false'" aria-pressed="{{ $key === 'write' ? 'true' : 'false' }}"

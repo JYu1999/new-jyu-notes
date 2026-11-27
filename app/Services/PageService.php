@@ -29,6 +29,7 @@ class PageService
                 'published_at' => $data['published_at'] ?? now(),
                 'author_id' => $data['author_id'] ?? auth()->id(),
             ]);
+            app(RevisionService::class)->record($page);
 
             return $page;
         });
@@ -37,6 +38,7 @@ class PageService
     public function update(Page $page, array $data): Page
     {
         return DB::transaction(function () use ($page, $data) {
+            app(RevisionService::class)->ensureBaseline($page);
             if (isset($data['title']) && $data['title'] !== $page->title && empty($data['slug'])) {
                 $data['slug'] = $this->forSlug($data['title'], $page->locale, $page->id);
             }
@@ -54,6 +56,7 @@ class PageService
             }
 
             $page->update($updateData);
+            app(RevisionService::class)->record($page);
 
             return $page->fresh();
         });
@@ -86,7 +89,7 @@ class PageService
                 return $existingTrans;
             }
 
-            return Page::create([
+            $new = Page::create([
                 'page_group_id' => $existing->page_group_id,
                 'locale' => $newLocale,
                 'slug' => $this->forSlug($existing->title, $newLocale),
@@ -96,6 +99,9 @@ class PageService
                 'status' => Page::STATUS_DRAFT,
                 'author_id' => auth()->id(),
             ]);
+            app(RevisionService::class)->record($new);
+
+            return $new;
         });
     }
 

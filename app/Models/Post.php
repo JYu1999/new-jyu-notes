@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasReferences;
+use App\Models\Concerns\HasRevisions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
-    use HasFactory, HasReferences, SoftDeletes;
+    use HasFactory, HasReferences, HasRevisions, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasReferences;
+use App\Models\Concerns\HasRevisions;
 use App\Support\MarkdownRenderer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
 
 class Tweet extends Model
 {
-    use HasFactory, HasReferences, SoftDeletes;
+    use HasFactory, HasReferences, HasRevisions, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
 

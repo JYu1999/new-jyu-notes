@@ -61,6 +61,7 @@ class PostService
             app(FeaturedOrderService::class)->sync($post);
             // A real post now owns this URL; drop any redirect that used it.
             PostSlugRedirect::query()->where('locale', $post->locale)->where('old_slug', $post->slug)->delete();
+            app(RevisionService::class)->record($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -72,6 +73,8 @@ class PostService
     public function update(Post $post, array $data): Post
     {
         return DB::transaction(function () use ($post, $data) {
+            app(RevisionService::class)->ensureBaseline($post);
+
             // Auto-regenerate slug if title changed and slug not explicitly set
             if (isset($data['title']) && $data['title'] !== $post->title && empty($data['slug'])) {
                 $data['slug'] = SlugGenerator::forPost($data['title'], $post->locale, $post->id);
@@ -118,6 +121,7 @@ class PostService
             (new ReferenceSyncer)->sync($post);
 
             app(FeaturedOrderService::class)->sync($post);
+            app(RevisionService::class)->record($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -157,7 +161,9 @@ class PostService
 
                 case 'tag':
                     $posts->each(function (Post $p) use ($tagId) {
+                        app(RevisionService::class)->ensureBaseline($p);
                         $this->syncTagsAcrossGroup($p, $p->tags()->pluck('tags.id')->push($tagId)->unique()->values()->all());
+                        app(RevisionService::class)->record($p);
                     });
 
                     return '已為 '.$posts->count().' 篇加上標籤';
@@ -194,6 +200,7 @@ class PostService
     {
         // Status changes (publish/draft/hide) are not content modifications, so
         // last_modified_at is left untouched; published_at records the publish time.
+        app(RevisionService::class)->ensureBaseline($post);
         $post->update([
             'status' => $status,
             'published_at' => $status === Post::STATUS_PUBLISHED && ! $post->published_at
@@ -202,6 +209,7 @@ class PostService
             // An explicit status change replaces any pending schedule (JYU-549).
             'scheduled_at' => null,
         ]);
+        app(RevisionService::class)->record($post);
     }
 
     /** Cancel a pending schedule; the post stays a draft (JYU-549). */
@@ -221,11 +229,15 @@ class PostService
         $due = Post::query()->scheduled()->where('scheduled_at', '<=', now())->get();
 
         foreach ($due as $post) {
-            $post->update([
-                'status' => Post::STATUS_PUBLISHED,
-                'published_at' => $post->scheduled_at,
-                'scheduled_at' => null,
-            ]);
+            app(RevisionService::class)->asSystem('排程發布', function () use ($post) {
+                app(RevisionService::class)->ensureBaseline($post);
+                $post->update([
+                    'status' => Post::STATUS_PUBLISHED,
+                    'published_at' => $post->scheduled_at,
+                    'scheduled_at' => null,
+                ]);
+                app(RevisionService::class)->record($post);
+            });
         }
 
         return $due->count();
@@ -322,6 +334,7 @@ class PostService
             if ($siblingCategories) {
                 $newPost->categories()->sync($siblingCategories);
             }
+            app(RevisionService::class)->record($newPost);
 
             return $newPost;
         });

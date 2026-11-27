@@ -46,6 +46,7 @@
                                 @csrf
                                 <button class="text-xs text-accent hover:text-accent-ink">還原</button>
                             </form>
+                            <a href="{{ route('admin.revisions.index', ['type' => 'pages', 'id' => $page->id]) }}" data-history-link class="ml-3 text-xs text-ink-2 hover:text-accent">版本</a>
                         @else
                             <a href="{{ url('/' . $page->locale . '/' . $page->slug) }}" target="_blank" class="text-xs text-ink-3 hover:text-accent mr-3">↗</a>
                             <a href="{{ route('admin.pages.edit', $page->id) }}" class="text-xs text-accent hover:text-accent-ink mr-3">編輯</a>
