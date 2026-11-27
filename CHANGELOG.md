@@ -1,3 +1,7 @@
+## 2026-11-27
+- Higher-contrast colors for dates and secondary text in light and dark mode
+- Tags, section headings, buttons and cards now share one consistent style across public pages
+
 ## 2026-08-04
 - Changelog now lives in CHANGELOG.md, updated as part of each PR instead of a todo list(Author: yi-rong)
 

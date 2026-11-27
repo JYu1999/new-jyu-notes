@@ -47,14 +47,7 @@
         @if($post->tags->isNotEmpty())
             <div class="mt-12 pt-6 border-t border-line flex flex-wrap gap-2">
                 @foreach($post->tags as $tag)
-                    @php $tt = $tag->translations->firstWhere('locale', $loc); @endphp
-                    @if($tt)
-                        <a href="{{ route('public.tags.show', [$loc, $tt->slug]) }}"
-                            class="font-mono text-xs px-3 py-1.5 border rounded-full {{ $tag->color ? 'tag-chip' : 'bg-card border-line text-ink-2 hover:text-accent hover:border-accent' }}"
-                            @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
-                            #{{ $tt->name }}
-                        </a>
-                    @endif
+                    <x-ui.tag :tag="$tag" />
                 @endforeach
             </div>
         @endif
@@ -64,20 +57,20 @@
 
         {{-- Series navigation --}}
         @if(($seriesNav['previous'] ?? null) || ($seriesNav['next'] ?? null))
-            <nav class="mt-12 pt-6 border-t border-line grid grid-cols-2 gap-4">
+            <nav class="mt-12 pt-6 border-t border-line grid grid-cols-2 gap-3">
                 @if($seriesNav['previous'])
-                    <a href="{{ route('public.posts.show', [$loc, $seriesNav['previous']->slug]) }}" class="block p-4 border border-line rounded hover:border-accent text-left">
-                        <div class="text-xs text-ink-3 font-mono mb-1">← {{ __('public.prev_post') }}</div>
-                        <div class="font-serif text-sm font-medium line-clamp-2">{{ $seriesNav['previous']->title }}</div>
-                    </a>
+                    <x-ui.card :href="route('public.posts.show', [$loc, $seriesNav['previous']->slug])" class="text-left">
+                        <div class="text-[13px] text-ink-3 mb-1">← {{ __('public.prev_post') }}</div>
+                        <div class="font-serif text-lg font-medium line-clamp-2">{{ $seriesNav['previous']->title }}</div>
+                    </x-ui.card>
                 @else
                     <span></span>
                 @endif
                 @if($seriesNav['next'])
-                    <a href="{{ route('public.posts.show', [$loc, $seriesNav['next']->slug]) }}" class="block p-4 border border-line rounded hover:border-accent text-right">
-                        <div class="text-xs text-ink-3 font-mono mb-1">{{ __('public.next_post') }} →</div>
-                        <div class="font-serif text-sm font-medium line-clamp-2">{{ $seriesNav['next']->title }}</div>
-                    </a>
+                    <x-ui.card :href="route('public.posts.show', [$loc, $seriesNav['next']->slug])" class="text-right">
+                        <div class="text-[13px] text-ink-3 mb-1">{{ __('public.next_post') }} →</div>
+                        <div class="font-serif text-lg font-medium line-clamp-2">{{ $seriesNav['next']->title }}</div>
+                    </x-ui.card>
                 @endif
             </nav>
         @endif
@@ -88,7 +81,7 @@
         <aside class="hidden lg:block">
             <nav x-data="postToc()" x-init="init()"
                 class="sticky top-20 text-sm border-l border-line pl-4">
-                <div class="text-[10px] uppercase tracking-widest text-ink-3 font-mono mb-3">{{ __('public.toc') }}</div>
+                <x-ui.section-heading as="h2" size="label" class="mb-3">{{ __('public.toc') }}</x-ui.section-heading>
                 <ul class="space-y-1.5">
                     @foreach($headings as $h)
                         <li class="{{ $h['level'] === 3 ? 'pl-3' : '' }}">

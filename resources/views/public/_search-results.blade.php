@@ -12,11 +12,11 @@
 
     @if($results['posts']->isNotEmpty())
         <section class="mb-10">
-            <h2 class="font-serif text-xl font-semibold mb-4">{{ __('public.search_posts') }}</h2>
+            <x-ui.section-heading size="md" class="mb-4">{{ __('public.search_posts') }}</x-ui.section-heading>
             <div class="space-y-4">
                 @foreach($results['posts'] as $post)
-                    <article class="border border-line rounded-md p-5 bg-card hover:border-accent transition-colors">
-                        <a href="{{ route('public.posts.show', [app()->getLocale(), $post->slug]) }}" class="block">
+                    <x-ui.card as="article" padding="none">
+                        <a href="{{ route('public.posts.show', [app()->getLocale(), $post->slug]) }}" class="block p-5">
                             <h3 class="font-serif text-lg font-medium text-ink hover:text-accent">{{ $post->title }}</h3>
                             @if($post->excerpt)
                                 <p class="text-sm text-ink-2 mt-2 line-clamp-2">{{ $post->excerpt }}</p>
@@ -25,7 +25,7 @@
                                 {{ $post->published_at?->format('Y/m/d') }} · {{ $post->views_count }} {{ __('public.views') }}
                             </div>
                         </a>
-                    </article>
+                    </x-ui.card>
                 @endforeach
             </div>
         </section>
@@ -33,7 +33,7 @@
 
     @if($results['tweets']->isNotEmpty())
         <section>
-            <h2 class="font-serif text-xl font-semibold mb-4">{{ __('public.search_tweets') }}</h2>
+            <x-ui.section-heading size="md" class="mb-4">{{ __('public.search_tweets') }}</x-ui.section-heading>
             <div class="space-y-4">
                 @foreach($results['tweets'] as $tweet)
                     <a href="{{ route('public.tweets.show', [app()->getLocale(), $tweet->id]) }}" class="block">

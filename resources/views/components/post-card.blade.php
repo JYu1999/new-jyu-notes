@@ -2,9 +2,9 @@
 
 {{-- Whole card is clickable via the stretched-link on the title (::before overlay);
      inner tag links lift back above with z-index. --}}
-<article class="bg-card border border-line rounded-md p-5 hover:border-line-2 transition-colors flex flex-col h-full relative">
+<x-ui.card as="article" padding="none" class="p-5 hover:border-line-2 transition-colors flex flex-col h-full relative overflow-hidden">
     @if($post->cover_image_path)
-        <div class="block mb-4 -mx-5 -mt-5 overflow-hidden rounded-t-md">
+        <div class="block mb-4 -mx-5 -mt-5 overflow-hidden">
             <img src="{{ media_url($post->cover_image_path) }}" alt="" class="w-full h-44 object-cover">
         </div>
     @endif
@@ -14,7 +14,7 @@
         $catTrans = $post->categories->first()?->translations->firstWhere('locale', $loc);
     @endphp
     @if($catTrans)
-        <div class="text-[10px] uppercase tracking-widest text-accent font-mono mb-2">
+        <div class="text-xs tracking-wider text-ink-3 font-mono mb-2">
             {{ $catTrans->name }}
         </div>
     @endif
@@ -39,15 +39,8 @@
     @if($post->tags->isNotEmpty())
         <div class="mt-3 flex flex-wrap gap-1.5 relative z-10">
             @foreach($post->tags->take(4) as $tag)
-                @php $tt = $tag->translations->firstWhere('locale', $loc); @endphp
-                @if($tt)
-                    <a href="{{ route('public.tags.show', [$loc, $tt->slug]) }}"
-                        class="text-[10px] font-mono px-2 py-0.5 rounded {{ $tag->color ? 'tag-chip' : 'bg-paper-2 text-ink-3 hover:text-accent' }}"
-                        @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
-                        #{{ $tt->name }}
-                    </a>
-                @endif
+                <x-ui.tag :tag="$tag" size="sm" />
             @endforeach
         </div>
     @endif
-</article>
+</x-ui.card>

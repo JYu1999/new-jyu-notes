@@ -13,7 +13,7 @@
 
     @if($posts->isNotEmpty())
         <section class="mb-14">
-            <h2 class="font-serif text-xl font-semibold mb-6">{{ __('public.tag_posts') }} ({{ $posts->total() }})</h2>
+            <x-ui.section-heading class="mb-6">{{ __('public.tag_posts') }} ({{ $posts->total() }})</x-ui.section-heading>
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 @foreach($posts as $post)
                     <x-post-card :post="$post" />
@@ -25,7 +25,7 @@
 
     @if($tweets->isNotEmpty())
         <section>
-            <h2 class="font-serif text-xl font-semibold mb-6">{{ __('public.tag_tweets') }} ({{ $tweets->total() }})</h2>
+            <x-ui.section-heading class="mb-6">{{ __('public.tag_tweets') }} ({{ $tweets->total() }})</x-ui.section-heading>
             <div class="space-y-4 max-w-2xl">
                 @foreach($tweets as $tweet)
                     <a href="{{ route('public.tweets.show', [app()->getLocale(), $tweet->id]) }}" class="block hover:opacity-80 transition-opacity">

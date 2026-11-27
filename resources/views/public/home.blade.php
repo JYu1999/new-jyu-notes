@@ -17,14 +17,9 @@
     <div class="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-10">
         {{-- Featured posts --}}
         <section>
-            <div class="flex items-baseline justify-between mb-6">
-                <h2 class="font-serif text-xl font-semibold">{{ __('public.home_featured_posts') }}</h2>
-                <a href="{{ route('public.posts.index', app()->getLocale()) }}" class="text-sm text-accent hover:text-accent-ink font-mono">{{ __('public.home_view_all') }}</a>
-            </div>
+            <x-ui.section-heading class="mb-6" :action-href="route('public.posts.index', app()->getLocale())" :action-label="__('public.home_view_all')">{{ __('public.home_featured_posts') }}</x-ui.section-heading>
             @if($featuredPosts->isEmpty())
-                <div class="bg-card border border-line rounded-md p-8 text-center text-ink-3 text-sm">
-                    {{ __('public.home_no_featured') }}
-                </div>
+                <x-ui.card padding="lg" class="text-center text-ink-3 text-sm">{{ __('public.home_no_featured') }}</x-ui.card>
             @else
                 <div class="grid sm:grid-cols-2 gap-5">
                     @foreach($featuredPosts as $post)
@@ -37,7 +32,7 @@
         {{-- Sidebar --}}
         <aside class="space-y-8">
             <section>
-                <h2 class="font-serif text-xl font-semibold mb-4">{{ __('public.home_recent_tweets') }}</h2>
+                <x-ui.section-heading size="md" class="mb-4">{{ __('public.home_recent_tweets') }}</x-ui.section-heading>
                 <div class="space-y-4">
                     @forelse($recentTweets as $tweet)
                         <x-tweet-card :tweet="$tweet" />
@@ -45,23 +40,15 @@
                         <p class="text-ink-3 text-sm">{{ __('public.no_tweets') }}</p>
                     @endforelse
                 </div>
-                <a href="{{ route('public.tweets.index', app()->getLocale()) }}" class="block mt-4 text-sm text-accent hover:text-accent-ink font-mono">{{ __('public.home_view_all_tweets') }}</a>
+                <x-ui.button :href="route('public.tweets.index', app()->getLocale())" size="lg" class="w-full mt-4">{{ __('public.home_view_all_tweets') }}</x-ui.button>
             </section>
 
             @if($popularTags->isNotEmpty())
                 <section>
-                    <h2 class="font-serif text-xl font-semibold mb-4">{{ __('public.home_popular_tags') }}</h2>
+                    <x-ui.section-heading size="md" class="mb-4">{{ __('public.home_popular_tags') }}</x-ui.section-heading>
                     <div class="flex flex-wrap gap-2">
                         @foreach($popularTags as $tag)
-                            @php $tslug = $tag->slug(app()->getLocale()); @endphp
-                            @if($tslug)
-                                <a href="{{ route('public.tags.show', [app()->getLocale(), $tslug]) }}"
-                                    class="font-mono text-xs px-3 py-1.5 border rounded-full {{ $tag->color ? 'tag-chip' : 'bg-card border-line text-ink-2 hover:text-accent hover:border-accent' }}"
-                                    @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
-                                    #{{ $tag->name(app()->getLocale()) }}
-                                    <span class="{{ $tag->color ? '' : 'text-ink-3' }} ml-1">{{ $tag->posts_count ?? '' }}</span>
-                                </a>
-                            @endif
+                            <x-ui.tag :tag="$tag" :count="$tag->posts_count" />
                         @endforeach
                     </div>
                 </section>

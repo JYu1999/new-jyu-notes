@@ -42,7 +42,7 @@
         <aside class="space-y-8">
             @if($categories->isNotEmpty())
                 <section>
-                    <h3 class="font-mono text-xs uppercase tracking-widest text-ink-3 mb-3">{{ __('public.categories') }}</h3>
+                    <x-ui.section-heading as="h2" size="label" class="mb-3">{{ __('public.categories') }}</x-ui.section-heading>
                     <ul class="space-y-1.5 text-sm">
                         @foreach($categories as $cat)
                             @php $catSlug = $cat->slug(app()->getLocale()); @endphp
@@ -61,17 +61,10 @@
 
             @if($tags->isNotEmpty())
                 <section>
-                    <h3 class="font-mono text-xs uppercase tracking-widest text-ink-3 mb-3">{{ __('public.tags') }}</h3>
+                    <x-ui.section-heading as="h2" size="label" class="mb-3">{{ __('public.tags') }}</x-ui.section-heading>
                     <div class="flex flex-wrap gap-1.5">
                         @foreach($tags as $tag)
-                            @php $tagSlug = $tag->slug(app()->getLocale()); @endphp
-                            @if($tagSlug)
-                                <a href="{{ route('public.tags.show', [app()->getLocale(), $tagSlug]) }}"
-                                    class="font-mono text-[11px] px-2 py-1 border rounded-full {{ $tag->color ? 'tag-chip' : 'bg-card border-line text-ink-2 hover:text-accent hover:border-accent' }}"
-                                    @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
-                                    #{{ $tag->name(app()->getLocale()) }}
-                                </a>
-                            @endif
+                            <x-ui.tag :tag="$tag" size="sm" />
                         @endforeach
                     </div>
                 </section>
