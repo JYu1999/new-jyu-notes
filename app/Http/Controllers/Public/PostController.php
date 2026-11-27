@@ -66,7 +66,9 @@ class PostController extends Controller
             'post' => $post,
             'translations' => $translations,
             'availableLocales' => $availableLocales,
-            'seriesNav' => $service->seriesNavigation($post),
+            'adjacent' => $service->adjacentPosts($post),
+            'related' => $posts->related($post, 3),
+            'cited' => $post->publishedOutgoing(),
             'backlinks' => $backlinks,
         ]);
     }

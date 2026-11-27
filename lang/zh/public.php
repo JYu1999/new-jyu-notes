@@ -25,7 +25,7 @@ return [
     'other_languages' => '其他語言：',
     'prev_post' => '上一篇',
     'next_post' => '下一篇',
-    'mentioned_in' => '被以下文章提及',
+    'mentioned_in' => '被提及於',
 
     // Tweets
     'tweets' => '碎念',
@@ -134,4 +134,11 @@ return [
     'post_close' => '關閉',
     'post_reading_progress' => '閱讀進度',
     'post_post_tools' => '文章工具',
+
+    // Post page: what to read next (JYU-536)
+    'post_mentioned_in_hint' => '其他文章或碎念引用了這一篇',
+    'post_related' => '同主題延伸閱讀',
+    'post_cites' => '本文引用',
+    'post_mentioned_by_n' => '被 :n 篇提及',
+    'post_see_backlinks' => '查看反向連結 ↓',
 ];

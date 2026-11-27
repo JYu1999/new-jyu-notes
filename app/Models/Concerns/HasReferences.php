@@ -38,4 +38,22 @@ trait HasReferences
             ->sortByDesc('published_at')
             ->values();
     }
+
+    /**
+     * Published content this model mentions, in the order the references were stored.
+     *
+     * @return Collection<int, Model>
+     */
+    public function publishedOutgoing(): Collection
+    {
+        return $this->outgoingReferences()
+            ->with('target')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Reference $r) => $r->target)
+            ->filter()
+            ->filter(fn ($m) => $m->status === 'published')
+            ->unique(fn ($m) => $m::class.':'.$m->getKey())
+            ->values();
+    }
 }
