@@ -92,24 +92,39 @@
         {{-- Backlinks：被以下文章 / 推文提及 --}}
         @include('public.partials.backlinks', ['backlinks' => $backlinks])
 
-        {{-- Series navigation --}}
-        @if(($seriesNav['previous'] ?? null) || ($seriesNav['next'] ?? null))
-            <nav class="mt-12 pt-6 border-t border-line grid grid-cols-2 gap-3">
-                @if($seriesNav['previous'])
-                    <x-ui.card :href="route('public.posts.show', [$loc, $seriesNav['previous']->slug])" class="text-left">
-                        <div class="text-[13px] text-ink-3 mb-1">← {{ __('public.prev_post') }}</div>
-                        <div class="font-serif text-lg font-medium line-clamp-2">{{ $seriesNav['previous']->title }}</div>
-                    </x-ui.card>
+        {{-- Previous / next: series order when in a series, otherwise publish date --}}
+        @if($adjacent['previous'] || $adjacent['next'])
+            <nav aria-label="{{ __('public.prev_post') }} / {{ __('public.next_post') }}" class="grid sm:grid-cols-2 gap-3 mt-10">
+                @if($adjacent['previous'])
+                    <a href="{{ route('public.posts.show', [$loc, $adjacent['previous']->slug]) }}" rel="prev"
+                        class="flex flex-col gap-1 p-[18px] rounded-[var(--radius-card)] border border-line-2 text-ink hover:border-accent hover:text-ink">
+                        <span class="text-[13px] text-ink-3">← {{ __('public.prev_post') }}</span>
+                        <span class="font-serif text-lg font-medium leading-snug">{{ $adjacent['previous']->title }}</span>
+                    </a>
                 @else
-                    <span></span>
+                    <span class="hidden sm:block"></span>
                 @endif
-                @if($seriesNav['next'])
-                    <x-ui.card :href="route('public.posts.show', [$loc, $seriesNav['next']->slug])" class="text-right">
-                        <div class="text-[13px] text-ink-3 mb-1">{{ __('public.next_post') }} →</div>
-                        <div class="font-serif text-lg font-medium line-clamp-2">{{ $seriesNav['next']->title }}</div>
-                    </x-ui.card>
+                @if($adjacent['next'])
+                    <a href="{{ route('public.posts.show', [$loc, $adjacent['next']->slug]) }}" rel="next"
+                        class="flex flex-col gap-1 p-[18px] rounded-[var(--radius-card)] border border-line-2 text-ink hover:border-accent hover:text-ink sm:text-right">
+                        <span class="text-[13px] text-ink-3">{{ __('public.next_post') }} →</span>
+                        <span class="font-serif text-lg font-medium leading-snug">{{ $adjacent['next']->title }}</span>
+                    </a>
                 @endif
             </nav>
+        @endif
+
+        {{-- Related reading: same tag or category --}}
+        @if($related->isNotEmpty())
+            <section aria-labelledby="related-h" class="mt-12">
+                <h2 id="related-h" class="m-0 mb-3 font-serif text-[22px] font-semibold">{{ __('public.post_related') }}</h2>
+                <ul class="list-none m-0 p-0 border-b border-line">
+                    @foreach($related as $r)
+                        <li class="border-t border-line"><a href="{{ route('public.posts.show', [$loc, $r->slug]) }}"
+                            class="flex justify-between gap-4 py-3.5 min-h-11 text-ink hover:text-accent"><span>{{ $r->title }}</span><span class="font-mono text-[13px] text-ink-3 whitespace-nowrap">{{ $r->published_at?->format('m/d') }}</span></a></li>
+                    @endforeach
+                </ul>
+            </section>
         @endif
     </article>
 
@@ -130,6 +145,21 @@
                     @endforeach
                 </ol>
             </nav>
+        @endif
+        @if($cited->isNotEmpty() || $backlinks->isNotEmpty())
+            <section data-references aria-label="{{ __('public.post_cites') }}" class="p-4 rounded-[var(--radius-card)] bg-card border border-line text-sm">
+                @if($cited->isNotEmpty())
+                    <div class="font-bold mb-2">{{ __('public.post_cites') }}</div>
+                    @foreach($cited as $c)
+                        @php $isTweet = $c instanceof \App\Models\Tweet; @endphp
+                        <a href="{{ $isTweet ? route('public.tweets.show', [$c->locale, $c->id]) : route('public.posts.show', [$c->locale, $c->slug]) }}" class="block py-1 text-ink-2 hover:text-accent">→ {{ $isTweet ? $c->preview(40) : $c->title }}</a>
+                    @endforeach
+                @endif
+                @if($backlinks->isNotEmpty())
+                    <div class="font-bold {{ $cited->isNotEmpty() ? 'mt-3' : '' }} mb-2">{{ __('public.post_mentioned_by_n', ['n' => $backlinks->count()]) }}</div>
+                    <a href="#backlinks" class="text-accent hover:text-accent-ink">{{ __('public.post_see_backlinks') }}</a>
+                @endif
+            </section>
         @endif
         <div class="flex gap-2">
             <x-ui.button icon aria-label="{{ __('public.post_back_to_top') }}" @click="toTop()">

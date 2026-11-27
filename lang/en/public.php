@@ -124,4 +124,11 @@ return [
     'post_close' => 'Close',
     'post_reading_progress' => 'Reading progress',
     'post_post_tools' => 'Post tools',
+
+    // Post page: what to read next (JYU-536)
+    'post_mentioned_in_hint' => 'Other posts and tweets that link here',
+    'post_related' => 'More on this topic',
+    'post_cites' => 'This post links to',
+    'post_mentioned_by_n' => 'Mentioned by :n',
+    'post_see_backlinks' => 'See backlinks ↓',
 ];

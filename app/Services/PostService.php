@@ -252,6 +252,41 @@ class PostService
     }
 
     /**
+     * Previous / next post for the bottom of a post page.
+     * Posts in a series follow the series order; otherwise publish date
+     * (previous = older, next = newer) within the same locale.
+     *
+     * @return array{previous: ?Post, next: ?Post}
+     */
+    public function adjacentPosts(Post $post): array
+    {
+        $series = $this->seriesNavigation($post);
+        if ($series['previous'] || $series['next']) {
+            return ['previous' => $series['previous'], 'next' => $series['next']];
+        }
+
+        if (! $post->published_at) {
+            return ['previous' => null, 'next' => null];
+        }
+
+        $base = fn () => Post::query()->locale($post->locale)->published()->whereKeyNot($post->id);
+        $at = $post->published_at;
+
+        return [
+            'previous' => $base()
+                ->where(fn ($q) => $q->where('published_at', '<', $at)
+                    ->orWhere(fn ($qq) => $qq->where('published_at', $at)->where('id', '<', $post->id)))
+                ->orderByDesc('published_at')->orderByDesc('id')
+                ->first(),
+            'next' => $base()
+                ->where(fn ($q) => $q->where('published_at', '>', $at)
+                    ->orWhere(fn ($qq) => $qq->where('published_at', $at)->where('id', '>', $post->id)))
+                ->orderBy('published_at')->orderBy('id')
+                ->first(),
+        ];
+    }
+
+    /**
      * Given a URL in one locale, find the corresponding URL in another locale.
      *
      * If the post translation doesn't exist, returns the post-list page in target locale

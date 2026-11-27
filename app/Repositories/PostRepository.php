@@ -62,6 +62,41 @@ class PostRepository
         ];
     }
 
+    /**
+     * Published posts in the same locale that share a tag or category with $post,
+     * most shared topics first, then newest. Excludes $post itself.
+     */
+    public function related(Post $post, int $limit = 3): EloquentCollection
+    {
+        $tagIds = $post->tags->pluck('id');
+        $categoryIds = $post->categories->pluck('id');
+
+        if ($tagIds->isEmpty() && $categoryIds->isEmpty()) {
+            return new EloquentCollection;
+        }
+
+        return Post::query()
+            ->locale($post->locale)
+            ->published()
+            ->whereKeyNot($post->id)
+            ->where(function ($q) use ($tagIds, $categoryIds) {
+                $q->whereHas('tags', fn ($t) => $t->whereIn('tags.id', $tagIds))
+                    ->orWhereHas('categories', fn ($c) => $c->whereIn('categories.id', $categoryIds));
+            })
+            ->withCount([
+                'tags as shared_tags' => fn ($t) => $t->whereIn('tags.id', $tagIds),
+                'categories as shared_categories' => fn ($c) => $c->whereIn('categories.id', $categoryIds),
+            ])
+            ->get()
+            // Postgres can't ORDER BY select aliases; a blog's candidate set is small.
+            ->sortBy([
+                fn ($a, $b) => ($b->shared_tags + $b->shared_categories) <=> ($a->shared_tags + $a->shared_categories),
+                fn ($a, $b) => $b->published_at <=> $a->published_at,
+            ])
+            ->take($limit)
+            ->values();
+    }
+
     public function findPublishedBySlug(string $locale, string $slug): ?Post
     {
         return Post::query()

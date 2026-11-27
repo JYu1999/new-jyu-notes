@@ -61,7 +61,7 @@ class SharedUiOnPagesTest extends TestCase
         $this->assertStringContainsString(__('public.feed_empty', [], 'zh'), $html);
     }
 
-    public function test_post_show_uses_chips_and_cards_for_series_navigation(): void
+    public function test_post_show_uses_chips_and_series_navigation(): void
     {
         $this->publishPost('first', '上一篇文章');
         $post = $this->publishPost('second', '這一篇');
@@ -74,7 +74,8 @@ class SharedUiOnPagesTest extends TestCase
         $html = $this->get('/zh/posts/second')->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression('/class="[^"]*ui-chip[^"]*tag-chip/', $html);
-        $this->assertMatchesRegularExpression('/<a [^>]*class="[^"]*ui-card[^"]*ui-card-interactive[^"]*"[^>]*>\s*<div[^>]*>← /u', $html);
+        // JYU-536: previous / next are outlined links per the redesign (not filled cards).
+        $this->assertMatchesRegularExpression('/<a [^>]*rel="prev"[^>]*>\s*<span[^>]*>← /u', $html);
     }
 
     public function test_posts_index_sidebar_uses_label_headings_and_chips(): void

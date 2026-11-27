@@ -22,7 +22,7 @@ return [
     'other_languages' => '他の言語：',
     'prev_post' => '前の記事',
     'next_post' => '次の記事',
-    'mentioned_in' => 'この記事に言及している記事',
+    'mentioned_in' => '言及している記事',
 
     'tweets' => 'つぶやき',
     'no_tweets' => 'つぶやきはまだありません。',
@@ -124,4 +124,11 @@ return [
     'post_close' => '閉じる',
     'post_reading_progress' => '読書の進捗',
     'post_post_tools' => '記事ツール',
+
+    // Post page: what to read next (JYU-536)
+    'post_mentioned_in_hint' => 'この記事を引用している記事やつぶやき',
+    'post_related' => '同じトピックの記事',
+    'post_cites' => 'この記事の引用先',
+    'post_mentioned_by_n' => ':n 件から言及',
+    'post_see_backlinks' => '被リンクを見る ↓',
 ];

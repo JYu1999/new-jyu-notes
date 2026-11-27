@@ -124,4 +124,11 @@ return [
     'post_close' => 'Tutup',
     'post_reading_progress' => 'Progres membaca',
     'post_post_tools' => 'Alat artikel',
+
+    // Post page: what to read next (JYU-536)
+    'post_mentioned_in_hint' => 'Artikel dan catatan lain yang menautkan ke sini',
+    'post_related' => 'Bacaan lain dengan topik serupa',
+    'post_cites' => 'Artikel ini menautkan ke',
+    'post_mentioned_by_n' => 'Disebutkan oleh :n',
+    'post_see_backlinks' => 'Lihat tautan balik ↓',
 ];

@@ -124,4 +124,11 @@ return [
     'post_close' => 'Đóng',
     'post_reading_progress' => 'Tiến độ đọc',
     'post_post_tools' => 'Công cụ bài viết',
+
+    // Post page: what to read next (JYU-536)
+    'post_mentioned_in_hint' => 'Các bài viết và ghi chú liên kết đến bài này',
+    'post_related' => 'Đọc thêm cùng chủ đề',
+    'post_cites' => 'Bài này trích dẫn',
+    'post_mentioned_by_n' => 'Được nhắc đến :n lần',
+    'post_see_backlinks' => 'Xem liên kết ngược ↓',
 ];
