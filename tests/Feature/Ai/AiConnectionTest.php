@@ -5,7 +5,6 @@ namespace Tests\Feature\Ai;
 use App\Models\AiConnection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -23,9 +22,6 @@ class AiConnectionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (! file_exists(storage_path('oauth-private.key'))) {
-            Artisan::call('passport:keys');
-        }
         $this->admin = User::create(['name' => 'JYu', 'email' => 'a@b.c', 'password' => bcrypt('x'), 'role' => User::ROLE_ADMIN]);
     }
 

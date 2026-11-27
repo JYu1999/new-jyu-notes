@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Support\HostResolver;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 
 abstract class TestCase extends BaseTestCase
@@ -22,5 +23,10 @@ abstract class TestCase extends BaseTestCase
             }
         });
         Http::preventStrayRequests();
+
+        // OAuth (JYU-554) needs signing keys; CI starts without them.
+        if (! file_exists(storage_path('oauth-private.key'))) {
+            Artisan::call('passport:keys');
+        }
     }
 }
