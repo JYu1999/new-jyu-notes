@@ -7,10 +7,13 @@ use App\Http\Requests\Admin\Agent\ConnectionPolicyRequest;
 use App\Http\Requests\Admin\Agent\PolicyRequest;
 use App\Mcp\Servers\BlogServer;
 use App\Mcp\Tools\BlogTool;
+use App\Models\AiActionRequest;
 use App\Models\AiActivity;
 use App\Models\AiConnection;
+use App\Services\AiApprovalService;
 use App\Services\AiConnectionService;
 use App\Support\AiPolicy;
+use App\Support\TextDiff;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -25,15 +28,55 @@ class AgentController extends Controller
             'mcpUrl' => url('/mcp'),
             'connections' => AiConnection::query()->with('client')->whereNull('revoked_at')->latest()->get(),
             'global' => $global,
-            'activities' => AiActivity::query()->with(['aiConnection', 'subject'])->latest('id')->limit(8)->get(),
+            'activities' => AiActivity::query()->with(['aiConnection', 'subject', 'actionRequest'])->latest('id')->limit(8)->get(),
             'tools' => $this->tools($global),
+            'pending' => AiActionRequest::query()->with(['aiConnection', 'publishable'])
+                ->where('status', AiActionRequest::STATUS_PENDING)->latest('id')->get(),
         ]);
+    }
+
+    /** One queued request (JYU-556): what the AI wants to do, with the proposed text diffed against the current one. */
+    public function showRequest(AiActionRequest $actionRequest, AiApprovalService $approvals): View
+    {
+        $args = $actionRequest->arguments ?? [];
+        $subject = $actionRequest->publishable;
+        $types = ['post' => 'posts', 'tweet' => 'tweets', 'page' => 'pages'];
+
+        return view('admin.agents.request', [
+            'r' => $actionRequest,
+            'headline' => $approvals->headline($actionRequest),
+            'approveLabel' => $approvals->approveLabel($actionRequest),
+            'subject' => $subject,
+            'historyUrl' => $subject && isset($types[$actionRequest->publishable_type])
+                ? route('admin.revisions.index', ['type' => $types[$actionRequest->publishable_type], 'id' => $subject->getKey()]) : null,
+            'titleChange' => isset($args['title']) && $args['title'] !== ($subject->title ?? null) ? [$subject->title ?? '', $args['title']] : null,
+            'paragraphs' => isset($args['body'])
+                ? array_values(array_filter(TextDiff::paragraphs($actionRequest->tool === 'update_content' ? (string) ($subject->body ?? '') : '', (string) $args['body']), fn ($p) => $p['type'] !== 'same'))
+                : null,
+            'args' => collect($args)->except(['body', 'title', 'type', 'id', 'note', 'data'])->all(),
+        ]);
+    }
+
+    public function approve(AiActionRequest $actionRequest, AiApprovalService $approvals): RedirectResponse
+    {
+        $error = $approvals->approve($actionRequest);
+
+        return redirect()->route('admin.agents.index')->with($error ? 'error' : 'success', $error
+            ? '執行失敗：'.$error
+            : '已核准並執行：'.$actionRequest->summary);
+    }
+
+    public function reject(AiActionRequest $actionRequest, AiApprovalService $approvals): RedirectResponse
+    {
+        $approvals->reject($actionRequest);
+
+        return redirect()->route('admin.agents.index')->with('success', '已拒絕，內容維持原狀');
     }
 
     public function activity(): View
     {
         return view('admin.agents.activity', [
-            'activities' => AiActivity::query()->with(['aiConnection', 'subject'])->latest('id')->paginate(50),
+            'activities' => AiActivity::query()->with(['aiConnection', 'subject', 'actionRequest'])->latest('id')->paginate(50),
         ]);
     }
 

@@ -18,12 +18,38 @@
     @if(session('success'))
         <p class="m-0 mb-5 px-4 py-2 rounded-[var(--radius-control)] bg-accent-soft text-accent-ink text-sm">{{ session('success') }}</p>
     @endif
-    @if($errors->any())
-        <p class="m-0 mb-5 px-4 py-2 rounded-[var(--radius-control)] bg-danger/10 text-danger text-sm">{{ $errors->first() }}</p>
+    @if($errors->any() || session('error'))
+        <p class="m-0 mb-5 px-4 py-2 rounded-[var(--radius-control)] bg-danger/10 text-danger text-sm">{{ session('error') ?? $errors->first() }}</p>
     @endif
 
     <div class="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
         <div class="flex flex-col gap-6 min-w-0">
+            {{-- Waiting for approval (JYU-556) --}}
+            @if($pending->isNotEmpty())
+                @php $approvals = app(\App\Services\AiApprovalService::class); @endphp
+                <section id="pending" aria-labelledby="pend-h" class="p-5 rounded-[var(--radius-card-lg)] bg-card border-2 border-accent/40">
+                    <h2 id="pend-h" class="m-0 mb-3 font-sans text-lg font-bold tracking-normal">等你確認 · {{ $pending->count() }}</h2>
+                    @foreach($pending as $r)
+                        <div data-pending="{{ $r->id }}" class="flex flex-wrap items-center gap-3 py-3 border-b border-line last:border-0">
+                            <span aria-hidden="true" class="inline-flex items-center justify-center size-9 rounded-lg bg-ink text-paper font-bold">{{ mb_strtoupper(mb_substr($r->aiConnection?->name ?? 'AI', 0, 1)) }}</span>
+                            <div class="flex-1 min-w-[220px]">
+                                <div class="text-[15px] font-semibold">{{ $approvals->headline($r) }}</div>
+                                <div class="text-xs text-ink-3">{{ $r->created_at->locale('zh_TW')->diffForHumans() }}@if($r->note) · 「{{ \Illuminate\Support\Str::limit($r->note, 60) }}」@endif</div>
+                            </div>
+                            <a href="{{ route('admin.agents.requests.show', $r) }}" class="text-[13px] text-accent hover:text-accent-ink">看內容與差異</a>
+                            <form method="POST" action="{{ route('admin.agents.requests.reject', $r) }}">
+                                @csrf
+                                <button type="submit" class="h-9 px-3 rounded-lg border border-line-2 text-[13px] hover:border-danger hover:text-danger">拒絕</button>
+                            </form>
+                            <form method="POST" action="{{ route('admin.agents.requests.approve', $r) }}">
+                                @csrf
+                                <button type="submit" class="h-9 px-3.5 rounded-lg bg-ink text-paper text-[13px] font-semibold hover:bg-accent">{{ $approvals->approveLabel($r) }}</button>
+                            </form>
+                        </div>
+                    @endforeach
+                </section>
+            @endif
+
             {{-- Connected AIs --}}
             <section aria-labelledby="conn-h" class="p-5 rounded-[var(--radius-card-lg)] bg-card border border-line">
                 <h2 id="conn-h" class="m-0 mb-3 font-sans text-lg font-bold tracking-normal">已連線的 AI</h2>
