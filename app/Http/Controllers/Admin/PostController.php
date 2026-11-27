@@ -89,7 +89,7 @@ class PostController extends Controller
 
         return redirect()
             ->route('admin.posts.edit', $post)
-            ->with('success', '已建立');
+            ->with('success', $post->isScheduled() ? '已排程，時間到會自動發布' : '已建立');
     }
 
     public function edit(Post $post, TagRepository $tags, CategoryRepository $categories, TranslationStatusService $status): View
@@ -118,9 +118,9 @@ class PostController extends Controller
 
     public function update(Post $post, UpdateRequest $request, PostService $service): RedirectResponse
     {
-        $service->update($post, $request->validated());
+        $post = $service->update($post, $request->validated());
 
-        return redirect()->route('admin.posts.edit', $post)->with('success', '已更新');
+        return redirect()->route('admin.posts.edit', $post)->with('success', $post->isScheduled() ? '已排程，時間到會自動發布' : '已更新');
     }
 
     public function destroy(Post $post, PostService $service): RedirectResponse
@@ -143,6 +143,14 @@ class PostController extends Controller
         $service->updateStatus($post, $request->validated()['status']);
 
         return back()->with('success', '狀態已更新');
+    }
+
+    /** Cancel a scheduled publish; the post goes back to being a plain draft (JYU-549). */
+    public function unschedule(Post $post, PostService $service): RedirectResponse
+    {
+        $service->unschedule($post);
+
+        return back()->with('success', '已取消排程，文章維持草稿');
     }
 
     public function createTranslation(Post $post, CreateTranslationRequest $request, PostService $service): RedirectResponse

@@ -37,9 +37,10 @@ class PostService
                 'excerpt' => $data['excerpt'] ?? null,
                 'body' => $data['body'],
                 'cover_image_path' => $data['cover_image_path'] ?? null,
-                'status' => $data['status'] ?? Post::STATUS_DRAFT,
+                'status' => $this->isScheduling($data) ? Post::STATUS_DRAFT : ($data['status'] ?? Post::STATUS_DRAFT),
                 'is_featured' => $data['is_featured'] ?? false,
-                'published_at' => $this->resolvePublishedAt($data),
+                'published_at' => $this->isScheduling($data) ? null : $this->resolvePublishedAt($data),
+                'scheduled_at' => $this->isScheduling($data) ? $data['scheduled_at'] : null,
                 'last_modified_at' => now(),
                 'author_id' => $data['author_id'] ?? auth()->id(),
             ]);
@@ -90,6 +91,7 @@ class PostService
             }
 
             $post->fill($updateData);
+            $this->applySchedule($post, $data);
 
             // Only a genuine content change counts as a modification. Metadata-only
             // edits (is_featured, status, tags/categories) must not bump the timestamp.
@@ -193,7 +195,56 @@ class PostService
             'published_at' => $status === Post::STATUS_PUBLISHED && ! $post->published_at
                 ? now()
                 : $post->published_at,
+            // An explicit status change replaces any pending schedule (JYU-549).
+            'scheduled_at' => null,
         ]);
+    }
+
+    /** Cancel a pending schedule; the post stays a draft (JYU-549). */
+    public function unschedule(Post $post): void
+    {
+        $post->update(['scheduled_at' => null]);
+    }
+
+    /**
+     * Publish every scheduled draft whose time has come (JYU-549). The publish
+     * date becomes the scheduled time, not the moment the job happened to run.
+     *
+     * @return int number of posts published
+     */
+    public function publishDue(): int
+    {
+        $due = Post::query()->scheduled()->where('scheduled_at', '<=', now())->get();
+
+        foreach ($due as $post) {
+            $post->update([
+                'status' => Post::STATUS_PUBLISHED,
+                'published_at' => $post->scheduled_at,
+                'scheduled_at' => null,
+            ]);
+        }
+
+        return $due->count();
+    }
+
+    private function isScheduling(array $data): bool
+    {
+        return ($data['publish_when'] ?? null) === 'schedule' && ! empty($data['scheduled_at']);
+    }
+
+    /**
+     * Editor publish options: "schedule" keeps the post a draft until scheduled_at;
+     * "now" (or publishing / hiding it) drops any pending schedule.
+     */
+    private function applySchedule(Post $post, array $data): void
+    {
+        if ($this->isScheduling($data)) {
+            $post->status = Post::STATUS_DRAFT;
+            $post->published_at = $post->getOriginal('published_at');
+            $post->scheduled_at = $data['scheduled_at'];
+        } elseif (($data['publish_when'] ?? null) === 'now' || $post->status !== Post::STATUS_DRAFT) {
+            $post->scheduled_at = null;
+        }
     }
 
     /**

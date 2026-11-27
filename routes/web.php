@@ -67,6 +67,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('posts/{post}', [Admin\PostController::class, 'destroy'])->name('posts.destroy');
         Route::post('posts/{id}/restore', [Admin\PostController::class, 'restore'])->name('posts.restore');
         Route::patch('posts/{post}/status', [Admin\PostController::class, 'updateStatus'])->name('posts.status');
+        Route::delete('posts/{post}/schedule', [Admin\PostController::class, 'unschedule'])->name('posts.unschedule');
         Route::post('posts/{post}/translation', [Admin\PostController::class, 'createTranslation'])
             ->name('posts.create-translation');
 

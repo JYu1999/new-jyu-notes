@@ -87,7 +87,13 @@
                         @if($trash)
                             <span class="inline-block px-2.5 py-0.5 rounded-full text-[13px] font-semibold bg-danger/10 text-danger">垃圾桶</span>
                         @else
-                            <span class="inline-block px-2.5 py-0.5 rounded-full text-[13px] font-semibold {{ $statusClass[$post->status] ?? '' }}">{{ $statusLabel[$post->status] ?? $post->status }}</span>
+                            @if($post->isScheduled())
+                                {{-- Scheduled draft (JYU-549): label + publish time in the display timezone --}}
+                                <span data-scheduled class="inline-block px-2.5 py-0.5 rounded-full text-[13px] font-semibold bg-accent-soft text-accent-ink">已排程</span>
+                                <time class="block mt-1 font-mono text-xs text-ink-3" datetime="{{ $post->scheduled_at->toIso8601String() }}">{{ $post->scheduled_at->timezone(config('app.display_timezone'))->format('m/d H:i') }}</time>
+                            @else
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[13px] font-semibold {{ $statusClass[$post->status] ?? '' }}">{{ $statusLabel[$post->status] ?? $post->status }}</span>
+                            @endif
                         @endif
                     </td>
                     <td class="px-3 py-3 border-b border-line/70">
@@ -131,6 +137,13 @@
                                 {{-- Last rows open upwards so the menu isn't clipped by the scrolling table. --}}
                                 <div class="absolute z-20 {{ $loop->count <= 2 ? 'right-full top-0 mr-1' : ($loop->remaining < 2 ? 'right-0 bottom-full mb-1' : 'right-0 mt-1') }} w-36 py-1 bg-card border border-line rounded-lg shadow-lg text-left">
                                     <a href="{{ route('admin.posts.edit', $post) }}" class="block px-3 py-2 text-sm text-ink hover:bg-paper-2">編輯</a>
+                                    @if($post->isScheduled())
+                                        <form method="POST" action="{{ route('admin.posts.unschedule', $post) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="w-full text-left px-3 py-2 text-sm text-ink hover:bg-paper-2">取消排程</button>
+                                        </form>
+                                    @endif
                                     @if($post->status === 'published')
                                         <a href="{{ route('public.posts.show', [$post->locale, $post->slug]) }}" target="_blank" rel="noopener" class="block px-3 py-2 text-sm text-ink hover:bg-paper-2">查看前台 ↗</a>
                                     @endif

@@ -748,11 +748,12 @@ function relativeTime(date) {
     return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
 }
 
-window.postEditor = function ({ postId, status, locale, autosaveUrl, previewUrl }) {
+window.postEditor = function ({ postId, status, locale, publishWhen = 'now', autosaveUrl, previewUrl }) {
     return {
         postId,
         status,
         locale,
+        publishWhen,
         mode: 'write',
         panel: window.innerWidth >= 1024,
         saveState: postId ? 'saved' : 'idle',
@@ -840,12 +841,43 @@ window.postEditor = function ({ postId, status, locale, autosaveUrl, previewUrl 
             this.saveState = 'saving';
             this.$root.requestSubmit();
         },
-        publishClicked() {
-            if (this.status !== 'published') {
-                this.status = 'published';
-                const sel = this.field('status');
-                if (sel) sel.value = 'published';
+        get publishLabel() {
+            if (this.publishWhen === 'schedule') return '排程';
+            return this.status === 'published' ? '更新' : '發布';
+        },
+        setStatus(value) {
+            this.status = value;
+            const sel = this.field('status');
+            if (sel) sel.value = value;
+        },
+        publishClicked(event) {
+            // Scheduling (JYU-549): the post stays a draft until the scheduled time.
+            if (this.publishWhen === 'schedule') {
+                const at = this.$refs.scheduledAt;
+                if (at && !at.value) {
+                    event.preventDefault();
+                    this.chooseSchedule();
+                    return;
+                }
+                this.setStatus('draft');
+                return;
             }
+            if (this.status !== 'published') this.setStatus('published');
+        },
+        chooseSchedule() {
+            this.publishWhen = 'schedule';
+            this.panel = true;
+            this.$nextTick(() => {
+                const at = this.$refs.scheduledAt;
+                if (!at) return;
+                at.focus();
+                try { at.showPicker?.(); } catch (e) { /* not allowed without a user gesture */ }
+            });
+        },
+        hideAndSave() {
+            this.publishWhen = 'now';
+            this.setStatus('hidden');
+            this.$nextTick(() => this.save());
         },
         setMode(mode) {
             this.mode = mode;

@@ -16,6 +16,12 @@
     $langNames = ['zh' => '繁中', 'en' => 'English', 'ja' => '日本語', 'vi' => 'Tiếng Việt', 'id' => 'Indonesia'];
     $statusLabel = ['draft' => '草稿', 'published' => '已發布', 'hidden' => '隱藏'];
     $mentionUrl = fn ($m) => $m instanceof \App\Models\Tweet ? route('admin.tweets.edit', $m) : route('admin.posts.edit', $m);
+    // Scheduled publishing (JYU-549): times are shown and entered in the site's display timezone.
+    $tz = (string) config('app.display_timezone', 'UTC');
+    $scheduled = ! $isCreate && $post->isScheduled();
+    $scheduledLabel = $scheduled ? $post->scheduled_at->timezone($tz)->format('Y/m/d H:i') : null;
+    $canSchedule = ($post->status ?? 'draft') !== 'published';
+    $publishWhen = old('publish_when', $scheduled ? 'schedule' : 'now');
     $mentionLabel = fn ($m) => $m instanceof \App\Models\Tweet ? \Illuminate\Support\Str::limit(strip_tags((string) $m->body), 40) : $m->title;
 @endphp
 
@@ -24,6 +30,7 @@
         postId: @js($post->id),
         status: @js(old('status', $post->status ?? 'draft')),
         locale: @js($locale),
+        publishWhen: @js($canSchedule ? $publishWhen : 'now'),
         autosaveUrl: @js(route('admin.posts.autosave')),
         previewUrl: @js(route('admin.posts.preview')),
     })"
@@ -69,6 +76,10 @@
             <span x-text="saveLabel">{{ $isCreate ? '尚未儲存' : '已儲存' }}</span>
         </span>
 
+        @if($scheduled)
+            <span data-scheduled-chip class="inline-flex items-center h-7 px-2.5 rounded-full bg-accent-soft text-accent-ink text-xs font-semibold">已排程 · {{ $scheduledLabel }}</span>
+        @endif
+
         <div role="group" aria-label="檢視模式" class="flex gap-0.5 p-0.5 rounded-lg bg-paper-2">
             @foreach(['write' => '寫作', 'split' => '左右對照', 'preview' => '預覽'] as $key => $label)
                 <button type="button" data-mode="{{ $key }}" @click="setMode('{{ $key }}')" :aria-pressed="mode === '{{ $key }}' ? 'true' : 'false'" aria-pressed="{{ $key === 'write' ? 'true' : 'false' }}"
@@ -81,9 +92,23 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>
         </button>
 
-        <button type="submit" data-publish @click="publishClicked($event)"
-            class="h-9 px-4 rounded-lg bg-ink text-paper text-sm font-semibold hover:bg-accent"
-            x-text="status === 'published' ? '更新' : '發布'">{{ ($post->status ?? 'draft') === 'published' ? '更新' : '發布' }}</button>
+        {{-- Publish split button: ▾ offers 排程… and 設為隱藏 (JYU-549). --}}
+        <div class="relative flex ml-auto" x-data="{ menu: false }" @click.outside="menu = false" @keydown.escape="menu = false">
+            <button type="submit" data-publish @click="publishClicked($event)"
+                class="h-9 px-4 rounded-l-lg bg-ink text-paper text-sm font-semibold hover:bg-accent"
+                x-text="publishLabel">{{ $canSchedule && $publishWhen === 'schedule' ? '排程' : (($post->status ?? 'draft') === 'published' ? '更新' : '發布') }}</button>
+            <button type="button" @click="menu = !menu" :aria-expanded="menu ? 'true' : 'false'" aria-expanded="false" aria-haspopup="menu"
+                aria-label="其他發布選項：{{ $canSchedule ? '排程、' : '' }}設為隱藏"
+                class="h-9 w-9 rounded-r-lg bg-ink text-paper border-l border-paper/25 text-xs hover:bg-accent">▾</button>
+            <div x-show="menu" x-cloak role="menu" class="absolute right-0 top-full z-40 mt-1 w-40 py-1 bg-card border border-line rounded-lg shadow-lg">
+                @if($canSchedule)
+                    <button type="button" role="menuitem" data-schedule-option @click="menu = false; chooseSchedule()"
+                        class="w-full text-left px-3 py-2 text-sm text-ink hover:bg-paper-2">排程…</button>
+                @endif
+                <button type="button" role="menuitem" @click="menu = false; hideAndSave()"
+                    class="w-full text-left px-3 py-2 text-sm text-ink hover:bg-paper-2">設為隱藏</button>
+            </div>
+        </div>
     </header>
 
     @if(session('success'))
@@ -212,6 +237,27 @@
                             @endforeach
                         </select>
                     </label>
+                    @if($canSchedule)
+                        <label class="flex items-center justify-between gap-2">發布時間
+                            <select name="publish_when" x-model="publishWhen" class="h-9 px-2 rounded-md border border-line-2 bg-transparent">
+                                <option value="now" @selected($publishWhen === 'now')>按下發布時</option>
+                                <option value="schedule" @selected($publishWhen === 'schedule')>排程…</option>
+                            </select>
+                        </label>
+                        <div x-show="publishWhen === 'schedule'" @if($publishWhen !== 'schedule') x-cloak @endif data-schedule class="flex flex-col gap-1.5">
+                            <input type="datetime-local" name="scheduled_at" x-ref="scheduledAt" aria-label="排程發布時間"
+                                value="{{ old('scheduled_at', $scheduled ? $post->scheduled_at->timezone($tz)->format('Y-m-d\TH:i') : '') }}"
+                                min="{{ now($tz)->format('Y-m-d\TH:i') }}"
+                                class="h-9 px-2 rounded-md border border-line-2 bg-transparent font-mono text-xs text-ink">
+                            <span class="text-xs text-ink-3">按「排程」儲存，時間到會自動發布（{{ $tz }}）</span>
+                        </div>
+                        @if($scheduled)
+                            <p data-scheduled-notice class="m-0 flex items-center justify-between gap-2 text-xs text-accent-ink">
+                                已排程：{{ $scheduledLabel }}
+                                <button type="submit" form="unschedule-post" class="text-xs text-danger hover:underline">取消排程</button>
+                            </p>
+                        @endif
+                    @endif
                     <label class="flex items-center justify-between gap-2 cursor-pointer">設為精選
                         <input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $post->is_featured)) class="size-[18px] accent-accent">
                     </label>
@@ -315,7 +361,13 @@
     </div>
 </form>
 
-{{-- "Create translation" forms live outside the main form (no nested forms). --}}
+{{-- "Create translation" / "cancel schedule" forms live outside the main form (no nested forms). --}}
+@if($scheduled)
+    <form id="unschedule-post" method="POST" action="{{ route('admin.posts.unschedule', $post) }}" class="hidden">
+        @csrf
+        @method('DELETE')
+    </form>
+@endif
 @unless($isCreate)
     @foreach($versionStates as $loc => $v)
         @unless($v['post'])
