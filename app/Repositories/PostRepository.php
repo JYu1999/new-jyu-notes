@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
-use App\Services\TranslationStatusService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
@@ -139,63 +138,6 @@ class PostRepository
         };
 
         return $q->paginate($perPage);
-    }
-
-    public function adminPaginate(
-        ?string $status = null,
-        ?string $locale = null,
-        ?string $search = null,
-        int $perPage = 20,
-        ?string $missing = null,
-        ?string $stale = null,
-    ): LengthAwarePaginator {
-        $translations = app(TranslationStatusService::class);
-        $q = match (true) {
-            $missing !== null => $translations->missing($missing),
-            $stale !== null => $translations->stale($stale),
-            default => Post::query(),
-        };
-        $q->with(['tags.translations', 'categories.translations']);
-
-        if ($status === 'trashed') {
-            $q->onlyTrashed();
-        } elseif ($status !== null && $status !== 'all') {
-            $q->where('status', $status);
-        }
-
-        if ($locale) {
-            $q->where('locale', $locale);
-        }
-
-        if ($search) {
-            $q->where(function ($qq) use ($search) {
-                $qq->where('title', 'ILIKE', "%{$search}%")
-                    ->orWhere('excerpt', 'ILIKE', "%{$search}%");
-            });
-        }
-
-        return $q->orderByDesc('updated_at')->paginate($perPage);
-    }
-
-    public function countsByStatus(): array
-    {
-        $counts = Post::query()
-            ->select('status')
-            ->selectRaw('count(*) as n')
-            ->groupBy('status')
-            ->pluck('n', 'status')
-            ->all();
-
-        $trashed = Post::onlyTrashed()->count();
-        $total = Post::query()->count();
-
-        return [
-            'all' => $total,
-            'published' => $counts[Post::STATUS_PUBLISHED] ?? 0,
-            'draft' => $counts[Post::STATUS_DRAFT] ?? 0,
-            'hidden' => $counts[Post::STATUS_HIDDEN] ?? 0,
-            'trashed' => $trashed,
-        ];
     }
 
     public function countByStatus(string $status): int
