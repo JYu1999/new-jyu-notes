@@ -67,6 +67,9 @@ return [
 
     'timezone' => 'UTC',
 
+    // Timezone for things shown to the author, e.g. the admin greeting (JYU-542).
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Taipei'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
