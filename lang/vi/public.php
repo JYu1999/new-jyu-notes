@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'home_intro' => 'Ghi chú của JYu về kỹ thuật phần mềm, cuộc sống và việc đọc.',
+    'home_intro' => 'Bài dài nằm ở "Bài viết", suy nghĩ ngắn nằm ở "Ghi chú". Chúng liên kết với nhau để bạn đọc tiếp theo mạch.',
     'home_featured_posts' => 'Bài viết nổi bật',
     'home_recent_tweets' => 'Ghi chú gần đây',
     'home_popular_tags' => 'Thẻ phổ biến',
@@ -72,4 +72,33 @@ return [
     'topics_tags' => 'Thẻ',
     'topics_empty' => 'Chưa có danh mục hay thẻ nào.',
     'n_posts' => ':n bài',
+
+    // Home page (JYU-534)
+    'home_hello' => 'Xin chào, mình là JYu.',
+    'home_headline' => 'Mình viết về kỹ thuật phần mềm, sự nghiệp, đọc sách và cuộc sống.',
+    'home_work_cta' => 'Dự án & kinh nghiệm',
+    'home_role' => 'Kỹ sư phần mềm · Laravel / PostgreSQL / DevOps',
+    'home_topics' => 'Chủ đề',
+    'home_all_tags' => 'Tất cả thẻ',
+    'home_featured' => 'Nổi bật',
+    'home_more_featured' => 'Còn :n bài nổi bật →',
+    'home_latest' => 'Mới nhất',
+    'feed_filter' => 'Lọc theo loại',
+    'feed_all' => 'Tất cả',
+    'feed_posts' => 'Bài viết',
+    'feed_tweets' => 'Ghi chú',
+    'kind_post' => 'Bài viết',
+    'kind_tweet' => 'Ghi chú',
+    'load_more' => 'Tải thêm',
+    'feed_empty' => 'Chưa có nội dung.',
+    'feed_error' => 'Không tải được. Vui lòng thử lại.',
+    'home_series' => 'Loạt bài',
+    'home_tags' => 'Thẻ',
+    'home_site_updates' => 'Cập nhật trang',
+    'home_changelog_link' => 'Changelog →',
+    'minutes' => ':n phút',
+    'n_photos' => ':n ảnh',
+    'feed_video' => 'Phát video',
+    'featured_filter' => 'Chỉ bài nổi bật',
+    'clear_filter' => 'Bỏ lọc',
 ];

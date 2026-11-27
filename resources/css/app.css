@@ -27,6 +27,10 @@
     --color-accent: #a4472f;
     --color-accent-soft: rgba(164, 71, 47, 0.10);
     --color-accent-ink: #8a3e2a;
+    /* Text on inverse (ink-filled) surfaces, e.g. the featured hero card. */
+    --color-inverse-ink-2: #d9cfbf;
+    --color-inverse-ink-3: #bfb3a2;
+    --color-inverse-accent: #e8a58b;
     --color-good: #4a6b3f;
     --color-warn: #b08234;
     --color-danger: #a83a2e;
@@ -50,6 +54,9 @@
     --color-accent: #d97a5a;
     --color-accent-soft: rgba(217, 122, 90, 0.15);
     --color-accent-ink: #ec8e6e;
+    --color-inverse-ink-2: #4a3f35;
+    --color-inverse-ink-3: #6b5f53;
+    --color-inverse-accent: #a4472f;
 }
 
 @layer base {

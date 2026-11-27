@@ -8,10 +8,16 @@
         <div>
             <h1 class="font-serif text-3xl md:text-4xl font-semibold">{{ __('public.posts') }}</h1>
             <p class="text-ink-3 text-sm mt-2 font-mono">{{ __('public.posts_total', ['n' => $posts->total()]) }}</p>
+            @if($featuredOnly)
+                <div class="mt-3 flex items-center gap-2">
+                    <x-ui.chip>{{ __('public.featured_filter') }}</x-ui.chip>
+                    <a href="{{ route('public.posts.index', app()->getLocale()) }}" class="inline-flex items-center min-h-11 text-sm text-accent hover:text-accent-ink">{{ __('public.clear_filter') }}</a>
+                </div>
+            @endif
         </div>
 
-        {{-- Sort selector --}}
-        <form method="GET" class="flex items-center gap-3">
+        {{-- Sort selector (featured list keeps the home-page order) --}}
+        <form method="GET" @class(['flex items-center gap-3', 'hidden' => $featuredOnly])>
             @if($selectedTag)<input type="hidden" name="tag" value="{{ $selectedTag }}">@endif
             @if($selectedCategory)<input type="hidden" name="category" value="{{ $selectedCategory }}">@endif
             <label for="sort" class="text-sm text-ink-2">{{ __('public.sort_label') }}</label>

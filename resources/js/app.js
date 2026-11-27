@@ -37,6 +37,59 @@ document.addEventListener('keydown', (e) => {
 });
 
 /**
+ * Home "Latest" timeline (JYU-534): type tabs + "load more" without a page reload.
+ * Links keep working without JS (they reload with ?type= / ?before=).
+ * Server returns { html, next } when called with ?partial=1.
+ */
+window.homeFeed = function ({ url, type, next }) {
+    return {
+        type,
+        next,
+        loading: false,
+        error: false,
+        async fetchPage(params) {
+            this.loading = true;
+            this.error = false;
+            try {
+                const qs = new URLSearchParams({ ...params, partial: '1' });
+                const res = await fetch(`${url}?${qs}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+                });
+                if (!res.ok) throw new Error(String(res.status));
+                return await res.json();
+            } catch (e) {
+                this.error = true;
+                return null;
+            } finally {
+                this.loading = false;
+            }
+        },
+        async switchTo(type) {
+            if (this.loading || type === this.type) return;
+            const data = await this.fetchPage(type === 'all' ? {} : { type });
+            if (!data) return;
+            this.type = type;
+            this.next = data.next;
+            this.$refs.list.innerHTML = data.html;
+            this.$refs.empty.classList.toggle('hidden', data.html.trim() !== '');
+            const u = new URL(window.location.href);
+            if (type === 'all') u.searchParams.delete('type'); else u.searchParams.set('type', type);
+            u.searchParams.delete('before');
+            history.replaceState(null, '', u);
+        },
+        async loadMore() {
+            if (this.loading || !this.next) return;
+            const params = { before: this.next };
+            if (this.type !== 'all') params.type = this.type;
+            const data = await this.fetchPage(params);
+            if (!data) return;
+            this.$refs.list.insertAdjacentHTML('beforeend', data.html);
+            this.next = data.next;
+        },
+    };
+};
+
+/**
  * AJAX live filter: posts a form's serialized fields to a URL + ?partial=1,
  * replaces the target element's innerHTML with the response, and updates
  * window history so the URL reflects current filter state.

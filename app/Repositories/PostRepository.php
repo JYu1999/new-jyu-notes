@@ -17,6 +17,7 @@ class PostRepository
         ?int $tag = null,
         ?int $category = null,
         int $perPage = 12,
+        bool $featured = false,
     ): LengthAwarePaginator {
         $q = Post::query()
             ->with(['tags.translations', 'categories.translations'])
@@ -30,34 +31,35 @@ class PostRepository
             $q->whereHas('categories', fn ($qq) => $qq->where('categories.id', $category));
         }
 
+        if ($featured) {
+            // Featured list keeps the same order as the home page.
+            return $q->featured()->orderForFeatured()->paginate($perPage);
+        }
+
         $q->sortBy($sort);
 
         return $q->paginate($perPage);
     }
 
-    public function featured(string $locale, int $limit = 4): Collection
+    /**
+     * Featured posts for the home page: the first $limit in featured order,
+     * plus how many featured posts exist in total (for "N more featured →").
+     * No fallback: with no featured posts the home page hides the section.
+     *
+     * @return array{items: EloquentCollection<int, Post>, total: int}
+     */
+    public function featuredForHome(string $locale, int $limit = 3): array
     {
-        $featured = Post::query()
-            ->with(['tags.translations', 'categories.translations'])
-            ->locale($locale)
-            ->published()
-            ->featured()
-            ->orderByDesc('published_at')
-            ->limit($limit)
-            ->get();
+        $base = Post::query()->locale($locale)->published()->featured();
 
-        // Fallback: if no posts are explicitly marked featured, show the latest published posts
-        if ($featured->isEmpty()) {
-            return Post::query()
+        return [
+            'items' => (clone $base)
                 ->with(['tags.translations', 'categories.translations'])
-                ->locale($locale)
-                ->published()
-                ->orderByDesc('published_at')
+                ->orderForFeatured()
                 ->limit($limit)
-                ->get();
-        }
-
-        return $featured;
+                ->get(),
+            'total' => (clone $base)->count(),
+        ];
     }
 
     public function findPublishedBySlug(string $locale, string $slug): ?Post
