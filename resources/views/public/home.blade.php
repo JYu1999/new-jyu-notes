@@ -59,8 +59,8 @@
                             @click.prevent="switchTo('{{ $key }}')"
                             :aria-pressed="type === '{{ $key }}' ? 'true' : 'false'"
                             aria-pressed="{{ $feedType === $key ? 'true' : 'false' }}"
-                            :class="type === '{{ $key }}' ? 'bg-card text-ink font-semibold shadow-sm' : 'text-ink-2'"
-                            class="inline-flex items-center h-11 md:h-9 px-3.5 rounded-[9px] text-sm {{ $feedType === $key ? 'bg-card text-ink font-semibold shadow-sm' : 'text-ink-2' }}">{{ $label }}</a>
+                            {{-- Selected style follows aria-pressed only, so switching tabs can never leave two selected. --}}
+                            class="inline-flex items-center h-11 md:h-9 px-3.5 rounded-[9px] text-sm text-ink-2 aria-pressed:bg-card aria-pressed:text-ink aria-pressed:font-semibold aria-pressed:shadow-sm">{{ $label }}</a>
                     @endforeach
                 </div>
             </div>

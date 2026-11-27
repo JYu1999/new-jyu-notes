@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Fix home "Latest" tabs showing two tabs as selected after switching
 - Home timeline renders tweets with full formatting (Markdown, YouTube embeds, blurred-image warning with tap to reveal), shows post cover images, expands long tweets, and loads more automatically as you scroll
 - Simpler home intro
 - Changelog entries support inline Markdown (code, bold, links), and home sidebar tags show how many posts each has
