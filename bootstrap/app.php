@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // The theme cookie is written by JS on the client (see resources/js/app.js),
+        // so it cannot be encrypted; App\Support\ThemePreference validates it.
+        $middleware->encryptCookies(except: ['theme']);
+
         $middleware->web(append: [
             DetectLocale::class,
         ]);

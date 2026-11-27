@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh">
+@php $theme = \App\Support\ThemePreference::fromRequest(request()); @endphp
+<html lang="zh" @if($theme) data-theme="{{ $theme }}" data-theme-choice="{{ $theme }}" @endif>
 <head>
     <meta charset="UTF-8">
+    @include('partials.theme-head')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Login') · JYu's Blog</title>

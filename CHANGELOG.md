@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Dark mode no longer flashes a light page on load, and the site follows your system theme until you pick one
 - Higher-contrast colors for dates and secondary text in light and dark mode
 - Tags, section headings, buttons and cards now share one consistent style across public pages
 
