@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Admin home shows unique post views for the last 30 days (with change vs. the previous 30 days), a daily bar chart, and this week's four most-read posts
 - Tag counts on the home page and Topics page now include tweets as well as posts
 - Admin home: greeting, a quick tweet box (Markdown, @ mentions, paste images, tags, sensitive flag, language, ⌘↵ to publish) and "continue writing" with recent drafts plus an all-drafts page
 - Admin sidebar grouped into Writing / Organize / Site, with post, tweet and page counts

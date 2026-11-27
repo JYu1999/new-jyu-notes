@@ -5,18 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Repositories\TagRepository;
 use App\Services\DraftService;
+use App\Services\ViewStatsService;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(DraftService $drafts, TagRepository $tags): View
+    public function index(DraftService $drafts, TagRepository $tags, ViewStatsService $views): View
     {
         return view('admin.dashboard', [
             'greeting' => self::greeting(Carbon::now(config('app.display_timezone'))),
             'drafts' => $drafts->recent(3),
             'draftCount' => $drafts->count(),
             'tags' => $tags->all(),
+            'views' => $views->summary(),
         ]);
     }
 
