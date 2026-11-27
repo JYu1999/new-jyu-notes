@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
+@php $theme = \App\Support\ThemePreference::fromRequest(request()); @endphp
+<html lang="{{ app()->getLocale() }}" @if($theme) data-theme="{{ $theme }}" data-theme-choice="{{ $theme }}" @endif>
 <head>
     <meta charset="UTF-8">
+    @include('partials.theme-head')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
@@ -75,17 +77,15 @@
                 </div>
 
                 {{-- Theme toggle (icon flips based on current theme) --}}
-                <x-ui.button icon
-                    x-data="{ dark: document.documentElement.getAttribute('data-theme') === 'dark' }"
-                    @click="window.toggleTheme(); dark = !dark"
-                    aria-label="Toggle theme">
+                <x-ui.button icon onclick="window.toggleTheme()" aria-label="Toggle theme">
+                    {{-- Icons follow <html data-theme> via CSS, so they are right on first paint and when the OS theme changes. --}}
                     {{-- Sun when in dark mode (click to go light) --}}
-                    <svg x-show="dark" x-cloak width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="theme-icon-when-dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="4"/>
                         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
                     </svg>
                     {{-- Moon when in light mode (click to go dark) --}}
-                    <svg x-show="!dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="theme-icon-when-light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                     </svg>
                 </x-ui.button>

@@ -155,6 +155,11 @@
     .ui-card-interactive:hover { border-color: var(--color-line-2); color: var(--color-ink); }
 }
 
+/* Theme toggle icon: show the icon for the theme you would switch to. */
+.theme-icon-when-dark { display: none; }
+[data-theme='dark'] .theme-icon-when-dark { display: block; }
+[data-theme='dark'] .theme-icon-when-light { display: none; }
+
 /* Prose styles for rendered Markdown body */
 .prose-blog {
     font-family: var(--font-serif);
