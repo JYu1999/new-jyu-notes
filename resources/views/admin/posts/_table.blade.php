@@ -12,10 +12,46 @@
         'stale' => ['class' => 'bg-warn/20 text-warn border-warn', 'aria' => '比原文舊，需要更新'],
     ];
 @endphp
+<div x-data="{ selected: [], all: @js($trash ? [] : $posts->pluck('id')->map(fn ($id) => (string) $id)->all()) }">
+@unless($trash)
+    {{-- Bulk actions (JYU-546) --}}
+    <form method="POST" action="{{ route('admin.posts.bulk') }}" x-show="selected.length" x-cloak role="toolbar" aria-label="批次操作"
+        x-data="{ tagOpen: false }"
+        @submit="if ($event.submitter?.value === 'trash' && !confirm('把選取的 ' + selected.length + ' 篇文章（含所有語言版本）移到垃圾桶？之後可以在垃圾桶還原。')) $event.preventDefault()"
+        class="flex flex-wrap items-center gap-1.5 mb-2.5 pl-4 pr-2 py-2 rounded-[var(--radius-control)] bg-ink text-paper text-sm">
+        @csrf
+        <template x-for="id in selected" :key="id"><input type="hidden" name="ids[]" :value="id"></template>
+        <span class="font-semibold mr-2" x-text="'已選 ' + selected.length + ' 篇'"></span>
+        <button type="submit" name="action" value="publish" class="h-9 px-3 rounded-md bg-paper/10 hover:bg-paper/20">發布</button>
+        <button type="submit" name="action" value="hide" class="h-9 px-3 rounded-md bg-paper/10 hover:bg-paper/20">隱藏</button>
+        <span class="relative">
+            <button type="button" @click="tagOpen = !tagOpen" :aria-expanded="tagOpen" class="h-9 px-3 rounded-md bg-paper/10 hover:bg-paper/20">加標籤</button>
+            <span x-show="tagOpen" @click.outside="tagOpen = false" class="absolute left-0 top-11 z-30 flex items-center gap-2 p-2 rounded-lg bg-card text-ink border border-line shadow-lg">
+                <select name="tag_id" aria-label="要加上的標籤" class="h-9 px-2 rounded-md border border-line-2 bg-transparent text-sm">
+                    @foreach($tags as $tag)
+                        <option value="{{ $tag->id }}">#{{ $tag->name('zh') }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" name="action" value="tag" class="h-9 px-3 rounded-md bg-ink text-paper text-sm whitespace-nowrap">加上</button>
+            </span>
+        </span>
+        <button type="submit" name="action" value="translate_en" class="h-9 px-3 rounded-md bg-paper/10 hover:bg-paper/20">建立英文翻譯</button>
+        <span class="flex-1"></span>
+        <button type="submit" name="action" value="trash" class="h-9 px-3 rounded-md text-inverse-accent hover:bg-paper/10">移到垃圾桶</button>
+        <button type="button" @click="selected = []" class="h-9 px-3 rounded-md text-paper/80 hover:bg-paper/10">取消</button>
+    </form>
+@endunless
 <div class="relative overflow-x-auto bg-card border border-line rounded-[var(--radius-card)]">
     <table class="w-full min-w-[880px] border-collapse text-sm">
         <thead>
             <tr class="text-left text-xs font-bold tracking-[0.04em] text-ink-3">
+                @unless($trash)
+                    <th class="w-11 pl-4 py-3 border-b border-line">
+                        <input type="checkbox" aria-label="全選這一頁" class="size-[18px] accent-accent"
+                            :checked="all.length && selected.length === all.length"
+                            @change="selected = $event.target.checked ? [...all] : []">
+                    </th>
+                @endunless
                 <th class="px-4 py-3 border-b border-line">標題</th>
                 <th class="px-3 py-3 border-b border-line">狀態</th>
                 @unless($trash)
@@ -31,7 +67,12 @@
         </thead>
         <tbody>
             @forelse($posts as $post)
-                <tr data-post-row="{{ $post->id }}" class="hover:bg-paper-2/60">
+                <tr data-post-row="{{ $post->id }}" class="hover:bg-paper-2/60" :class="selected.includes('{{ $post->id }}') && 'bg-accent-soft'">
+                    @unless($trash)
+                        <td class="pl-4 border-b border-line/70">
+                            <input type="checkbox" value="{{ $post->id }}" x-model="selected" aria-label="選取 {{ $post->title }}" class="size-[18px] accent-accent">
+                        </td>
+                    @endunless
                     <td class="px-4 py-3 border-b border-line/70 max-w-[420px]">
                         @if($trash)
                             <span class="block font-semibold text-[15px] truncate text-ink-2">{{ $post->title ?: '（未命名）' }}</span>
@@ -93,9 +134,10 @@
                                     @if($post->status === 'published')
                                         <a href="{{ route('public.posts.show', [$post->locale, $post->slug]) }}" target="_blank" rel="noopener" class="block px-3 py-2 text-sm text-ink hover:bg-paper-2">查看前台 ↗</a>
                                     @endif
-                                    <form method="POST" action="{{ route('admin.posts.destroy', $post) }}" onsubmit="return confirm('移到垃圾桶？之後可以在垃圾桶還原。')">
+                                    <form method="POST" action="{{ route('admin.posts.bulk') }}" onsubmit="return confirm('把這篇文章（含所有語言版本）移到垃圾桶？之後可以在垃圾桶還原。')">
                                         @csrf
-                                        @method('DELETE')
+                                        <input type="hidden" name="action" value="trash">
+                                        <input type="hidden" name="ids[]" value="{{ $post->id }}">
                                         <button type="submit" class="w-full text-left px-3 py-2 text-sm text-danger hover:bg-paper-2">移到垃圾桶</button>
                                     </form>
                                 </div>
@@ -104,7 +146,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="px-4 py-10 text-center text-ink-3">沒有符合條件的文章</td></tr>
+                <tr><td colspan="8" class="px-4 py-10 text-center text-ink-3">沒有符合條件的文章</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -124,3 +166,4 @@
 </div>
 
 <div class="mt-6">{{ $posts->links() }}</div>
+</div>

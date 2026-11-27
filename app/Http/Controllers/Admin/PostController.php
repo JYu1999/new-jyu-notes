@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Post\BulkRequest;
 use App\Http\Requests\Admin\Post\CreateTranslationRequest;
 use App\Http\Requests\Admin\Post\IndexRequest;
 use App\Http\Requests\Admin\Post\StoreRequest;
@@ -116,5 +117,14 @@ class PostController extends Controller
 
         return redirect()->route('admin.posts.edit', $new)
             ->with('success', '已建立新翻譯版本');
+    }
+
+    /** Bulk actions from the post list (JYU-546). */
+    public function bulk(BulkRequest $request, PostService $service): RedirectResponse
+    {
+        $posts = Post::query()->whereIn('id', $request->validated('ids'))->get();
+        $message = $service->bulk($request->validated('action'), $posts, $request->validated('tag_id'));
+
+        return back()->with('success', $message);
     }
 }
