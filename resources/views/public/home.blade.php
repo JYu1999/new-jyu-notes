@@ -27,7 +27,7 @@
                             <span aria-hidden="true" class="size-2 rounded-full" style="background: {{ preg_match('/^#[0-9a-fA-F]{6}$/', (string) $topic->color) ? $topic->color : 'var(--color-ink-3)' }}"></span>
                             {{ $topic->name($loc) }}
                         </span>
-                        <span class="font-mono text-xs text-ink-3">{{ $topic->posts_count }}</span>
+                        <span class="font-mono text-xs text-ink-3">{{ $topic->content_count }}</span>
                     </a>
                 @endforeach
                 <a href="{{ route('public.topics', $loc) }}"
@@ -101,7 +101,7 @@
                     <x-ui.section-heading id="tags-h" size="md" class="mb-3.5">{{ __('public.home_tags') }}</x-ui.section-heading>
                     <div class="flex flex-wrap gap-2">
                         @foreach($tags as $tag)
-                            <x-ui.tag :tag="$tag" :count="$tag->posts_count" />
+                            <x-ui.tag :tag="$tag" :count="$tag->content_count" />
                         @endforeach
                     </div>
                 </section>

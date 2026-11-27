@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Tag counts on the home page and Topics page now include tweets as well as posts
 - Admin sidebar grouped into Writing / Organize / Site, with post, tweet and page counts
 - External links in tweets show a preview card with the site and page title
 - Topics page shows each category's description
