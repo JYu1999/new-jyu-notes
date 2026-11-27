@@ -127,5 +127,51 @@
             </div>
         @endif
     </section>
+    {{-- Views, last 30 days (posts only; JYU-543) --}}
+    @php
+        $max = max(1, collect($views['daily'])->max('count'));
+        $change = $views['change'];
+    @endphp
+    <section aria-labelledby="st-h" class="bg-card border border-line rounded-[var(--radius-card-lg)] p-5">
+        <div class="flex flex-wrap items-baseline justify-between gap-3 mb-4">
+            <h2 id="st-h" class="m-0 font-sans text-lg font-bold tracking-normal">近 30 天瀏覽</h2>
+            <span class="text-[13px] text-ink-3">文章的不重複瀏覽（同一位讀者 30 分鐘內只算一次）</span>
+        </div>
+        <div class="flex flex-wrap gap-8">
+            <div class="grow-[2] basis-[280px] min-w-0">
+                <div class="font-serif text-4xl font-medium leading-none">
+                    {{ number_format($views['total']) }}
+                    @if($change !== null)
+                        <span class="font-sans text-sm font-semibold {{ $change >= 0 ? 'text-good' : 'text-danger' }}">{{ $change >= 0 ? '↑' : '↓' }} {{ abs($change) }}%</span>
+                    @endif
+                </div>
+                <div role="img" aria-label="近 30 天每日瀏覽長條圖，最高 {{ number_format($max) }}" class="flex items-end gap-[3px] h-24 mt-4">
+                    @foreach($views['daily'] as $i => $d)
+                        <span data-bar title="{{ $d['label'] }}：{{ number_format($d['count']) }}"
+                            class="flex-1 rounded-t-sm {{ $i >= 23 ? 'bg-accent' : 'bg-accent/35' }}"
+                            style="height: {{ $d['count'] ? max(4, round($d['count'] / $max * 100)) : 2 }}%"></span>
+                    @endforeach
+                </div>
+                <div class="flex justify-between mt-1.5 font-mono text-[11px] text-ink-3">
+                    <span>{{ $views['daily'][0]['label'] }}</span><span>{{ end($views['daily'])['label'] }}</span>
+                </div>
+            </div>
+            <div class="grow basis-[240px] min-w-0">
+                <div class="text-[13px] font-bold text-ink-3 mb-1.5">本週熱門</div>
+                @if($views['top']->isEmpty())
+                    <p class="m-0 py-2 text-sm text-ink-3">這段期間還沒有瀏覽紀錄。</p>
+                @else
+                    <ol class="list-none m-0 p-0 text-sm">
+                        @foreach($views['top'] as $t)
+                            <li class="flex justify-between gap-3 py-[7px] {{ $loop->last ? '' : 'border-b border-line' }}">
+                                <a href="{{ route('admin.posts.edit', $t['post']) }}" class="min-w-0 truncate text-ink hover:text-accent">{{ $t['post']->title }}</a>
+                                <span class="font-mono text-ink-3">{{ number_format($t['views']) }}</span>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+            </div>
+        </div>
+    </section>
 </div>
 @endsection
