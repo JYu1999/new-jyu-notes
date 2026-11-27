@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Full-screen "new tweet" composer for phones (＋ 碎念 button on the admin home and tweet list): language and tag chips, up to 4 photos with upload progress and per-photo removal, a sensitive-content switch, @ mentions and draft autosave
 - Changing the URL (slug) of a published post keeps the old link working: it permanently redirects to the new address
 - Schedule a post to publish at a chosen date and time from the editor's publish options; scheduled posts are labelled with their time in the admin list, publish themselves when the time comes, and the schedule can be cancelled to keep the post as a draft
 - New focus-mode post editor: switch or add language versions from the header, autosave for drafts, Write / Split / Preview modes (preview matches the public post page), a formatting toolbar, word count with reading time, ⌘S to save and ⌘⇧P to preview, plus a side panel with status, featured, slug, excerpt length, categories, tags, references in both directions and every translation's status; pasting a YouTube link can embed it from a chosen start time

@@ -3,6 +3,7 @@
 @section('title', 'Tweets')
 
 @section('content')
+@include('admin.partials.compose-fab')
 <header class="mb-6 flex items-center justify-between flex-wrap gap-3">
     <div>
         <h1 class="font-serif text-2xl font-semibold">Tweets</h1>
