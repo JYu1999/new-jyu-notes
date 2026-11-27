@@ -129,9 +129,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('media/{id}', [Admin\MediaController::class, 'destroy'])->name('media.destroy');
 
         // API Tokens
-        Route::get('tokens', [Admin\ApiTokenController::class, 'index'])->name('tokens.index');
-        Route::post('tokens', [Admin\ApiTokenController::class, 'store'])->name('tokens.store');
-        Route::delete('tokens/{id}', [Admin\ApiTokenController::class, 'destroy'])->name('tokens.destroy');
 
         // Todos
         Route::get('todos', [Admin\TodoController::class, 'index'])->name('todos.index');

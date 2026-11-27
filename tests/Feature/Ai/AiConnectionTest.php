@@ -170,7 +170,7 @@ class AiConnectionTest extends TestCase
         $tools = $this->mcp($token, 'tools/list')->assertOk()->json('result.tools.*.name');
 
         sort($tools);
-        $this->assertSame(['create_draft', 'create_translation', 'get_content', 'list_translation_gaps', 'search_content', 'update_content'], $tools);
+        $this->assertSame(['create_draft', 'create_translation', 'get_content', 'list_media', 'list_taxonomy', 'list_translation_gaps', 'search_content', 'update_content'], $tools);
         $this->assertEmpty(array_filter($tools, fn ($t) => str_contains($t, 'delete')), 'no tool can delete content');
     }
 

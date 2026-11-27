@@ -9,10 +9,10 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Services\PageService;
 use App\Services\PostService;
+use App\Services\RevisionService;
 use App\Services\TweetService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /**
@@ -127,14 +127,11 @@ class RevisionHistoryTest extends TestCase
         $this->travel(15)->minutes();
         app(PostService::class)->updateStatus($post, Post::STATUS_PUBLISHED);
 
-        // A change made with an API token counts as AI.
+        // A change made through an AI connection counts as AI (EnsureAiConnection calls actAsAi).
         $this->travel(15)->minutes();
-        $token = $this->admin->createToken('Claude', ['*']);
-        Sanctum::actingAs($this->admin->fresh(), ['*']);
-        $this->admin->withAccessToken($token->accessToken);
-        auth()->setUser($this->admin);
+        app(RevisionService::class)->actAsAi('Claude', $this->admin->id);
         app(PostService::class)->update($post->fresh(), ['body' => "第一段\n\n我進來這間公司"]);
-        $this->actingAs($this->admin);
+        app()->forgetScopedInstances();
 
         $ai = $post->revisions()->latest('id')->first();
         $this->assertSame([ContentRevision::ACTOR_AI, 'Claude'], [$ai->actor, $ai->actor_name]);

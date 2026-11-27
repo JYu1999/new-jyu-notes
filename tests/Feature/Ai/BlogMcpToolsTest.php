@@ -175,7 +175,7 @@ class BlogMcpToolsTest extends TestCase
         $names = collect((new \ReflectionClass(BlogServer::class))->getDefaultProperties()['tools'])
             ->map(fn ($class) => app($class)->name());
 
-        $this->assertCount(9, $names);
+        $this->assertCount(11, $names);
         $this->assertEmpty($names->filter(fn ($n) => str_contains($n, 'delete') || str_contains($n, 'trash')));
     }
 }

@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Passport::refreshTokensExpireIn(now()->addDays(90));
 
         // Non-enforcing: maps Post/Tweet to short type strings for content_references
-        // while leaving other polymorphic models (e.g. Sanctum's tokenable User) on
+        // while leaving other polymorphic models (e.g. Passport's token owners) on
         // their default class-name morph. enforceMorphMap() would throw for User.
         Relation::morphMap([
             'post' => Post::class,

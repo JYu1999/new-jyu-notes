@@ -10,7 +10,6 @@ use App\Support\TextDiff;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Version history for posts, tweets and pages (JYU-553).
@@ -328,12 +327,8 @@ class RevisionService
             return $this->actorOverride;
         }
 
+        // Changes from an AI connection are attributed by actAsAi() (EnsureAiConnection).
         $user = auth()->user();
-        $token = $user?->currentAccessToken();
-        if ($token instanceof PersonalAccessToken) {
-            // Requests made with an API token come from an AI / script.
-            return [ContentRevision::ACTOR_AI, $token->name, $user->id];
-        }
 
         return $user
             ? [ContentRevision::ACTOR_USER, $user->name, $user->id]

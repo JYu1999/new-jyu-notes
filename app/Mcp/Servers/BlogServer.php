@@ -5,6 +5,8 @@ namespace App\Mcp\Servers;
 use App\Mcp\Tools\CreateDraft;
 use App\Mcp\Tools\CreateTranslation;
 use App\Mcp\Tools\GetContent;
+use App\Mcp\Tools\ListMedia;
+use App\Mcp\Tools\ListTaxonomy;
 use App\Mcp\Tools\ListTranslationGaps;
 use App\Mcp\Tools\ManageTaxonomy;
 use App\Mcp\Tools\RequestPublish;
@@ -26,6 +28,8 @@ class BlogServer extends Server
         SearchContent::class,
         GetContent::class,
         ListTranslationGaps::class,
+        ListTaxonomy::class,
+        ListMedia::class,
         CreateDraft::class,
         UpdateContent::class,
         CreateTranslation::class,
