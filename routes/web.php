@@ -130,11 +130,6 @@ Route::middleware(['auth', 'role:admin'])
 
         // API Tokens
 
-        // Todos
-        Route::get('todos', [Admin\TodoController::class, 'index'])->name('todos.index');
-        Route::post('todos', [Admin\TodoController::class, 'store'])->name('todos.store');
-        Route::put('todos/{todo}', [Admin\TodoController::class, 'update'])->name('todos.update');
-        Route::delete('todos/{todo}', [Admin\TodoController::class, 'destroy'])->name('todos.destroy');
     });
 
 /*
