@@ -104,15 +104,19 @@ class TranslationStatusTest extends TestCase
         $this->assertStringNotContainsString('越南文', $box);
 
         $missing = $this->actingAs($this->admin)->get(route('admin.posts.index', ['missing' => 'en']))->assertOk()->getContent();
-        $this->assertStringContainsString('缺英文版的文章（3）', $missing);
+        $this->assertMatchesRegularExpression('/<option value="missing:en" selected>/', $missing);
+        $this->assertSame(3, substr_count($missing, 'data-post-row='));
         foreach (['缺英文一', '缺英文二', '日文原文'] as $t) {
             $this->assertStringContainsString($t, $missing);
         }
         $this->assertStringNotContainsString('有英文版', $missing);
 
+        // JYU-545: the list shows one row per article, so the stale filter lists the
+        // article whose Japanese version is out of date, with that language marked.
         $stale = $this->actingAs($this->admin)->get(route('admin.posts.index', ['stale' => 'ja']))->getContent();
-        $this->assertStringContainsString('古い日本語', $stale);
-        $this->assertStringNotContainsString('日文原文', $stale);
+        $this->assertSame(1, substr_count($stale, 'data-post-row='));
+        $this->assertStringContainsString('日文原文', $stale);
+        $this->assertMatchesRegularExpression('/data-lang="ja" data-state="stale"/', $stale);
     }
 
     public function test_stale_translation_is_labelled_in_list_and_editor_and_label_goes_away_after_update(): void
@@ -122,13 +126,13 @@ class TranslationStatusTest extends TestCase
         $ja = $this->makePost('ja', '古い日本語', $g, '2026-04-01');
 
         $list = $this->actingAs($this->admin)->get(route('admin.posts.index'))->getContent();
-        $this->assertSame(1, substr_count($list, 'data-stale'));
+        $this->assertSame(1, substr_count($list, 'data-state="stale"'));
         $this->assertStringContainsString('比原文舊', $list);
         $this->actingAs($this->admin)->get(route('admin.posts.edit', $ja))->assertSee('比原文舊');
 
         app(PostService::class)->update($ja, ['body' => '同期しました']);
 
-        $this->assertStringNotContainsString('data-stale', $this->actingAs($this->admin)->get(route('admin.posts.index'))->getContent());
+        $this->assertStringNotContainsString('data-state="stale"', $this->actingAs($this->admin)->get(route('admin.posts.index'))->getContent());
         $this->actingAs($this->admin)->get(route('admin.posts.edit', $ja))->assertDontSee('比原文舊');
     }
 

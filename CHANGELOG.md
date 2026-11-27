@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Admin post list shows one row per article with the status of every language (published, draft, outdated, not yet translated — click to start a translation), plus search across title, slug and body, filters by category, tag and translation status, and sorting by modified, published or views
 - Admin home "Needs attention" lists posts missing a translation, translations older than their original, and unused media, each linking to a filtered list; outdated translations are labelled in the post list and editor
 - Admin home shows unique post views for the last 30 days (with change vs. the previous 30 days), a daily bar chart, and this week's four most-read posts
 - Tag counts on the home page and Topics page now include tweets as well as posts

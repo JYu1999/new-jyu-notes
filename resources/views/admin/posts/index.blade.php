@@ -1,62 +1,74 @@
 @extends('layouts.admin')
 
-@section('title', 'Posts')
+@section('title', '文章')
 
 @section('content')
-<header class="mb-6 flex items-center justify-between gap-4 flex-wrap">
-    <div>
-        <h1 class="font-serif text-2xl font-semibold">Posts</h1>
-        <p class="text-sm text-ink-3 mt-1">總共 {{ $counts['all'] }} 篇</p>
-    </div>
-    <a href="{{ route('admin.posts.create') }}" class="bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-ink text-sm font-medium">
-        + 新增文章
-    </a>
+@php
+    $tabs = ['all' => '全部', 'published' => '已發布', 'draft' => '草稿', 'hidden' => '隱藏', 'trashed' => '垃圾桶'];
+    $langNames = \App\Services\TranslationStatusService::LANGUAGE_NAMES;
+    $tabUrl = fn ($key) => route('admin.posts.index', array_filter([...$filters, 'status' => $key === 'all' ? null : $key, 'translation' => $filters['translation']]));
+@endphp
+<header class="flex flex-wrap items-center gap-4 mb-5">
+    <h1 class="m-0 font-serif text-[32px] font-medium">文章</h1>
+    <span class="flex-1"></span>
+    <a href="{{ route('admin.posts.create') }}" class="inline-flex items-center h-10 px-4 rounded-lg bg-ink text-paper text-sm font-semibold hover:bg-accent hover:text-paper">新增文章</a>
 </header>
 
-@if($translationFilter ?? null)
-    <div data-translation-filter class="mb-4 flex items-center gap-3 px-4 py-3 rounded-[var(--radius-card)] bg-accent-soft text-sm">
-        <span class="font-semibold">{{ $translationFilter }}（{{ $posts->total() }}）</span>
-        <a href="{{ route('admin.posts.index') }}" class="text-accent hover:text-accent-ink">清除篩選</a>
-    </div>
-@endif
 
-{{-- Status tabs --}}
-<div class="border-b border-line mb-6 flex items-center gap-1 overflow-x-auto">
-    @php
-        $tabs = [
-            'all' => ['label' => '全部', 'count' => $counts['all']],
-            'published' => ['label' => '已發布', 'count' => $counts['published']],
-            'draft' => ['label' => '草稿', 'count' => $counts['draft']],
-            'hidden' => ['label' => '隱藏', 'count' => $counts['hidden']],
-            'trashed' => ['label' => '垃圾桶', 'count' => $counts['trashed']],
-        ];
-    @endphp
-    @foreach($tabs as $key => $tab)
-        @php
-            $active = $currentStatus === $key || ($key === 'all' && empty($currentStatus));
-        @endphp
-        <a href="{{ route('admin.posts.index', ['status' => $key]) }}"
-           class="px-4 py-2.5 text-sm whitespace-nowrap border-b-2 -mb-px {{ $active ? 'border-accent text-accent font-medium' : 'border-transparent text-ink-2 hover:text-accent' }}">
-            {{ $tab['label'] }} <span class="text-ink-3 font-mono text-xs ml-1">{{ $tab['count'] }}</span>
+{{-- Status tabs (articles; the trash counts single language versions) --}}
+<nav aria-label="狀態" class="flex flex-wrap gap-0.5 border-b border-line mb-4">
+    @foreach($tabs as $key => $label)
+        @php $active = $filters['status'] === $key; @endphp
+        <a href="{{ $tabUrl($key) }}" @if($active) aria-current="page" @endif data-status-tab="{{ $key }}"
+            class="inline-flex items-center gap-1.5 h-11 px-3.5 -mb-px border-b-2 text-sm {{ $active ? 'border-accent text-ink font-semibold' : 'border-transparent text-ink-2 hover:text-accent' }}">
+            {{ $label }} <span class="font-normal text-ink-3">{{ $counts[$key] }}</span>
         </a>
     @endforeach
-</div>
+</nav>
 
-{{-- Filters auto-apply via AJAX (no "Apply" button, no full reload) --}}
-<div x-data="liveFilter({ url: '{{ route('admin.posts.index') }}', target: '#post-results' })" class="mb-6">
-    <form @input.debounce.300ms="submit($event)" @change="submit($event)" class="flex items-center gap-3">
-        @if($currentStatus)<input type="hidden" name="status" value="{{ $currentStatus }}">@endif
-        <input
-            type="search" name="q" value="{{ $currentSearch }}"
-            placeholder="搜尋標題或摘要..."
-            class="flex-1 max-w-md px-3 py-1.5 bg-card border border-line rounded text-sm focus:border-accent focus:outline-none">
-        <select name="locale" class="bg-card border border-line rounded px-2 py-1.5 text-sm focus:border-accent focus:outline-none">
-            <option value="">所有語言</option>
-            @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
-                <option value="{{ $loc }}" {{ $currentLocale === $loc ? 'selected' : '' }}>{{ strtoupper($loc) }}</option>
-            @endforeach
-        </select>
-        <span x-show="loading" x-cloak class="text-xs text-ink-3 font-mono animate-pulse">載入中…</span>
+{{-- Filters: auto-apply via AJAX --}}
+<div x-data="liveFilter({ url: '{{ route('admin.posts.index') }}', target: '#post-results' })" class="mb-3.5">
+    <form @input.debounce.300ms="submit($event)" @change="submit($event)" class="flex flex-wrap items-center gap-2">
+        @if($filters['status'] !== 'all')<input type="hidden" name="status" value="{{ $filters['status'] }}">@endif
+        <label class="flex items-center gap-2 h-10 px-3 min-w-[260px] rounded-lg border border-line-2 bg-card text-ink-3">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <span class="sr-only">搜尋標題、slug、內文</span>
+            <input type="search" name="q" value="{{ $filters['q'] }}" placeholder="搜尋標題、slug、內文" class="flex-1 min-w-0 border-0 bg-transparent text-sm text-ink focus:outline-none">
+        </label>
+        @if($filters['status'] !== 'trashed')
+            <select name="category" aria-label="分類" class="h-10 px-2.5 rounded-lg border border-line-2 bg-transparent text-sm text-ink-2">
+                <option value="">分類：全部</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}" @selected($filters['category'] === $cat->id)>{{ $cat->name('zh') }}</option>
+                @endforeach
+            </select>
+            <select name="tag" aria-label="標籤" class="h-10 px-2.5 rounded-lg border border-line-2 bg-transparent text-sm text-ink-2">
+                <option value="">標籤：全部</option>
+                @foreach($tags as $tag)
+                    <option value="{{ $tag->id }}" @selected($filters['tag'] === $tag->id)>#{{ $tag->name('zh') }}</option>
+                @endforeach
+            </select>
+            <select name="translation" aria-label="翻譯狀態" class="h-10 px-2.5 rounded-lg border border-line-2 bg-transparent text-sm text-ink-2">
+                <option value="">翻譯狀態：全部</option>
+                <optgroup label="尚未翻譯">
+                    @foreach($langNames as $code => $name)
+                        <option value="missing:{{ $code }}" @selected($filters['translation'] === "missing:{$code}")>缺{{ $name }}版</option>
+                    @endforeach
+                </optgroup>
+                <optgroup label="比原文舊">
+                    @foreach($langNames as $code => $name)
+                        <option value="stale:{{ $code }}" @selected($filters['translation'] === "stale:{$code}")>{{ $name }}版比原文舊</option>
+                    @endforeach
+                </optgroup>
+            </select>
+            <span class="flex-1"></span>
+            <select name="sort" aria-label="排序" class="h-10 px-2.5 rounded-lg border-0 bg-transparent text-sm text-ink-2">
+                @foreach(['updated' => '最後修改', 'published' => '發布時間', 'views' => '瀏覽數'] as $key => $label)
+                    <option value="{{ $key }}" @selected($filters['sort'] === $key)>排序：{{ $label }}</option>
+                @endforeach
+            </select>
+        @endif
+        <span x-show="loading" x-cloak class="text-xs text-ink-3 animate-pulse">載入中…</span>
     </form>
 </div>
 
