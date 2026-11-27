@@ -32,7 +32,7 @@
             <span class="flex-1">{{ __('nav.search_placeholder') }}</span>
             <kbd data-shortcut-label class="font-mono text-xs px-1.5 py-0.5 border border-line-2 rounded-[5px]">⌘K</kbd>
         </a>
-        <x-ui.button :href="$searchUrl" variant="ghost" icon class="md:hidden" aria-label="{{ __('nav.open_search') }}">
+        <x-ui.button :href="$searchUrl" variant="ghost" icon class="md:hidden" data-search-trigger aria-label="{{ __('nav.open_search') }}">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         </x-ui.button>
 

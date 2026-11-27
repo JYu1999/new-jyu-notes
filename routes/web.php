@@ -149,6 +149,9 @@ Route::prefix('{locale}')
         Route::get('categories/{slug}', [Public\CategoryController::class, 'show'])->name('categories.show');
 
         Route::get('search', [Public\SearchController::class, 'index'])->name('search');
+        Route::get('search/suggest', [Public\SearchController::class, 'suggest'])
+            ->middleware('throttle:60,1')
+            ->name('search.suggest');
 
         Route::get('topics', [Public\TopicController::class, 'index'])->name('topics');
 
