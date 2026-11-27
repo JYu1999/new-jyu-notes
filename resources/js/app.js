@@ -286,7 +286,10 @@ const youtubePasteBehavior = {
         // 貼上本身會觸發 textarea 的 input 事件，須等它過了再開彈窗，
         // 否則 @input 的 dismiss 會立刻把彈窗關掉。
         setTimeout(() => {
-            this.ytPrompt = { url: text.trim(), ...parsed };
+            // startText is editable in the prompt (JYU-548): "84", "1:24" or "1:02:03".
+            const start = parsed.start || 0;
+            const startText = start ? `${Math.floor(start / 60)}:${String(start % 60).padStart(2, '0')}` : '';
+            this.ytPrompt = { url: text.trim(), ...parsed, startText };
         }, 0);
     },
     embedYoutube() {
@@ -294,7 +297,11 @@ const youtubePasteBehavior = {
         const ta = this.$refs.body;
         const idx = ta.value.lastIndexOf(this.ytPrompt.url);
         if (idx !== -1) {
-            const code = youtubeShortcode(this.ytPrompt);
+            const parts = String(this.ytPrompt.startText ?? '').trim().split(':').filter(Boolean).map(Number);
+            const start = parts.length && parts.every((n) => Number.isFinite(n) && n >= 0)
+                ? parts.reduce((acc, n) => acc * 60 + n, 0)
+                : 0;
+            const code = youtubeShortcode({ id: this.ytPrompt.id, start: Math.floor(start) });
             ta.value = ta.value.slice(0, idx) + code + ta.value.slice(idx + this.ytPrompt.url.length);
             const pos = idx + code.length;
             ta.setSelectionRange(pos, pos);
@@ -720,6 +727,216 @@ window.searchPanel = function ({ url, pageUrl, noResults, found, labels }) {
         },
         scrollActive() {
             this.$nextTick(() => document.getElementById('sp-opt-' + this.active)?.scrollIntoView({ block: 'nearest' }));
+        },
+    };
+};
+
+/**
+ * Focus-mode post editor (JYU-548): autosave, write / split / preview modes,
+ * format toolbar, live counts and keyboard shortcuts. The body textarea keeps
+ * its own markdownMediaInsert scope (uploads, @ mentions, YouTube prompt).
+ */
+const CJK = /[぀-ヿ㐀-鿿豈-﫿가-힯]/g;
+const READING = { zh: ['char', 400], ja: ['char', 500], en: ['word', 230], vi: ['word', 230], id: ['word', 230] };
+const INTERNAL_LINK = /\]\((?:https?:\/\/[^)\/\s]+)?\/(?:zh|en|ja|vi|id)\/(?:posts|tweets)\/([^)\s]+)\)/g;
+
+function relativeTime(date) {
+    if (!date) return '';
+    const s = Math.round((Date.now() - date.getTime()) / 1000);
+    if (s < 45) return '剛剛';
+    if (s < 3600) return `${Math.round(s / 60)} 分鐘前`;
+    return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+}
+
+window.postEditor = function ({ postId, status, locale, autosaveUrl, previewUrl }) {
+    return {
+        postId,
+        status,
+        locale,
+        mode: 'write',
+        panel: window.innerWidth >= 1024,
+        saveState: postId ? 'saved' : 'idle',
+        savedAt: null,
+        submitting: false,
+        timer: null,
+        previewTimer: null,
+        previewHtml: '',
+        previewLoading: false,
+        title: '',
+        refCount: 0,
+        statsLabel: '',
+        tick: 0,
+        init() {
+            this.readFields();
+            setInterval(() => { this.tick++; }, 15000);
+            this.$root.addEventListener('submit', () => { this.submitting = true; });
+            window.addEventListener('beforeunload', (e) => {
+                if (!this.submitting && (this.saveState === 'dirty' || this.saveState === 'saving')) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        },
+        field(name) {
+            return this.$root.elements.namedItem(name);
+        },
+        readFields() {
+            this.title = this.field('title')?.value ?? '';
+            this.updateStats(this.field('body')?.value ?? '');
+        },
+        get saveLabel() {
+            this.tick; // re-evaluate relative time periodically
+            switch (this.saveState) {
+                case 'saved': return this.savedAt ? `已自動儲存 · ${relativeTime(this.savedAt)}` : '已儲存';
+                case 'saving': return '儲存中…';
+                case 'error': return '自動儲存失敗，請按 ⌘S';
+                case 'dirty': return this.status === 'draft' ? '有變更，稍後自動儲存' : '有未儲存的變更 · ⌘S 儲存';
+                default: return '尚未儲存';
+            }
+        },
+        changed() {
+            this.readFields();
+            this.saveState = 'dirty';
+            clearTimeout(this.timer);
+            // Only drafts autosave: saving a published post would put changes live.
+            if (this.status === 'draft') this.timer = setTimeout(() => this.autosave(), 3000);
+            if (this.mode !== 'write') this.schedulePreview();
+        },
+        async autosave() {
+            if (this.submitting || this.status !== 'draft') return;
+            const fd = new FormData(this.$root);
+            fd.delete('_method');
+            fd.delete('status');
+            if (this.postId) fd.set('post_id', this.postId);
+            this.saveState = 'saving';
+            try {
+                const res = await fetch(autosaveUrl, {
+                    method: 'POST',
+                    headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                    body: fd,
+                });
+                if (res.status === 409 || res.status === 422) { this.saveState = 'dirty'; return; }
+                if (!res.ok) throw new Error(String(res.status));
+                const data = await res.json();
+                if (!this.postId) {
+                    // First save of a new post: from now on this form updates it.
+                    this.postId = data.id;
+                    this.$root.action = data.update_url;
+                    const m = document.createElement('input');
+                    m.type = 'hidden'; m.name = '_method'; m.value = 'PUT';
+                    this.$root.prepend(m);
+                    history.replaceState(null, '', data.edit_url);
+                }
+                const slug = this.field('slug');
+                if (slug && !slug.value) slug.value = data.slug;
+                this.savedAt = new Date();
+                this.saveState = 'saved';
+            } catch (e) {
+                this.saveState = 'error';
+            }
+        },
+        save() {
+            clearTimeout(this.timer);
+            this.saveState = 'saving';
+            this.$root.requestSubmit();
+        },
+        publishClicked() {
+            if (this.status !== 'published') {
+                this.status = 'published';
+                const sel = this.field('status');
+                if (sel) sel.value = 'published';
+            }
+        },
+        setMode(mode) {
+            this.mode = mode;
+            if (mode !== 'write') this.loadPreview();
+        },
+        togglePreview() {
+            this.setMode(this.mode === 'preview' ? 'write' : 'preview');
+        },
+        schedulePreview() {
+            clearTimeout(this.previewTimer);
+            this.previewTimer = setTimeout(() => this.loadPreview(), 500);
+        },
+        async loadPreview() {
+            this.previewLoading = true;
+            try {
+                const res = await fetch(previewUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    },
+                    body: JSON.stringify({ body: this.field('body')?.value ?? '' }),
+                });
+                if (res.ok) this.previewHtml = (await res.json()).html;
+            } finally {
+                this.previewLoading = false;
+            }
+        },
+        updateStats(body) {
+            const text = body
+                .replace(/```[\s\S]*?```/g, ' ')
+                .replace(/\{\{<.*?>\}\}/g, ' ')
+                .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+                .replace(/\]\([^)]*\)/g, ']')
+                .replace(/<[^>]+>/g, ' ');
+            const cjk = (text.match(CJK) || []).length;
+            const words = (text.replace(CJK, ' ').match(/[A-Za-z0-9À-ɏḀ-ỿ]+(?:['’-][A-Za-z0-9À-ɏ]+)*/g) || []).length;
+            const [kind, speed] = READING[this.currentLocale()] ?? READING.zh;
+            const units = kind === 'char' ? cjk + words : words + cjk;
+            const minutes = Math.max(1, Math.ceil(units / speed));
+            const unitLabel = kind === 'char' ? '字' : '字';
+            this.statsLabel = `${(cjk + words).toLocaleString()} ${unitLabel} · 約 ${minutes} 分鐘${kind === 'char' ? '（中文以字數計）' : ''}`;
+            this.refCount = new Set([...body.matchAll(INTERNAL_LINK)].map((m) => m[1])).size;
+        },
+        currentLocale() {
+            return this.field('locale')?.value ?? this.locale;
+        },
+        format(kind, ta) {
+            const { selectionStart: s, selectionEnd: e, value } = ta;
+            const sel = value.slice(s, e);
+            const lineStart = value.lastIndexOf('\n', s - 1) + 1;
+            let next = value;
+            let caretStart = s;
+            let caretEnd = e;
+            const wrap = (left, right, placeholder) => {
+                const inner = sel || placeholder;
+                next = value.slice(0, s) + left + inner + right + value.slice(e);
+                caretStart = s + left.length;
+                caretEnd = caretStart + inner.length;
+            };
+            const prefixLines = (prefix) => {
+                const end = e > s && value[e - 1] === '\n' ? e - 1 : e;
+                const block = value.slice(lineStart, end);
+                const lines = block.split('\n');
+                const all = lines.every((l) => l.startsWith(prefix));
+                const changed = lines.map((l) => (all ? l.slice(prefix.length) : prefix + l.replace(/^#+\s|^>\s/, ''))).join('\n');
+                next = value.slice(0, lineStart) + changed + value.slice(end);
+                caretStart = lineStart;
+                caretEnd = lineStart + changed.length;
+            };
+            switch (kind) {
+                case 'bold': wrap('**', '**', '粗體文字'); break;
+                case 'italic': wrap('_', '_', '斜體文字'); break;
+                case 'heading': prefixLines('## '); break;
+                case 'quote': prefixLines('> '); break;
+                case 'code':
+                    if (sel.includes('\n')) wrap('```\n', '\n```', '');
+                    else wrap('`', '`', 'code');
+                    break;
+                case 'mention': {
+                    const before = s > 0 && !/\s/.test(value[s - 1]) ? ' @' : '@';
+                    next = value.slice(0, s) + before + value.slice(e);
+                    caretStart = caretEnd = s + before.length;
+                    break;
+                }
+            }
+            ta.value = next;
+            ta.focus();
+            ta.setSelectionRange(caretStart, caretEnd);
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
         },
     };
 };

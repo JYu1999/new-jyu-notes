@@ -1,252 +1,329 @@
-@extends('layouts.admin')
+@extends('layouts.editor')
 
-@section('title', $mode === 'create' ? '新增文章' : '編輯文章')
+@section('title', $mode === 'create' ? '新增文章' : '編輯：' . $post->title)
 
+{{--
+    Focus-mode post editor (JYU-548).
+    - Header: language versions, autosave status, 寫作 / 左右對照 / 預覽, settings panel, 發布
+    - Main: cover, title, format toolbar, Markdown body (paste / drop media, @ mentions, YouTube prompt), counts
+    - Sidebar: 發布, 網址, 摘要, 分類與標籤, 引用關係, 翻譯版本
+--}}
 @section('content')
 @php
     $isCreate = $mode === 'create';
     $action = $isCreate ? route('admin.posts.store') : route('admin.posts.update', $post);
-    $method = $isCreate ? 'POST' : 'PUT';
+    $locale = old('locale', $post->locale ?: 'zh');
+    $langNames = ['zh' => '繁中', 'en' => 'English', 'ja' => '日本語', 'vi' => 'Tiếng Việt', 'id' => 'Indonesia'];
+    $statusLabel = ['draft' => '草稿', 'published' => '已發布', 'hidden' => '隱藏'];
+    $mentionUrl = fn ($m) => $m instanceof \App\Models\Tweet ? route('admin.tweets.edit', $m) : route('admin.posts.edit', $m);
+    $mentionLabel = fn ($m) => $m instanceof \App\Models\Tweet ? \Illuminate\Support\Str::limit(strip_tags((string) $m->body), 40) : $m->title;
 @endphp
 
-<form method="POST" action="{{ $action }}" class="space-y-6" enctype="multipart/form-data" id="post-form">
+<form method="POST" action="{{ $action }}" id="post-form" enctype="multipart/form-data"
+    x-data="postEditor({
+        postId: @js($post->id),
+        status: @js(old('status', $post->status ?? 'draft')),
+        locale: @js($locale),
+        autosaveUrl: @js(route('admin.posts.autosave')),
+        previewUrl: @js(route('admin.posts.preview')),
+    })"
+    @input="changed()" @change="changed()"
+    @keydown.window.meta.s.prevent="save()" @keydown.window.ctrl.s.prevent="save()"
+    @keydown.window.meta.shift.p.prevent="togglePreview()" @keydown.window.ctrl.shift.p.prevent="togglePreview()"
+    class="min-h-screen flex flex-col">
     @csrf
-    @if(!$isCreate)@method('PUT')@endif
+    @unless($isCreate)@method('PUT')@endunless
 
-    <header class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-            <nav class="text-xs text-ink-3 font-mono mb-1">
-                <a href="{{ route('admin.posts.index') }}" class="hover:text-accent">Posts</a>
-                / {{ $isCreate ? '新增' : '編輯' }}
-            </nav>
-            <h1 class="font-serif text-2xl font-semibold">{{ $isCreate ? '新增文章' : '編輯文章' }}</h1>
-            @if(! $isCreate && app(\App\Services\TranslationStatusService::class)->isStale($post))
-                <p data-stale class="mt-1 text-sm text-warn">比原文舊：原文在這個翻譯最後更新之後修改過，記得同步。</p>
-            @endif
-        </div>
+    {{-- Header --}}
+    <header class="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 min-h-14 px-4 py-2 border-b border-line bg-paper/95 backdrop-blur-sm">
+        <a href="{{ route('admin.posts.index') }}" class="inline-flex items-center gap-1.5 min-h-9 text-sm text-ink-2 hover:text-accent">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>文章
+        </a>
+        <span aria-hidden="true" class="w-px h-5 bg-line-2"></span>
 
-        <div class="flex items-center gap-3">
-            @if(!$isCreate)
-                <a href="{{ route('public.posts.show', [$post->locale, $post->slug]) }}" target="_blank" class="text-sm text-accent hover:text-accent-ink font-mono">預覽 ↗</a>
-            @endif
-            <select name="status" class="bg-card border border-line rounded px-3 py-1.5 text-sm focus:border-accent focus:outline-none">
-                @foreach(['draft' => '草稿', 'published' => '發布', 'hidden' => '隱藏'] as $val => $label)
-                    <option value="{{ $val }}" {{ old('status', $post->status) === $val ? 'selected' : '' }}>{{ $label }}</option>
+        @unless($isCreate)
+            <nav aria-label="翻譯版本" data-versions class="flex flex-wrap items-center gap-1">
+                @foreach($versionStates as $loc => $v)
+                    @if($v['post'])
+                        @php $current = $v['post']->id === $post->id; @endphp
+                        <a href="{{ route('admin.posts.edit', $v['post']) }}" @if($current) aria-current="page" @endif
+                            class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-sm {{ $current ? 'bg-paper-2 text-ink font-semibold' : 'text-ink-2 hover:bg-paper-2' }}">
+                            {{ $langNames[$loc] }}
+                            <span class="text-[11px] font-normal {{ $v['stale'] ? 'text-warn' : 'text-ink-3' }}">{{ $v['original'] ? '原文' : ($statusLabel[$v['post']->status] ?? '') }}{{ $v['stale'] ? ' · 比原文舊' : '' }}</span>
+                        </a>
+                    @else
+                        <button type="submit" form="translate-post-{{ $loc }}" data-create-version="{{ $loc }}"
+                            class="inline-flex items-center h-8 px-2 rounded-lg border border-dashed border-line-2 text-xs text-ink-3 hover:border-accent hover:text-accent"
+                            aria-label="建立{{ $langNames[$loc] }}版本">＋ {{ $langNames[$loc] }}</button>
+                    @endif
                 @endforeach
-            </select>
-            <button type="submit" class="bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-ink text-sm font-medium">儲存</button>
+            </nav>
+        @else
+            <span class="text-sm text-ink-2">新文章</span>
+        @endunless
+
+        <span class="flex-1"></span>
+
+        <span data-autosave-status class="inline-flex items-center gap-1.5 text-[13px] text-ink-3" aria-live="polite">
+            <span aria-hidden="true" class="size-2 rounded-full" :class="{ 'bg-good': saveState === 'saved', 'bg-warn': saveState === 'dirty' || saveState === 'saving', 'bg-danger': saveState === 'error', 'bg-line-2': saveState === 'idle' }"></span>
+            <span x-text="saveLabel">{{ $isCreate ? '尚未儲存' : '已儲存' }}</span>
+        </span>
+
+        <div role="group" aria-label="檢視模式" class="flex gap-0.5 p-0.5 rounded-lg bg-paper-2">
+            @foreach(['write' => '寫作', 'split' => '左右對照', 'preview' => '預覽'] as $key => $label)
+                <button type="button" data-mode="{{ $key }}" @click="setMode('{{ $key }}')" :aria-pressed="mode === '{{ $key }}' ? 'true' : 'false'" aria-pressed="{{ $key === 'write' ? 'true' : 'false' }}"
+                    class="h-8 px-3 rounded-md text-sm text-ink-2 aria-pressed:bg-card aria-pressed:text-ink aria-pressed:font-semibold aria-pressed:shadow-sm">{{ $label }}</button>
+            @endforeach
         </div>
+
+        <button type="button" @click="panel = !panel" :aria-pressed="panel ? 'true' : 'false'" aria-label="文章設定面板"
+            class="inline-flex items-center justify-center size-9 rounded-lg text-ink-2 hover:bg-paper-2 aria-pressed:bg-paper-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>
+        </button>
+
+        <button type="submit" data-publish @click="publishClicked($event)"
+            class="h-9 px-4 rounded-lg bg-ink text-paper text-sm font-semibold hover:bg-accent"
+            x-text="status === 'published' ? '更新' : '發布'">{{ ($post->status ?? 'draft') === 'published' ? '更新' : '發布' }}</button>
     </header>
 
+    @if(session('success'))
+        <div class="px-4 py-2 bg-accent-soft text-accent-ink text-sm">{{ session('success') }}</div>
+    @endif
     @if($errors->any())
-        <div class="bg-red-50 border border-red-200 text-red-700 rounded-md p-4 text-sm">
-            <ul class="list-disc list-inside space-y-1">
-                @foreach($errors->all() as $err)<li>{{ $err }}</li>@endforeach
-            </ul>
+        <div class="px-4 py-3 bg-danger/10 text-danger text-sm">
+            <ul class="m-0 list-disc list-inside">@foreach($errors->all() as $err)<li>{{ $err }}</li>@endforeach</ul>
         </div>
     @endif
+    @if(! $isCreate && ($versionStates[$post->locale]['stale'] ?? false))
+        <p data-stale class="m-0 px-4 py-2 bg-warn/10 text-sm text-warn">比原文舊：原文在這個翻譯最後更新之後修改過，記得同步。</p>
+    @endif
 
-    <div class="grid lg:grid-cols-[1fr_320px] gap-6">
-        {{-- Main editor --}}
-        <div class="space-y-4">
-            <div>
-                <input type="text" name="title" value="{{ old('title', $post->title) }}" placeholder="文章標題"
-                    class="w-full text-2xl font-serif font-semibold bg-transparent border-0 border-b-2 border-line focus:border-accent focus:outline-none py-2"
-                    required>
-            </div>
-            <div>
-                <textarea name="excerpt" rows="2" placeholder="摘要（顯示在卡片預覽）"
-                    class="w-full bg-card border border-line rounded-md p-3 text-sm focus:border-accent focus:outline-none">{{ old('excerpt', $post->excerpt) }}</textarea>
-            </div>
-            <div x-data="markdownMediaInsert({ locale: @js($post->locale ?: app()->getLocale()), postId: @js($post->id) })" class="relative">
-                <div class="flex items-center justify-between mb-1">
-                    <label class="block text-xs text-ink-3 font-mono uppercase tracking-wide">內文 (Markdown)</label>
-                    <button type="button" @click="pick()"
-                        class="text-xs text-ink-3 hover:text-accent font-mono"
-                        x-text="uploading > 0 ? '上傳中…' : '📷 插入媒體'"></button>
-                </div>
-                <textarea name="body" rows="24" x-ref="body"
-                    @dragover.prevent="dragging = true"
-                    @dragleave="dragging = false"
-                    @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files)"
-                    @paste="handlePaste($event)"
-                    @input="dismissYtPrompt(); detectMention()"
-                    @keydown="onMentionKeydown($event)"
-                    :class="dragging ? 'border-accent' : ''"
-                    class="w-full bg-card border border-line rounded-md p-4 font-mono text-sm focus:border-accent focus:outline-none leading-relaxed">{{ old('body', $post->body) }}</textarea>
-                <input type="file" class="hidden" x-ref="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-                    @change="handleFiles($event.target.files); $event.target.value = ''">
-                <p x-show="error" x-cloak class="mt-1 text-xs text-danger" x-text="error"></p>
-                @include('admin.partials.youtube-embed-prompt')
-                {{-- @ 提及文章搜尋下拉 --}}
-                <div x-show="mentionActive && mentionResults.length" x-cloak
-                    class="mt-1 bg-card border border-line rounded-md shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-                    <template x-for="(item, i) in mentionResults" :key="item.type + ':' + item.id">
-                        <button type="button"
-                            @click="pickMention(item)"
-                            @mouseenter="mentionIndex = i"
-                            :class="i === mentionIndex ? 'bg-paper-2' : ''"
-                            class="w-full text-left px-3 py-2 border-b border-line last:border-0 hover:bg-paper-2 flex items-start gap-2">
-                            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-paper-2 text-ink-3 shrink-0"
-                                x-text="item.type === 'tweet' ? '推' : '文'"></span>
-                            <span class="min-w-0">
-                                <span class="block text-sm truncate" x-text="item.label"></span>
-                                <span class="block text-xs text-ink-3 font-mono truncate" x-text="item.url"></span>
-                            </span>
-                        </button>
-                    </template>
-                </div>
-            </div>
-        </div>
+    <div class="flex-1 flex min-h-0">
+        {{-- Writing area --}}
+        <main class="flex-1 min-w-0 flex" :class="mode === 'split' && 'divide-x divide-line'">
+            <div x-show="mode !== 'preview'" class="flex-1 min-w-0 flex flex-col">
+                <div class="flex-1 w-full max-w-[760px] mx-auto px-5 md:px-10 pt-8 pb-6">
+                    {{-- Cover --}}
+                    <div x-data="coverUpload({ initial: @js(old('cover_image_path', $post->cover_image_path)) })" class="mb-5">
+                        <template x-if="path">
+                            <div class="relative group mb-2">
+                                <img :src="previewUrl" alt="" class="w-full max-h-64 object-cover rounded-[var(--radius-card)] border border-line">
+                                <button type="button" @click="clear()" class="absolute top-2 right-2 h-8 px-2.5 rounded-md bg-paper/90 border border-line text-xs hover:text-danger">移除封面</button>
+                            </div>
+                        </template>
+                        <label class="inline-flex items-center gap-2 min-h-9 text-sm text-ink-3 hover:text-accent cursor-pointer" :class="uploading && 'animate-pulse'"
+                            @dragover.prevent @drop.prevent="upload($event.dataTransfer.files[0])">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M21 16l-5-5-8 8"/></svg>
+                            <span x-text="uploading ? '上傳中…' : (path ? '更換封面圖' : '加入封面圖（可直接拖曳進來）')">加入封面圖</span>
+                            <input type="file" class="sr-only" accept="image/*" @change="upload($event.target.files[0])">
+                        </label>
+                        <input type="hidden" name="cover_image_path" x-model="path">
+                        <p x-show="error" x-cloak class="mt-1 text-xs text-danger" x-text="error"></p>
+                    </div>
 
-        {{-- Sidebar --}}
-        <aside class="space-y-5">
-            {{-- Slug + locale + featured --}}
-            <div class="bg-card border border-line rounded-md p-4 space-y-4">
-                @if($isCreate)
-                    <div>
-                        <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">語言</label>
-                        <select name="locale" class="w-full bg-paper border border-line rounded px-2 py-1.5 text-sm focus:border-accent focus:outline-none">
-                            @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
-                                <option value="{{ $loc }}" {{ old('locale', $post->locale) === $loc ? 'selected' : '' }}>{{ strtoupper($loc) }}</option>
+                    <label for="title" class="sr-only">標題</label>
+                    {{-- A one-line textarea so long titles wrap instead of being clipped. --}}
+                    <textarea id="title" name="title" rows="1" placeholder="標題" required x-ref="title" @keydown.enter.prevent
+                        class="w-full mb-4 bg-transparent border-0 resize-none field-sizing-content font-serif text-[34px] md:text-[40px] leading-tight font-medium text-ink placeholder:text-ink-3/60 focus:outline-none">{{ old('title', $post->title) }}</textarea>
+
+                    <div x-data="markdownMediaInsert({ locale: @js($locale), postId: @js($post->id) })" class="relative">
+                        {{-- Format toolbar --}}
+                        <div role="toolbar" aria-label="格式" class="sticky top-14 z-10 flex flex-wrap items-center gap-0.5 mb-3 py-1 bg-paper/95 border-b border-line">
+                            <button type="button" @click="format('bold', $refs.body)" aria-label="粗體" title="粗體 (⌘B)" class="size-9 rounded-md font-bold text-ink-2 hover:bg-paper-2">B</button>
+                            <button type="button" @click="format('italic', $refs.body)" aria-label="斜體" title="斜體 (⌘I)" class="size-9 rounded-md italic font-serif text-ink-2 hover:bg-paper-2">I</button>
+                            <button type="button" @click="format('heading', $refs.body)" aria-label="標題" class="h-9 px-2 rounded-md text-sm font-semibold text-ink-2 hover:bg-paper-2">H2</button>
+                            <button type="button" @click="format('quote', $refs.body)" aria-label="引用區塊" class="size-9 rounded-md text-ink-2 hover:bg-paper-2">❝</button>
+                            <button type="button" @click="format('code', $refs.body)" aria-label="程式碼" class="h-9 px-2 rounded-md font-mono text-sm text-ink-2 hover:bg-paper-2">&lt;/&gt;</button>
+                            <span aria-hidden="true" class="w-px h-5 mx-1 bg-line-2"></span>
+                            <button type="button" @click="pick()" aria-label="插入圖片或影片" class="size-9 rounded-md text-ink-2 hover:bg-paper-2 inline-flex items-center justify-center">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>
+                            </button>
+                            <button type="button" @click="format('mention', $refs.body); detectMention()" aria-label="引用文章或碎念" class="size-9 rounded-md text-ink-2 hover:bg-paper-2">@</button>
+                            <span class="ml-auto text-xs text-ink-3" x-text="uploading > 0 ? '上傳中…' : ''"></span>
+                        </div>
+
+                        <label for="body" class="sr-only">內文（Markdown）</label>
+                        <textarea id="body" name="body" x-ref="body" required placeholder="開始寫作…（支援 Markdown，貼上圖片或 YouTube 網址都可以）"
+                            @dragover.prevent="dragging = true" @dragleave="dragging = false"
+                            @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files)"
+                            @paste="handlePaste($event)"
+                            @input="dismissYtPrompt(); detectMention()"
+                            @keydown="onMentionKeydown($event)"
+                            @keydown.meta.b.prevent="format('bold', $refs.body)" @keydown.meta.i.prevent="format('italic', $refs.body)"
+                            :class="dragging && 'ring-2 ring-accent'"
+                            class="w-full min-h-[55vh] bg-transparent border-0 font-serif text-[18px] leading-[1.85] text-ink placeholder:text-ink-3/60 resize-none focus:outline-none field-sizing-content">{{ old('body', $post->body) }}</textarea>
+                        <input type="file" class="hidden" x-ref="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" @change="handleFiles($event.target.files); $event.target.value = ''">
+                        <p x-show="error" x-cloak class="mt-1 text-xs text-danger" x-text="error"></p>
+                        @include('admin.partials.youtube-embed-prompt')
+                        <div x-show="mentionActive && mentionResults.length" x-cloak role="listbox" aria-label="引用建議"
+                            class="absolute left-0 right-0 z-20 mt-1 bg-card border border-line rounded-[var(--radius-control)] shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+                            <div class="px-3 py-1.5 text-xs text-ink-3 border-b border-line">引用文章或碎念 · 存檔時自動建立反向連結</div>
+                            <template x-for="(item, i) in mentionResults" :key="item.type + ':' + item.id">
+                                <button type="button" role="option" :aria-selected="i === mentionIndex" @click="pickMention(item)" @mouseenter="mentionIndex = i"
+                                    :class="i === mentionIndex ? 'bg-paper-2' : ''" class="w-full text-left px-3 py-2 hover:bg-paper-2 flex items-center gap-2">
+                                    <span class="text-[11px] px-1.5 py-0.5 rounded bg-paper-2 text-ink-3 shrink-0" x-text="item.type === 'tweet' ? '碎念' : '文章'"></span>
+                                    <span class="text-sm truncate" x-text="item.label"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Counts + shortcuts --}}
+                <div data-editor-stats class="sticky bottom-0 flex flex-wrap items-center gap-x-4 gap-y-1 px-5 md:px-10 py-2 border-t border-line bg-paper/95 text-xs text-ink-3">
+                    <span x-text="statsLabel">0 字 · 約 1 分鐘</span>
+                    <span x-text="'引用 ' + refCount + ' 篇'">引用 0 篇</span>
+                    <span class="flex-1"></span>
+                    <span><kbd class="font-mono">⌘S</kbd> 儲存　<kbd class="font-mono">⌘⇧P</kbd> 預覽</span>
+                </div>
+            </div>
+
+            {{-- Preview: same Markdown pipeline and prose styles as the public post page --}}
+            <div x-show="mode !== 'write'" x-cloak class="flex-1 min-w-0 overflow-y-auto bg-paper" data-preview-pane>
+                <article class="max-w-[720px] mx-auto px-5 md:px-10 py-10">
+                    <h1 class="m-0 mb-6 font-serif text-[34px] md:text-5xl leading-tight font-medium tracking-tight" x-text="title || '（未命名）'"></h1>
+                    <div class="prose-blog post-body" x-html="previewHtml"></div>
+                    <p x-show="previewLoading" class="text-sm text-ink-3">產生預覽中…</p>
+                </article>
+            </div>
+        </main>
+
+        {{-- Settings --}}
+        {{-- Below lg the panel is a slide-over (closed by default); on desktop it sits beside the text. --}}
+        <div x-show="panel" x-cloak @click="panel = false" class="fixed inset-0 z-30 bg-ink/30 lg:hidden" aria-hidden="true"></div>
+        <aside x-show="panel" x-cloak aria-label="文章設定" @keydown.escape="if (window.innerWidth < 1024) panel = false"
+            class="fixed inset-y-0 right-0 z-40 w-[min(320px,88vw)] shadow-xl lg:static lg:z-auto lg:w-[300px] lg:shadow-none shrink-0 border-l border-line bg-card overflow-y-auto">
+            <div class="flex flex-col divide-y divide-line text-sm">
+                <section class="p-4 flex flex-col gap-3">
+                    <h2 class="m-0 font-sans text-xs font-bold tracking-[0.06em] text-ink-3">發布</h2>
+                    @if($isCreate)
+                        <label class="flex items-center justify-between gap-2">語言
+                            <select name="locale" class="h-9 px-2 rounded-md border border-line-2 bg-transparent">
+                                @foreach($langNames as $code => $label)
+                                    <option value="{{ $code }}" @selected($locale === $code)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                    @endif
+                    <label class="flex items-center justify-between gap-2">狀態
+                        <select name="status" x-model="status" x-ref="status" class="h-9 px-2 rounded-md border border-line-2 bg-transparent">
+                            @foreach($statusLabel as $val => $label)
+                                <option value="{{ $val }}" @selected(old('status', $post->status ?? 'draft') === $val)>{{ $label }}</option>
                             @endforeach
                         </select>
-                    </div>
-                @else
-                    <div>
-                        <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">語言</label>
-                        <div class="text-sm font-mono uppercase">{{ $post->locale }}</div>
-                    </div>
-                @endif
-
-                <div>
-                    <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">Slug</label>
-                    <input type="text" name="slug" value="{{ old('slug', $post->slug) }}" placeholder="auto-generated"
-                        class="w-full bg-paper border border-line rounded px-2 py-1.5 text-sm font-mono focus:border-accent focus:outline-none">
-                </div>
-
-                <label class="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="checkbox" name="is_featured" value="1" {{ old('is_featured', $post->is_featured) ? 'checked' : '' }}>
-                    <span>設為精選 <span class="text-xs text-ink-3">（新精選排在最後，可在「文章 › 精選」調整順序）</span></span>
-                </label>
-
-                <div x-data="coverUpload({ initial: @js($post->cover_image_path) })">
-                    <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">封面圖片</label>
-
-                    {{-- Preview --}}
-                    <template x-if="path">
-                        <div class="relative mb-2 group">
-                            <img :src="previewUrl" class="rounded max-h-40 w-full object-cover border border-line">
-                            <button type="button" @click="clear()" class="absolute top-1 right-1 bg-paper/90 border border-line rounded px-2 py-0.5 text-xs hover:text-danger">移除</button>
-                        </div>
-                    </template>
-
-                    {{-- Upload zone --}}
-                    <label class="block cursor-pointer border-2 border-dashed border-line rounded-md p-4 text-center text-xs text-ink-3 hover:border-accent hover:text-accent transition-colors"
-                        :class="uploading ? 'animate-pulse' : ''">
-                        <span x-show="!uploading">
-                            <template x-if="path">
-                                <span>點此重新上傳</span>
-                            </template>
-                            <template x-if="!path">
-                                <span>點此選擇圖片（PNG/JPG/WebP，≤ 10 MB）</span>
-                            </template>
-                        </span>
-                        <span x-show="uploading" x-cloak>上傳中…</span>
-                        <input type="file" class="hidden" accept="image/*" @change="upload($event.target.files[0])">
                     </label>
+                    <label class="flex items-center justify-between gap-2 cursor-pointer">設為精選
+                        <input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $post->is_featured)) class="size-[18px] accent-accent">
+                    </label>
+                    <span class="text-xs text-ink-3">新精選排在最後，可在「文章 › 精選」調整順序</span>
+                </section>
 
-                    {{-- Hidden form field that actually submits --}}
-                    <input type="hidden" name="cover_image_path" x-model="path">
-                    <p x-show="error" x-cloak class="mt-2 text-xs text-danger" x-text="error"></p>
-                </div>
-            </div>
+                <section class="p-4 flex flex-col gap-2">
+                    <h2 class="m-0 font-sans text-xs font-bold tracking-[0.06em] text-ink-3">網址</h2>
+                    <label class="flex items-center h-9 rounded-md border border-line-2 overflow-hidden">
+                        <span class="pl-2 font-mono text-xs text-ink-3 whitespace-nowrap">/{{ $locale }}/posts/</span>
+                        <input type="text" name="slug" value="{{ old('slug', $post->slug) }}" placeholder="自動產生" aria-label="Slug"
+                            class="flex-1 min-w-0 h-full px-1 bg-transparent border-0 font-mono text-xs focus:outline-none">
+                    </label>
+                    <span class="text-xs text-ink-3">留空時由標題自動產生</span>
+                </section>
 
-            {{-- Tags --}}
-            <div class="bg-card border border-line rounded-md p-4">
-                <h3 class="text-xs text-ink-3 font-mono uppercase mb-3">標籤</h3>
-                <div class="space-y-1.5 max-h-48 overflow-y-auto">
-                    @foreach($tags as $tag)
-                        <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-paper-2 px-2 py-1 rounded">
-                            <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}"
-                                {{ $isCreate ? '' : ($post->tags->contains($tag->id) ? 'checked' : '') }}>
-                            <span>{{ $tag->name(app()->getLocale()) ?: '(unnamed)' }}</span>
-                        </label>
-                    @endforeach
-                </div>
-            </div>
+                <section class="p-4 flex flex-col gap-2" x-data="{ n: {{ mb_strlen((string) old('excerpt', $post->excerpt)) }} }">
+                    <div class="flex items-baseline justify-between">
+                        <h2 class="m-0 font-sans text-xs font-bold tracking-[0.06em] text-ink-3">摘要</h2>
+                        <span data-excerpt-count class="text-xs" :class="n > 120 ? 'text-warn' : 'text-ink-3'"><span x-text="n">{{ mb_strlen((string) old('excerpt', $post->excerpt)) }}</span> / 120</span>
+                    </div>
+                    <textarea name="excerpt" rows="3" aria-label="摘要" @input="n = Array.from($event.target.value).length"
+                        placeholder="顯示在卡片與搜尋結果"
+                        class="w-full p-2 rounded-md border border-line-2 bg-transparent text-sm focus:outline-none focus:border-accent">{{ old('excerpt', $post->excerpt) }}</textarea>
+                </section>
 
-            {{-- Categories --}}
-            <div class="bg-card border border-line rounded-md p-4">
-                <h3 class="text-xs text-ink-3 font-mono uppercase mb-3">分類 / 系列</h3>
-                <div class="space-y-2 max-h-48 overflow-y-auto">
-                    @foreach($categories as $cat)
-                        @php
-                            $checked = !$isCreate && $post->categories->contains($cat->id);
-                            $order = $checked ? $post->categories->firstWhere('id', $cat->id)?->pivot?->order_in_category : null;
-                        @endphp
-                        <div class="flex items-center gap-2 text-sm">
-                            <label class="flex items-center gap-2 cursor-pointer flex-1">
-                                <input type="checkbox" name="category_ids[]" value="{{ $cat->id }}" {{ $checked ? 'checked' : '' }}>
-                                <span>{{ $cat->name(app()->getLocale()) ?: '(unnamed)' }}</span>
-                            </label>
-                            <input type="number" name="categories_order[{{ $cat->id }}]" value="{{ $order }}"
-                                placeholder="順序"
-                                class="w-16 bg-paper border border-line rounded px-1 py-0.5 text-xs font-mono">
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Translations (edit mode only).
-                 NOTE: HTML disallows nested forms. The buttons below use the `form="..."`
-                 attribute to associate with hidden forms rendered AFTER the main #post-form. --}}
-            @if(!$isCreate)
-                <div class="bg-card border border-line rounded-md p-4">
-                    <h3 class="text-xs text-ink-3 font-mono uppercase mb-3">翻譯版本</h3>
-                    <div class="space-y-1 text-sm">
-                        @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
-                            @php $t = $translations[$loc] ?? null; @endphp
-                            <div class="flex items-center justify-between">
-                                <span class="font-mono uppercase text-xs text-ink-3 w-8">{{ $loc }}</span>
-                                @if($t)
-                                    <a href="{{ route('admin.posts.edit', $t) }}" class="text-accent hover:text-accent-ink flex-1 truncate">
-                                        {{ $t->title ?: '(no title)' }}
-                                    </a>
-                                @else
-                                    <button type="submit" form="translate-post-{{ $loc }}"
-                                        class="text-xs text-ink-3 hover:text-accent">
-                                        + 新增翻譯
-                                    </button>
-                                @endif
+                <section class="p-4 flex flex-col gap-3">
+                    <h2 class="m-0 font-sans text-xs font-bold tracking-[0.06em] text-ink-3">分類與標籤</h2>
+                    <div class="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+                        @foreach($categories as $cat)
+                            @php
+                                $checked = ! $isCreate && $post->categories->contains($cat->id);
+                                $order = $checked ? $post->categories->firstWhere('id', $cat->id)?->pivot?->order_in_category : null;
+                            @endphp
+                            <div class="flex items-center gap-2">
+                                <label class="flex-1 flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="category_ids[]" value="{{ $cat->id }}" @checked($checked) class="accent-accent">
+                                    {{ $cat->name('zh') ?: '(unnamed)' }}
+                                </label>
+                                <input type="number" name="categories_order[{{ $cat->id }}]" value="{{ $order }}" placeholder="順序" aria-label="{{ $cat->name('zh') }} 中的順序"
+                                    class="w-14 h-7 px-1 rounded border border-line-2 bg-transparent font-mono text-xs">
                             </div>
                         @endforeach
                     </div>
-                </div>
-            @endif
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach($tags as $tag)
+                            @php $has = ! $isCreate && $post->tags->contains($tag->id); @endphp
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}" @checked($has) class="peer sr-only">
+                                <span class="inline-flex items-center h-7 px-2.5 rounded-full text-xs bg-paper-2 text-ink-2 peer-checked:bg-ink peer-checked:text-paper peer-focus-visible:ring-2 peer-focus-visible:ring-accent">#{{ $tag->name('zh') ?: '(unnamed)' }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </section>
 
-            {{-- Metadata --}}
-            @if(!$isCreate)
-                <div class="text-xs text-ink-3 font-mono space-y-1 px-1">
-                    <div>建立：{{ $post->created_at?->format('Y/m/d H:i') }}</div>
-                    <div>更新：{{ $post->updated_at?->format('Y/m/d H:i') }}</div>
-                    <div>觀看：{{ $post->views_count }}</div>
-                </div>
-            @endif
+                <section class="p-4 flex flex-col gap-2" data-references>
+                    <h2 class="m-0 font-sans text-xs font-bold tracking-[0.06em] text-ink-3">引用關係</h2>
+                    <span class="text-xs font-semibold text-ink-2">本文引用</span>
+                    @forelse($cites as $m)
+                        <a href="{{ $mentionUrl($m) }}" class="block truncate text-ink-2 hover:text-accent">→ {{ $mentionLabel($m) }}</a>
+                    @empty
+                        <span class="text-xs text-ink-3">（無）</span>
+                    @endforelse
+                    <span class="mt-2 text-xs font-semibold text-ink-2">被引用</span>
+                    @forelse($citedBy as $m)
+                        <a href="{{ $mentionUrl($m) }}" class="block truncate text-ink-2 hover:text-accent">← {{ $mentionLabel($m) }}</a>
+                    @empty
+                        <span class="text-xs text-ink-3">（無）</span>
+                    @endforelse
+                    <span class="text-[11px] text-ink-3">存檔時會依內文的連結自動更新</span>
+                </section>
+
+                @unless($isCreate)
+                    <section class="p-4 flex flex-col gap-1.5" data-translation-states>
+                        <h2 class="m-0 mb-1 font-sans text-xs font-bold tracking-[0.06em] text-ink-3">翻譯版本</h2>
+                        @foreach($versionStates as $loc => $v)
+                            <div class="flex items-center justify-between gap-2">
+                                <span>{{ $langNames[$loc] }}</span>
+                                @if($v['post'])
+                                    <a href="{{ route('admin.posts.edit', $v['post']) }}" class="text-xs {{ $v['stale'] ? 'text-warn' : 'text-ink-3' }} hover:text-accent">
+                                        {{ $v['original'] ? '原文 · ' : '' }}{{ $statusLabel[$v['post']->status] ?? $v['post']->status }}{{ $v['stale'] ? ' · 比原文舊' : '' }}
+                                    </a>
+                                @else
+                                    <button type="submit" form="translate-post-{{ $loc }}" class="text-xs text-accent hover:text-accent-ink">＋ 建立</button>
+                                @endif
+                            </div>
+                        @endforeach
+                    </section>
+
+                    <section class="p-4 text-xs text-ink-3 font-mono flex flex-col gap-1">
+                        <span>建立：{{ $post->created_at?->format('Y/m/d H:i') }}</span>
+                        <span>更新：{{ $post->updated_at?->format('Y/m/d H:i') }}</span>
+                        <span>瀏覽：{{ number_format($post->views_count) }}</span>
+                        @if($post->status === 'published')
+                            <a href="{{ route('public.posts.show', [$post->locale, $post->slug]) }}" target="_blank" rel="noopener" class="font-sans text-accent hover:text-accent-ink">查看前台 ↗</a>
+                        @endif
+                    </section>
+                @endunless
+            </div>
         </aside>
     </div>
 </form>
 
-{{-- Hidden "create translation" forms (referenced via form="..." attribute from sidebar). --}}
-@if(!$isCreate)
-    @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
-        @if(!isset($translations[$loc]))
-            <form id="translate-post-{{ $loc }}" method="POST"
-                action="{{ route('admin.posts.create-translation', $post) }}" class="hidden">
+{{-- "Create translation" forms live outside the main form (no nested forms). --}}
+@unless($isCreate)
+    @foreach($versionStates as $loc => $v)
+        @unless($v['post'])
+            <form id="translate-post-{{ $loc }}" method="POST" action="{{ route('admin.posts.create-translation', $post) }}" class="hidden">
                 @csrf
                 <input type="hidden" name="locale" value="{{ $loc }}">
             </form>
-        @endif
+        @endunless
     @endforeach
-@endif
+@endunless
 @endsection

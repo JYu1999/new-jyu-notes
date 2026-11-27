@@ -1,4 +1,5 @@
 ## 2026-11-27
+- New focus-mode post editor: switch or add language versions from the header, autosave for drafts, Write / Split / Preview modes (preview matches the public post page), a formatting toolbar, word count with reading time, ⌘S to save and ⌘⇧P to preview, plus a side panel with status, featured, slug, excerpt length, categories, tags, references in both directions and every translation's status; pasting a YouTube link can embed it from a chosen start time
 - Choose the order of featured posts by dragging them in the admin "Featured" tab; newly featured posts go last, and the home page follows this order
 - Select several posts in the admin list to publish, hide, tag, start English translations or move them to the trash at once
 - Admin post list shows one row per article with the status of every language (published, draft, outdated, not yet translated — click to start a translation), plus search across title, slug and body, filters by category, tag and translation status, and sorting by modified, published or views
