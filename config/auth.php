@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AiUser;
 use App\Models\User;
 
 return [
@@ -42,6 +43,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // AI connections over MCP (JYU-554): OAuth access tokens issued by Passport.
+        'api' => [
+            'driver' => 'passport',
+            'provider' => 'ai_users',
+        ],
     ],
 
     /*
@@ -65,6 +72,12 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        // Same users table, but a model with Passport's token methods (see App\Models\AiUser).
+        'ai_users' => [
+            'driver' => 'eloquent',
+            'model' => AiUser::class,
         ],
 
         // 'users' => [

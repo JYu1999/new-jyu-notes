@@ -118,6 +118,12 @@ class RevisionService
         }
     }
 
+    /** Attribute every change in this request to an AI connection (JYU-554, set by the MCP middleware). */
+    public function actAsAi(string $name, ?int $userId): void
+    {
+        $this->actorOverride = [ContentRevision::ACTOR_AI, $name, $userId];
+    }
+
     /** Record changes made by the system (e.g. scheduled publishing) under a name. */
     public function asSystem(string $name, callable $fn): mixed
     {

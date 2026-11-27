@@ -39,6 +39,7 @@ class AdminNav
                 $item('媒體庫', 'admin.media.index', 'admin.media.*'),
             ]],
             ['label' => '網站', 'items' => [
+                $item('AI 連線', 'admin.agents.index', 'admin.agents.*'),
                 $item('API Tokens', 'admin.tokens.index', 'admin.tokens.*'),
                 $item('Todos', 'admin.todos.index', 'admin.todos.*'),
             ]],
