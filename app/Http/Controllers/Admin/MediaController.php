@@ -5,15 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Media\StoreRequest;
 use App\Services\MediaService;
+use App\Services\MediaUsageService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class MediaController extends Controller
 {
-    public function index(MediaService $service): View
+    public function index(Request $request, MediaService $service, MediaUsageService $usage): View
     {
+        $unusedOnly = $request->boolean('unused');
+
         return view('admin.media.index', [
-            'media' => $service->paginate(24),
+            'media' => $service->paginate(24, $unusedOnly ? $usage->unusedIds() : null),
+            'unusedOnly' => $unusedOnly,
         ]);
     }
 

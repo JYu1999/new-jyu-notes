@@ -10,6 +10,11 @@
                 <th class="px-4 py-3 w-28 text-right">操作</th>
             </tr>
         </thead>
+        @php
+            // Translations older than their original on this page (JYU-544).
+            $staleIds = app(\App\Services\TranslationStatusService::class)->stale()
+                ->whereIn('posts.id', $posts->pluck('id'))->pluck('posts.id')->all();
+        @endphp
         <tbody class="divide-y divide-line">
             @forelse($posts as $post)
                 <tr class="hover:bg-paper-2">
@@ -37,7 +42,12 @@
                             <span class="text-xs px-2 py-0.5 rounded font-mono {{ $statusColor }}">{{ $post->status }}</span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-xs font-mono uppercase text-ink-3">{{ $post->locale }}</td>
+                    <td class="px-4 py-3 text-xs font-mono uppercase text-ink-3">
+                        {{ $post->locale }}
+                        @if(in_array($post->id, $staleIds, true))
+                            <span data-stale class="block mt-1 normal-case font-sans text-[11px] px-1.5 py-0.5 rounded bg-warn/10 text-warn whitespace-nowrap">比原文舊</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-3 font-mono text-xs text-ink-3">{{ $post->views_count }}</td>
                     <td class="px-4 py-3 text-xs text-ink-3 font-mono">{{ $post->updated_at->format('Y/m/d') }}</td>
                     <td class="px-4 py-3 text-right">

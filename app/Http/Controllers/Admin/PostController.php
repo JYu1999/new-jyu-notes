@@ -13,6 +13,7 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\TagRepository;
 use App\Services\PostService;
+use App\Services\TranslationStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -26,7 +27,12 @@ class PostController extends Controller
                 status: $params['status'] ?? null,
                 locale: $params['locale'] ?? null,
                 search: $params['q'] ?? null,
+                missing: $params['missing'] ?? null,
+                stale: $params['stale'] ?? null,
             ),
+            'translationFilter' => isset($params['missing'])
+                ? '缺'.TranslationStatusService::LANGUAGE_NAMES[$params['missing']].'版的文章'
+                : (isset($params['stale']) ? TranslationStatusService::LANGUAGE_NAMES[$params['stale']].'版比原文舊的文章' : null),
             'counts' => $repo->countsByStatus(),
             'currentStatus' => $params['status'] ?? 'all',
             'currentLocale' => $params['locale'] ?? null,

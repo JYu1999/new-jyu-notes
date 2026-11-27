@@ -19,6 +19,9 @@ class IndexRequest extends FormRequest
             'q' => 'nullable|string|max:100',
             'page' => 'nullable|integer|min:1',
             'partial' => 'nullable|boolean',
+            // Translation filters (JYU-544): originals missing a language / translations older than the original.
+            'missing' => 'nullable|in:zh,en,ja,vi,id',
+            'stale' => 'nullable|in:zh,en,ja,vi,id',
         ];
     }
 }

@@ -20,6 +20,9 @@
                 / {{ $isCreate ? '新增' : '編輯' }}
             </nav>
             <h1 class="font-serif text-2xl font-semibold">{{ $isCreate ? '新增文章' : '編輯文章' }}</h1>
+            @if(! $isCreate && app(\App\Services\TranslationStatusService::class)->isStale($post))
+                <p data-stale class="mt-1 text-sm text-warn">比原文舊：原文在這個翻譯最後更新之後修改過，記得同步。</p>
+            @endif
         </div>
 
         <div class="flex items-center gap-3">
