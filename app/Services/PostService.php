@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\PostGroup;
 use App\Models\Tweet;
 use App\Support\SlugGenerator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class PostService
@@ -116,6 +117,63 @@ class PostService
     public function softDelete(Post $post): void
     {
         $post->delete();
+    }
+
+    /** Move an article to the trash: this post and every other language version (JYU-546). */
+    public function softDeleteGroup(Post $post): int
+    {
+        return DB::transaction(function () use ($post) {
+            $versions = Post::query()->where('post_group_id', $post->post_group_id)->get();
+            $versions->each->delete();
+
+            return $versions->count();
+        });
+    }
+
+    /**
+     * Bulk actions from the admin post list (JYU-546). $posts are the articles' rows.
+     *
+     * @return string human summary for the flash message
+     */
+    public function bulk(string $action, Collection $posts, ?int $tagId = null): string
+    {
+        return DB::transaction(function () use ($action, $posts, $tagId) {
+            switch ($action) {
+                case 'publish':
+                case 'hide':
+                    $status = $action === 'publish' ? Post::STATUS_PUBLISHED : Post::STATUS_HIDDEN;
+                    $posts->each(fn (Post $p) => $this->updateStatus($p, $status));
+
+                    return ($action === 'publish' ? '已發布 ' : '已隱藏 ').$posts->count().' 篇';
+
+                case 'tag':
+                    $posts->each(function (Post $p) use ($tagId) {
+                        $this->syncTagsAcrossGroup($p, $p->tags()->pluck('tags.id')->push($tagId)->unique()->values()->all());
+                    });
+
+                    return '已為 '.$posts->count().' 篇加上標籤';
+
+                case 'translate_en':
+                    $created = 0;
+                    foreach ($posts as $p) {
+                        $hasEn = Post::withTrashed()->where('post_group_id', $p->post_group_id)->where('locale', 'en')->exists();
+                        if (! $hasEn) {
+                            $this->createTranslation($p, 'en');
+                            $created++;
+                        }
+                    }
+                    $skipped = $posts->count() - $created;
+
+                    return "已建立 {$created} 篇英文翻譯草稿".($skipped ? "（{$skipped} 篇已有英文版，略過）" : '');
+
+                case 'trash':
+                    $versions = $posts->sum(fn (Post $p) => $this->softDeleteGroup($p));
+
+                    return '已將 '.$posts->count()." 篇文章（共 {$versions} 個語言版本）移到垃圾桶";
+            }
+
+            throw new \InvalidArgumentException("Unknown bulk action: {$action}");
+        });
     }
 
     public function restore(Post $post): void
