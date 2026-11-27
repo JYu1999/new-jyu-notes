@@ -80,4 +80,17 @@ class TagRepository
             ->orderByDesc('posts_count')
             ->get();
     }
+
+    /** Tags used by published tweets in this locale, most used first (tweets page filter). */
+    public function forTweets(string $locale): Collection
+    {
+        return Tag::query()
+            ->with('translations')
+            ->whereHas('translations', fn ($qq) => $qq->where('locale', $locale))
+            ->withCount(['tweets as tweets_count' => fn ($q) => $q->where('status', 'published')->where('locale', $locale)])
+            ->get()
+            ->filter(fn ($t) => $t->tweets_count > 0)
+            ->sortByDesc('tweets_count')
+            ->values();
+    }
 }

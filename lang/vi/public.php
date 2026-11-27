@@ -131,4 +131,20 @@ return [
     'post_cites' => 'Bài này trích dẫn',
     'post_mentioned_by_n' => 'Được nhắc đến :n lần',
     'post_see_backlinks' => 'Xem liên kết ngược ↓',
+
+    // Tweets page (JYU-537)
+    'tweets_intro' => 'Ngắn hơn bài viết, dài hơn một dòng tweet. Những suy nghĩ thoáng qua, mảnh đời thường và những gì mình đọc.',
+    'tweets_filter_by_tag' => 'Lọc theo thẻ',
+    'tweets_all' => 'Tất cả',
+    'tweets_media_only' => 'Chỉ ghi chú có ảnh hoặc video',
+    'tweets_archive' => 'Lưu trữ',
+    'tweets_by_month' => 'Theo tháng',
+    'tweets_month_format' => '\\T\\h\\á\\n\\g n, Y',
+    'tweets_load_older' => 'Xem ghi chú cũ hơn',
+    'tweets_empty_filtered' => 'Không có ghi chú nào phù hợp.',
+    'tweets_clear_filters' => 'Bỏ lọc',
+    'tweets_expand' => 'Xem toàn bộ',
+    'tweets_collapse' => 'Thu gọn',
+    'tweets_pick_month' => 'Chọn tháng',
+    'tweets_all_months' => 'Tất cả các tháng',
 ];

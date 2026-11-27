@@ -131,4 +131,20 @@ return [
     'post_cites' => 'Artikel ini menautkan ke',
     'post_mentioned_by_n' => 'Disebutkan oleh :n',
     'post_see_backlinks' => 'Lihat tautan balik ↓',
+
+    // Tweets page (JYU-537)
+    'tweets_intro' => 'Lebih pendek dari artikel, lebih panjang dari tweet. Pikiran sekilas, potongan keseharian, dan bacaan.',
+    'tweets_filter_by_tag' => 'Filter berdasarkan tag',
+    'tweets_all' => 'Semua',
+    'tweets_media_only' => 'Hanya yang ada foto atau video',
+    'tweets_archive' => 'Arsip',
+    'tweets_by_month' => 'Per bulan',
+    'tweets_month_format' => 'F Y',
+    'tweets_load_older' => 'Lihat catatan lebih lama',
+    'tweets_empty_filtered' => 'Tidak ada catatan yang cocok.',
+    'tweets_clear_filters' => 'Hapus filter',
+    'tweets_expand' => 'Baca selengkapnya',
+    'tweets_collapse' => 'Ringkas',
+    'tweets_pick_month' => 'Pilih bulan',
+    'tweets_all_months' => 'Semua bulan',
 ];
