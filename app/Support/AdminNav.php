@@ -40,7 +40,6 @@ class AdminNav
             ]],
             ['label' => '網站', 'items' => [
                 $item('AI 連線', 'admin.agents.index', 'admin.agents.*'),
-                $item('Todos', 'admin.todos.index', 'admin.todos.*'),
             ]],
         ];
     }
