@@ -83,4 +83,6 @@
                 class="flex-none inline-flex items-center h-11 px-4 rounded-full text-sm {{ $item['active'] ? 'bg-ink text-paper font-semibold' : 'bg-paper-2 text-ink-2' }}">{{ $item['label'] }}</a>
         @endforeach
     </nav>
+    {{-- Page-specific strip under the header, e.g. the post reading-progress bar (JYU-535). --}}
+    @yield('header-progress')
 </header>

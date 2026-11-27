@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Post pages show breadcrumbs, publish and update dates, other-language versions, a reading progress bar, a highlighted table of contents (a bottom sheet on phones), copy buttons on code blocks, adjustable text size, back to top and copy link
 - Redesigned home page: intro, main topics, featured posts that adapt to how many are featured, a mixed timeline of posts and tweets with filters and "load more", plus series, tags and latest site update
 - Posts list can be filtered to featured posts
 - New site menu (Posts, Tweets, Topics, About) on every page, with a scrollable menu on phones, a header search box and ⌘K / Ctrl+K shortcut
