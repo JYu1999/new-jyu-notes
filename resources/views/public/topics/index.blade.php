@@ -19,9 +19,14 @@
             <x-ui.section-heading id="topics-categories" class="mb-4">{{ __('public.topics_categories') }}</x-ui.section-heading>
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 @foreach($categories as $cat)
-                    <x-ui.card :href="route('public.categories.show', [$loc, $cat->slug($loc)])" padding="sm" class="flex items-center justify-between gap-3 min-h-12">
-                        <span class="font-semibold leading-snug">{{ $cat->name($loc) }}</span>
-                        <span class="font-mono text-xs text-ink-3 whitespace-nowrap">{{ __('public.n_posts', ['n' => $cat->posts_count]) }}</span>
+                    <x-ui.card :href="route('public.categories.show', [$loc, $cat->slug($loc)])" padding="sm" class="flex flex-col gap-1.5 min-h-12">
+                        <span class="flex items-start justify-between gap-3">
+                            <span class="font-semibold leading-snug">{{ $cat->name($loc) }}</span>
+                            <span class="font-mono text-xs text-ink-3 whitespace-nowrap pt-0.5">{{ __('public.n_posts', ['n' => $cat->posts_count]) }}</span>
+                        </span>
+                        @if($desc = $cat->description($loc))
+                            <span class="text-sm text-ink-2 line-clamp-2">{{ $desc }}</span>
+                        @endif
                     </x-ui.card>
                 @endforeach
             </div>
