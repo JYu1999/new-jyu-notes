@@ -6,6 +6,7 @@
 @php
     $locales = ['zh' => '繁中', 'en' => 'EN', 'ja' => '日本語', 'vi' => 'VI', 'id' => 'ID'];
 @endphp
+@include('admin.partials.compose-fab')
 <h1 class="m-0 mb-7 font-serif text-[32px] font-medium">{{ $greeting }}，{{ auth()->user()->name }}</h1>
 
 <div class="flex flex-col gap-6 max-w-[960px]">

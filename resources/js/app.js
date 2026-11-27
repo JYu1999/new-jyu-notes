@@ -215,12 +215,14 @@ window.tweetMediaUpload = function ({ initial, max = 4 }) {
     return {
         items: (initial || []).map((m) => ({ path: m.path, type: m.type, alt: m.alt ?? '', sensitive: !!m.sensitive })),
         uploading: 0,
+        // Uploads in flight with their progress 0–100 (JYU-551).
+        pending: [],
         error: null,
         get mediaBase() {
             return document.querySelector('meta[name=media-base]')?.content ?? '';
         },
         get full() {
-            return this.items.length >= max;
+            return this.items.length + this.uploading >= max;
         },
         url(item) {
             return this.mediaBase + '/' + item.path;
@@ -228,39 +230,53 @@ window.tweetMediaUpload = function ({ initial, max = 4 }) {
         async add(fileList) {
             this.error = null;
             const incoming = Array.from(fileList);
-            const files = incoming.slice(0, max - this.items.length - this.uploading);
+            const files = incoming.slice(0, Math.max(0, max - this.items.length - this.uploading));
             if (incoming.length > files.length) {
                 this.error = `最多 ${max} 個媒體`;
             }
             await Promise.all(files.map((f) => this.uploadOne(f)));
         },
-        async uploadOne(file) {
-            this.uploading++;
-            try {
+        // XHR instead of fetch so the upload progress can be shown.
+        postFile(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/admin/media');
+                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name=csrf-token]').content);
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try { resolve(JSON.parse(xhr.responseText)); } catch (e) { reject(new Error('上傳失敗')); }
+                    } else {
+                        reject(new Error('上傳失敗 (' + xhr.status + '): ' + String(xhr.responseText).slice(0, 100)));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('上傳失敗，請檢查網路'));
                 const fd = new FormData();
                 fd.append('file', file);
-                const res = await fetch('/admin/media', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                        'Accept': 'application/json',
-                    },
-                    body: fd,
+                xhr.send(fd);
+            });
+        },
+        async uploadOne(file) {
+            this.uploading++;
+            const job = { id: Math.random().toString(36).slice(2), name: file.name, progress: 0 };
+            this.pending.push(job);
+            try {
+                const data = await this.postFile(file, (p) => {
+                    const j = this.pending.find((x) => x.id === job.id);
+                    if (j) j.progress = p;
                 });
-                if (!res.ok) {
-                    const txt = await res.text();
-                    throw new Error('上傳失敗 (' + res.status + '): ' + txt.slice(0, 100));
-                }
-                const data = await res.json();
                 this.items.push({
                     path: data.path,
                     type: data.mime_type.startsWith('video/') ? 'video' : 'image',
                     alt: '',
                     sensitive: false,
                 });
+                this.$dispatch?.('media-changed');
             } catch (e) {
                 this.error = e.message || '上傳失敗';
             } finally {
+                this.pending = this.pending.filter((x) => x.id !== job.id);
                 this.uploading--;
             }
         },
@@ -527,6 +543,86 @@ window.tweetComposer = function ({ locale = 'zh', tweetId = null } = {}) {
         mentionExcludeId: tweetId,
         handlePaste(event) {
             this.detectYoutubePaste(event);
+        },
+    };
+};
+
+/**
+ * Full-screen tweet composer (JYU-551): tag chips, sensitive switch and draft
+ * autosave. The first autosave creates a draft; from then on the form updates it,
+ * so 發布 publishes that same tweet.
+ */
+window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
+    return {
+        tags,
+        selected: [],
+        tagsOpen: false,
+        sensitive: false,
+        tweetId: null,
+        saveState: 'idle',
+        savedAt: null,
+        submitting: false,
+        timer: null,
+        tick: 0,
+        init() {
+            setInterval(() => { this.tick++; }, 15000);
+            window.addEventListener('beforeunload', (e) => {
+                if (!this.submitting && (this.saveState === 'dirty' || this.saveState === 'saving')) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        },
+        get selectedTags() {
+            return this.selected.map((id) => this.tags.find((t) => t.id === id)).filter(Boolean);
+        },
+        toggleTag(id) {
+            this.selected = this.selected.includes(id) ? this.selected.filter((x) => x !== id) : [...this.selected, id];
+            this.$nextTick(() => this.changed());
+        },
+        get saveLabel() {
+            this.tick;
+            switch (this.saveState) {
+                case 'saved': return `草稿已自動儲存 · ${relativeTime(this.savedAt)}`;
+                case 'saving': return '儲存中…';
+                case 'error': return '自動儲存失敗';
+                case 'dirty': return '有變更，稍後自動儲存';
+                default: return '尚未儲存';
+            }
+        },
+        changed() {
+            if (this.submitting) return;
+            this.saveState = 'dirty';
+            clearTimeout(this.timer);
+            this.timer = setTimeout(() => this.autosave(), 3000);
+        },
+        async autosave() {
+            if (this.submitting) return;
+            const fd = new FormData(this.$root);
+            ['_method', 'status', 'redirect_to', 'tags_sent'].forEach((k) => fd.delete(k));
+            if (this.tweetId) fd.set('tweet_id', this.tweetId);
+            this.saveState = 'saving';
+            try {
+                const res = await fetch(autosaveUrl, {
+                    method: 'POST',
+                    headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                    body: fd,
+                });
+                if (res.status === 422 || res.status === 409) { this.saveState = 'idle'; return; }
+                if (!res.ok) throw new Error(String(res.status));
+                const data = await res.json();
+                if (!this.tweetId) {
+                    this.tweetId = data.id;
+                    this.$root.action = data.update_url;
+                    const m = document.createElement('input');
+                    m.type = 'hidden'; m.name = '_method'; m.value = 'PUT';
+                    this.$root.prepend(m);
+                }
+                this.savedAt = new Date();
+                this.saveState = 'saved';
+            } catch (e) {
+                this.saveState = 'error';
+            }
         },
     };
 };

@@ -74,6 +74,8 @@ Route::middleware(['auth', 'role:admin'])
         // Tweets
         Route::get('tweets', [Admin\TweetController::class, 'index'])->name('tweets.index');
         Route::get('tweets/create', [Admin\TweetController::class, 'create'])->name('tweets.create');
+        Route::get('tweets/compose', [Admin\TweetController::class, 'compose'])->name('tweets.compose');
+        Route::post('tweets/autosave', [Admin\TweetController::class, 'autosave'])->name('tweets.autosave');
         Route::post('tweets', [Admin\TweetController::class, 'store'])->name('tweets.store');
         Route::get('tweets/{tweet}/edit', [Admin\TweetController::class, 'edit'])->name('tweets.edit');
         Route::put('tweets/{tweet}', [Admin\TweetController::class, 'update'])->name('tweets.update');

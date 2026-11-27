@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Tweet\AutosaveRequest;
 use App\Http\Requests\Admin\Tweet\CreateTranslationRequest;
 use App\Http\Requests\Admin\Tweet\IndexRequest;
 use App\Http\Requests\Admin\Tweet\StoreRequest;
@@ -12,6 +13,7 @@ use App\Models\Tweet;
 use App\Repositories\TagRepository;
 use App\Repositories\TweetRepository;
 use App\Services\TweetService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -78,9 +80,58 @@ class TweetController extends Controller
 
     public function update(Tweet $tweet, UpdateRequest $request, TweetService $service): RedirectResponse
     {
-        $service->update($tweet, $request->validated());
+        $tweet = $service->update($tweet, $request->safe()->except(['redirect_to', 'tags_sent']));
+
+        if ($request->validated('redirect_to') === 'dashboard') {
+            return redirect()->route('admin.dashboard')
+                ->with('success', $tweet->status === Tweet::STATUS_PUBLISHED ? '已發布' : '已存草稿');
+        }
 
         return redirect()->route('admin.tweets.edit', $tweet)->with('success', '已更新');
+    }
+
+    /** Full-screen composer for posting a tweet from a phone (JYU-551). */
+    public function compose(TagRepository $tags): View
+    {
+        return view('admin.tweets.compose', [
+            'tags' => $tags->all(),
+            'locale' => app()->getLocale(),
+        ]);
+    }
+
+    /**
+     * Composer autosave (JYU-551): the first save creates a draft, later saves
+     * update it. Tweets that are already live are never autosaved.
+     */
+    public function autosave(AutosaveRequest $request, TweetService $service): JsonResponse
+    {
+        $data = collect($request->validated())->except('tweet_id')->all();
+        $tweet = $request->filled('tweet_id') ? Tweet::findOrFail($request->validated('tweet_id')) : null;
+
+        if ($tweet && $tweet->status !== Tweet::STATUS_DRAFT) {
+            return response()->json(['saved' => false, 'reason' => 'not_draft'], 409);
+        }
+        if (blank($data['body'] ?? null) && empty($data['media'])) {
+            return response()->json(['saved' => false, 'reason' => 'empty'], 422);
+        }
+
+        $data['body'] = (string) ($data['body'] ?? '');
+        $data['media'] ??= [];
+        // The composer always sends its whole state: no tags means none.
+        $data['tag_ids'] ??= [];
+        if ($tweet) {
+            unset($data['locale']);
+            $tweet = $service->update($tweet, $data);
+        } else {
+            $tweet = $service->create($data + ['status' => Tweet::STATUS_DRAFT]);
+        }
+
+        return response()->json([
+            'saved' => true,
+            'id' => $tweet->id,
+            'saved_at' => now()->toIso8601String(),
+            'update_url' => route('admin.tweets.update', $tweet),
+        ]);
     }
 
     public function destroy(Tweet $tweet, TweetService $service): RedirectResponse

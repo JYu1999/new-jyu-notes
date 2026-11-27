@@ -24,6 +24,17 @@ class UpdateRequest extends FormRequest
             'published_at' => 'nullable|date',
             'tag_ids' => 'sometimes|array',
             'tag_ids.*' => 'integer|exists:tags,id',
+            // The mobile composer goes back to the admin home after publishing (JYU-551).
+            'redirect_to' => 'nullable|in:dashboard',
+            'tags_sent' => 'sometimes|boolean',
         ];
+    }
+
+    /** Forms that send `tags_sent` mean "no tags" when no tag is ticked (JYU-551). */
+    protected function prepareForValidation(): void
+    {
+        if ($this->boolean('tags_sent') && ! $this->has('tag_ids')) {
+            $this->merge(['tag_ids' => []]);
+        }
     }
 }
