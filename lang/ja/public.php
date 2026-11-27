@@ -131,4 +131,20 @@ return [
     'post_cites' => 'この記事の引用先',
     'post_mentioned_by_n' => ':n 件から言及',
     'post_see_backlinks' => '被リンクを見る ↓',
+
+    // Tweets page (JYU-537)
+    'tweets_intro' => '記事より短く、ツイートより長い。ふと思ったこと、日々の断片、読んだもの。',
+    'tweets_filter_by_tag' => 'タグで絞り込み',
+    'tweets_all' => 'すべて',
+    'tweets_media_only' => '写真・動画ありのみ',
+    'tweets_archive' => 'アーカイブ',
+    'tweets_by_month' => '月別',
+    'tweets_month_format' => 'Y年n月',
+    'tweets_load_older' => '以前のつぶやきを見る',
+    'tweets_empty_filtered' => '条件に合うつぶやきはありません。',
+    'tweets_clear_filters' => '絞り込みを解除',
+    'tweets_expand' => '全文を表示',
+    'tweets_collapse' => '折りたたむ',
+    'tweets_pick_month' => '月を選択',
+    'tweets_all_months' => 'すべての月',
 ];

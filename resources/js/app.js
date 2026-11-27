@@ -570,6 +570,53 @@ window.infiniteScroll = function ({ url, startPage, hasMore, listSelector }) {
 };
 
 /**
+ * Tweets page "load older" (JYU-537). The button is a real link to the next
+ * page (keeps filters), so it works without JS; with JS the next page's items
+ * are appended in place.
+ */
+window.tweetList = function () {
+    return {
+        loading: false,
+        error: false,
+        async loadOlder(button) {
+            if (this.loading || !button.href) return;
+            this.loading = true;
+            this.error = false;
+            try {
+                const url = new URL(button.href);
+                url.searchParams.set('partial', '1');
+                const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' } });
+                if (!res.ok) throw new Error(String(res.status));
+                const tmp = document.createElement('div');
+                tmp.innerHTML = (await res.text()).trim();
+                const page = tmp.firstElementChild;
+                if (!page) return;
+
+                // Don't repeat the month heading when a month spans two pages.
+                const shown = this.$refs.list.querySelectorAll('[data-month]');
+                const lastMonth = shown[shown.length - 1]?.dataset.month;
+                const firstHeading = page.querySelector('[data-month]');
+                if (firstHeading && firstHeading.dataset.month === lastMonth) firstHeading.remove();
+
+                this.$refs.list.firstElementChild.append(...page.childNodes);
+
+                if (page.dataset.hasMore === '1' && page.dataset.nextUrl) {
+                    const next = new URL(page.dataset.nextUrl);
+                    next.searchParams.delete('partial');
+                    button.href = next.toString();
+                } else {
+                    button.remove();
+                }
+            } catch (e) {
+                this.error = true;
+            } finally {
+                this.loading = false;
+            }
+        },
+    };
+};
+
+/**
  * Shared fullscreen image lightbox. A single overlay lives in the public
  * layout; any image can open it via $store.lightbox.show(src, alt).
  */

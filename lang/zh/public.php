@@ -141,4 +141,20 @@ return [
     'post_cites' => '本文引用',
     'post_mentioned_by_n' => '被 :n 篇提及',
     'post_see_backlinks' => '查看反向連結 ↓',
+
+    // Tweets page (JYU-537)
+    'tweets_intro' => '比文章短、比推特長。隨手記下的想法、生活片段與讀到的東西。',
+    'tweets_filter_by_tag' => '依標籤篩選',
+    'tweets_all' => '全部',
+    'tweets_media_only' => '只看有照片或影片的',
+    'tweets_archive' => '封存',
+    'tweets_by_month' => '依月份',
+    'tweets_month_format' => 'Y 年 n 月',
+    'tweets_load_older' => '看更早的碎念',
+    'tweets_empty_filtered' => '沒有符合條件的碎念。',
+    'tweets_clear_filters' => '清除篩選',
+    'tweets_expand' => '展開全文',
+    'tweets_collapse' => '收合',
+    'tweets_pick_month' => '選擇月份',
+    'tweets_all_months' => '所有月份',
 ];

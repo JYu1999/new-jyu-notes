@@ -131,4 +131,20 @@ return [
     'post_cites' => 'This post links to',
     'post_mentioned_by_n' => 'Mentioned by :n',
     'post_see_backlinks' => 'See backlinks ↓',
+
+    // Tweets page (JYU-537)
+    'tweets_intro' => 'Shorter than a post, longer than a tweet. Passing thoughts, bits of life, and things I read.',
+    'tweets_filter_by_tag' => 'Filter by tag',
+    'tweets_all' => 'All',
+    'tweets_media_only' => 'Only with photos or videos',
+    'tweets_archive' => 'Archive',
+    'tweets_by_month' => 'By month',
+    'tweets_month_format' => 'F Y',
+    'tweets_load_older' => 'Load older tweets',
+    'tweets_empty_filtered' => 'No tweets match these filters.',
+    'tweets_clear_filters' => 'Clear filters',
+    'tweets_expand' => 'Read more',
+    'tweets_collapse' => 'Show less',
+    'tweets_pick_month' => 'Choose a month',
+    'tweets_all_months' => 'All months',
 ];
