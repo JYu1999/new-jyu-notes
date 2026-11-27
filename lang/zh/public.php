@@ -2,7 +2,6 @@
 
 return [
     // Home
-    'home_intro' => '長文放在「文章」，隨手的想法放在「碎念」。兩者會互相引用，點進去就能沿著線索讀下去。',
     'home_featured_posts' => '精選文章',
     'home_recent_tweets' => '最近的碎念',
     'home_popular_tags' => '熱門標籤',
@@ -58,8 +57,8 @@ return [
     // Card
     'views' => 'views',
     'min_read' => 'min read',
-    'sensitive_warning' => '敏感內容',
-    'sensitive_reveal' => '點擊顯示',
+    'sensitive_warning' => '這張圖片已模糊處理',
+    'sensitive_reveal' => '點一下移除模糊',
 
     // Auth
     'login_to_admin' => '管理員登入',
@@ -84,10 +83,8 @@ return [
     'n_posts' => ':n 篇',
 
     // Home page (JYU-534)
-    'home_hello' => '嗨，我是 JYu。',
-    'home_headline' => '寫軟體工程、職涯、閱讀，還有生活。',
-    'home_work_cta' => '作品與經歷',
-    'home_role' => '軟體工程師 · Laravel / PostgreSQL / DevOps',
+    'home_hello' => '嗨，我是 JYu',
+    'home_work_cta' => '作品與經歷（施工中👷）',
     'home_topics' => '主題',
     'home_all_tags' => '全部標籤',
     'home_featured' => '精選',

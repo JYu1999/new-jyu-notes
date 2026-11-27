@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'home_intro' => 'Tulisan panjang ada di "Artikel", pikiran singkat di "Catatan". Keduanya saling terhubung, jadi kamu bisa mengikuti alurnya.',
     'home_featured_posts' => 'Artikel Unggulan',
     'home_recent_tweets' => 'Catatan Terbaru',
     'home_popular_tags' => 'Tag Populer',
@@ -50,8 +49,8 @@ return [
 
     'views' => 'dilihat',
     'min_read' => 'mnt baca',
-    'sensitive_warning' => 'Konten sensitif',
-    'sensitive_reveal' => 'Klik untuk melihat',
+    'sensitive_warning' => 'Gambar ini diburamkan',
+    'sensitive_reveal' => 'Ketuk untuk menghapus buram',
 
     'login_to_admin' => 'Masuk Admin',
     'login_email' => 'Email',
@@ -74,10 +73,8 @@ return [
     'n_posts' => ':n artikel',
 
     // Home page (JYU-534)
-    'home_hello' => 'Halo, saya JYu.',
-    'home_headline' => 'Saya menulis tentang rekayasa perangkat lunak, karier, membaca, dan kehidupan.',
-    'home_work_cta' => 'Karya & pengalaman',
-    'home_role' => 'Software engineer · Laravel / PostgreSQL / DevOps',
+    'home_hello' => 'Halo, saya JYu',
+    'home_work_cta' => 'Karya & pengalaman (sedang dibangun 👷)',
     'home_topics' => 'Topik',
     'home_all_tags' => 'Semua tag',
     'home_featured' => 'Pilihan',

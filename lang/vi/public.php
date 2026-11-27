@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'home_intro' => 'Bài dài nằm ở "Bài viết", suy nghĩ ngắn nằm ở "Ghi chú". Chúng liên kết với nhau để bạn đọc tiếp theo mạch.',
     'home_featured_posts' => 'Bài viết nổi bật',
     'home_recent_tweets' => 'Ghi chú gần đây',
     'home_popular_tags' => 'Thẻ phổ biến',
@@ -50,8 +49,8 @@ return [
 
     'views' => 'lượt xem',
     'min_read' => 'phút đọc',
-    'sensitive_warning' => 'Nội dung nhạy cảm',
-    'sensitive_reveal' => 'Nhấn để xem',
+    'sensitive_warning' => 'Ảnh này đã được làm mờ',
+    'sensitive_reveal' => 'Chạm để bỏ làm mờ',
 
     'login_to_admin' => 'Đăng nhập quản trị',
     'login_email' => 'Email',
@@ -74,10 +73,8 @@ return [
     'n_posts' => ':n bài',
 
     // Home page (JYU-534)
-    'home_hello' => 'Xin chào, mình là JYu.',
-    'home_headline' => 'Mình viết về kỹ thuật phần mềm, sự nghiệp, đọc sách và cuộc sống.',
-    'home_work_cta' => 'Dự án & kinh nghiệm',
-    'home_role' => 'Kỹ sư phần mềm · Laravel / PostgreSQL / DevOps',
+    'home_hello' => 'Xin chào, mình là JYu',
+    'home_work_cta' => 'Dự án & kinh nghiệm (đang xây dựng 👷)',
     'home_topics' => 'Chủ đề',
     'home_all_tags' => 'Tất cả thẻ',
     'home_featured' => 'Nổi bật',

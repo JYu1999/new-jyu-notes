@@ -19,6 +19,9 @@ class HomeController extends Controller
 
     public const FEATURED_ON_HOME = 3;
 
+    /** Tweets longer than this (plain-text characters) start collapsed in the timeline. */
+    public const FEED_EXCERPT_CHARS = 500;
+
     public function index(
         HomeRequest $request,
         HomeFeedService $feed,
