@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Tag counts on the home page and Topics page now include tweets as well as posts
 - Admin home: greeting, a quick tweet box (Markdown, @ mentions, paste images, tags, sensitive flag, language, ⌘↵ to publish) and "continue writing" with recent drafts plus an all-drafts page
 - Admin sidebar grouped into Writing / Organize / Site, with post, tweet and page counts
 - External links in tweets show a preview card with the site and page title

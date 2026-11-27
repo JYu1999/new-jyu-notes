@@ -49,36 +49,39 @@ class TagRepository
             ->first();
     }
 
+    /**
+     * Tags used most in this locale. `content_count` = published posts + published tweets.
+     */
     public function popular(string $locale, int $limit = 12): Collection
     {
-        return Tag::query()
-            ->with('translations')
-            ->whereHas('translations', fn ($qq) => $qq->where('locale', $locale))
-            ->withCount(['posts as posts_count' => function ($q) use ($locale) {
-                $q->where('status', 'published')->where('locale', $locale);
-            }])
-            ->orderByDesc('posts_count')
-            ->limit($limit)
-            ->get()
-            ->filter(fn ($t) => $t->posts_count > 0)
+        return $this->withContentCounts($locale)
+            ->filter(fn ($t) => $t->content_count > 0)
+            ->take($limit)
             ->values();
     }
 
     /**
-     * Every tag translated into this locale, with the number of published posts
-     * in this locale, most-used first. Tags without posts are kept (they may
-     * still have tweets) so the topics page lists the full vocabulary.
+     * Every tag translated into this locale with `content_count` (published posts +
+     * published tweets in this locale), most used first. Unused tags are kept so
+     * the topics page lists the full vocabulary.
      */
     public function allWithPostCounts(string $locale): Collection
     {
+        return $this->withContentCounts($locale);
+    }
+
+    private function withContentCounts(string $locale): Collection
+    {
+        $published = fn ($q) => $q->where('status', 'published')->where('locale', $locale);
+
         return Tag::query()
             ->with('translations')
             ->whereHas('translations', fn ($qq) => $qq->where('locale', $locale))
-            ->withCount(['posts as posts_count' => function ($q) use ($locale) {
-                $q->where('status', 'published')->where('locale', $locale);
-            }])
-            ->orderByDesc('posts_count')
-            ->get();
+            ->withCount(['posts as posts_count' => $published, 'tweets as tweets_count' => $published])
+            ->get()
+            ->each(fn ($t) => $t->content_count = $t->posts_count + $t->tweets_count)
+            ->sortByDesc('content_count')
+            ->values();
     }
 
     /** Tags used by published tweets in this locale, most used first (tweets page filter). */

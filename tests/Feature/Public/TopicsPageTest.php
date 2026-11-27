@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\Post;
 use App\Models\PostGroup;
 use App\Models\Tag;
+use App\Models\Tweet;
+use App\Models\TweetGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -95,5 +97,37 @@ class TopicsPageTest extends TestCase
     public function test_translated(): void
     {
         $this->get('/ja/topics')->assertOk()->assertSee('トピック')->assertSee('カテゴリやタグはまだありません。');
+    }
+
+    public function test_tag_count_includes_posts_and_tweets(): void
+    {
+        $tag = Tag::create([]);
+        $tag->translations()->create(['locale' => 'zh', 'name' => '生活', 'slug' => 'life']);
+        $this->makePost()->tags()->attach($tag);
+        foreach (['published', 'published', 'draft'] as $status) {
+            Tweet::create(['tweet_group_id' => TweetGroup::create([])->id, 'locale' => 'zh', 'body' => 't', 'status' => $status])
+                ->tags()->attach($tag);
+        }
+
+        $html = $this->get('/zh/topics')->getContent();
+
+        // 1 post + 2 published tweets (the draft tweet doesn't count).
+        $this->assertMatchesRegularExpression('/#生活<span class="ui-chip-count">3<\/span>/u', $html);
+    }
+
+    public function test_home_tag_counts_include_tweets(): void
+    {
+        $tag = Tag::create([]);
+        $tag->translations()->create(['locale' => 'zh', 'name' => '碎碎念', 'slug' => 'murmur']);
+        foreach (range(1, 2) as $_) {
+            Tweet::create(['tweet_group_id' => TweetGroup::create([])->id, 'locale' => 'zh', 'body' => 't', 'status' => 'published'])
+                ->tags()->attach($tag);
+        }
+
+        $html = $this->get('/zh')->getContent();
+
+        // Tag used only by tweets still appears with its count, in topics and in the sidebar.
+        $this->assertMatchesRegularExpression('/碎碎念\s*<\/span>\s*<span class="font-mono text-xs text-ink-3">2<\/span>/u', $html);
+        $this->assertMatchesRegularExpression('/#碎碎念<span class="ui-chip-count">2<\/span>/u', $html);
     }
 }

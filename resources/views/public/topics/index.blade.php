@@ -38,7 +38,7 @@
             <x-ui.section-heading id="topics-tags" class="mb-4">{{ __('public.topics_tags') }}</x-ui.section-heading>
             <div class="flex flex-wrap gap-2">
                 @foreach($tags as $tag)
-                    <x-ui.tag :tag="$tag" :count="$tag->posts_count" class="min-h-11" />
+                    <x-ui.tag :tag="$tag" :count="$tag->content_count" class="min-h-11" />
                 @endforeach
             </div>
         </section>
