@@ -64,4 +64,12 @@ return [
     'loading_more' => 'もっと読み込み中…',
     'toc' => '目次',
     'no_more' => '— これ以上ありません —',
+
+    // Topics overview (JYU-533 / JYU-539)
+    'topics_title' => 'トピック',
+    'topics_intro' => 'カテゴリ・シリーズ・タグからすべての記事を探せます。',
+    'topics_categories' => 'カテゴリとシリーズ',
+    'topics_tags' => 'タグ',
+    'topics_empty' => 'カテゴリやタグはまだありません。',
+    'n_posts' => ':n 件',
 ];

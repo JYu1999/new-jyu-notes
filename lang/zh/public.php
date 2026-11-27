@@ -74,4 +74,12 @@ return [
     'loading_more' => '載入更多…',
     'toc' => '目錄',
     'no_more' => '— 沒有更多了 —',
+
+    // Topics overview (JYU-533 / JYU-539)
+    'topics_title' => '主題',
+    'topics_intro' => '依分類、系列與標籤瀏覽所有文章。',
+    'topics_categories' => '分類與系列',
+    'topics_tags' => '標籤',
+    'topics_empty' => '目前還沒有分類或標籤。',
+    'n_posts' => ':n 篇',
 ];

@@ -271,6 +271,8 @@
 .scrollbar-thin::-webkit-scrollbar { height: 6px; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-line-2); border-radius: 4px; }
 .scrollbar-thin { scrollbar-width: thin; }
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
 .prose-blog video {
     max-width: 100%;
     border-radius: 6px;

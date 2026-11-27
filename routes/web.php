@@ -150,9 +150,11 @@ Route::prefix('{locale}')
 
         Route::get('search', [Public\SearchController::class, 'index'])->name('search');
 
+        Route::get('topics', [Public\TopicController::class, 'index'])->name('topics');
+
         // Static page catch-all (must be LAST so it doesn't shadow other routes above).
         // Matches /{locale}/{slug} where slug is not one of the reserved names above.
         Route::get('{slug}', [Public\PageController::class, 'show'])
-            ->where('slug', '(?!posts$|tweets$|tags$|categories$|search$)[A-Za-z0-9_\-]+')
+            ->where('slug', '(?!posts$|tweets$|tags$|categories$|search$|topics$)[A-Za-z0-9_\-]+')
             ->name('pages.show');
     });
