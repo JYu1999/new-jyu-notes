@@ -107,6 +107,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('pages/{id}/restore', [Admin\PageController::class, 'restore'])->name('pages.restore');
         Route::post('pages/{page}/translation', [Admin\PageController::class, 'createTranslation'])->name('pages.create-translation');
 
+        // AI connections (JYU-554).
+        Route::get('agents', [Admin\AgentController::class, 'index'])->name('agents.index');
+
         // Version history of posts, tweets and pages (JYU-553).
         Route::get('{type}/{id}/revisions', [Admin\RevisionController::class, 'index'])
             ->whereIn('type', ['posts', 'tweets', 'pages'])->whereNumber('id')->name('revisions.index');
