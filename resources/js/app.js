@@ -885,10 +885,10 @@ window.postEditor = function ({ postId, status, locale, autosaveUrl, previewUrl 
             const cjk = (text.match(CJK) || []).length;
             const words = (text.replace(CJK, ' ').match(/[A-Za-z0-9À-ɏḀ-ỿ]+(?:['’-][A-Za-z0-9À-ɏ]+)*/g) || []).length;
             const [kind, speed] = READING[this.currentLocale()] ?? READING.zh;
-            const units = kind === 'char' ? cjk + words : words + cjk;
+            // Each CJK character and each Latin word counts as one unit.
+            const units = cjk + words;
             const minutes = Math.max(1, Math.ceil(units / speed));
-            const unitLabel = kind === 'char' ? '字' : '字';
-            this.statsLabel = `${(cjk + words).toLocaleString()} ${unitLabel} · 約 ${minutes} 分鐘${kind === 'char' ? '（中文以字數計）' : ''}`;
+            this.statsLabel = `${units.toLocaleString()} 字 · 約 ${minutes} 分鐘${kind === 'char' ? '（中文以字數計）' : ''}`;
             this.refCount = new Set([...body.matchAll(INTERNAL_LINK)].map((m) => m[1])).size;
         },
         currentLocale() {
