@@ -1,4 +1,6 @@
 ## 2026-11-27
+- Redesigned home page: intro, main topics, featured posts that adapt to how many are featured, a mixed timeline of posts and tweets with filters and "load more", plus series, tags and latest site update
+- Posts list can be filtered to featured posts
 - New site menu (Posts, Tweets, Topics, About) on every page, with a scrollable menu on phones, a header search box and ⌘K / Ctrl+K shortcut
 - New Topics page listing every category, series and tag
 - Dark mode no longer flashes a light page on load, and the site follows your system theme until you pick one

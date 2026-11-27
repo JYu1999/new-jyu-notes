@@ -39,7 +39,9 @@ class SharedUiOnPagesTest extends TestCase
 
     public function test_home_uses_shared_headings_cards_and_tag_chips(): void
     {
+        // Two featured posts → the second one is rendered as a shared card (JYU-534 layout).
         $this->publishPost('a', '第一篇', ['is_featured' => true]);
+        $this->publishPost('b', '第二篇', ['is_featured' => true]);
         app(TweetService::class)->create(['locale' => 'zh', 'body' => '一則碎念', 'status' => 'published', 'tag_ids' => [$this->tag->id]]);
 
         $html = $this->get('/zh')->assertOk()->getContent();
@@ -50,11 +52,13 @@ class SharedUiOnPagesTest extends TestCase
         $this->assertStringContainsString('#技術', $html);
     }
 
-    public function test_home_empty_state_uses_card(): void
+    public function test_home_without_content_shows_empty_feed_message_not_an_empty_featured_box(): void
     {
+        // JYU-534: with no featured posts the section is hidden instead of an empty card.
         $html = $this->get('/zh')->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression('/class="[^"]*ui-card[^"]*"[^>]*>\s*'.preg_quote(__('public.home_no_featured', [], 'zh'), '/').'/u', $html);
+        $this->assertStringNotContainsString(__('public.home_no_featured', [], 'zh'), $html);
+        $this->assertStringContainsString(__('public.feed_empty', [], 'zh'), $html);
     }
 
     public function test_post_show_uses_chips_and_cards_for_series_navigation(): void

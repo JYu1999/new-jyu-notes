@@ -2,7 +2,7 @@
 
 return [
     // Home
-    'home_intro' => '紀錄 JYu 的軟體工程、生活與閱讀思考。',
+    'home_intro' => '長文放在「文章」，隨手的想法放在「碎念」。兩者會互相引用，點進去就能沿著線索讀下去。',
     'home_featured_posts' => '精選文章',
     'home_recent_tweets' => '最近的碎念',
     'home_popular_tags' => '熱門標籤',
@@ -82,4 +82,33 @@ return [
     'topics_tags' => '標籤',
     'topics_empty' => '目前還沒有分類或標籤。',
     'n_posts' => ':n 篇',
+
+    // Home page (JYU-534)
+    'home_hello' => '嗨，我是 JYu。',
+    'home_headline' => '寫軟體工程、職涯、閱讀，還有生活。',
+    'home_work_cta' => '作品與經歷',
+    'home_role' => '軟體工程師 · Laravel / PostgreSQL / DevOps',
+    'home_topics' => '主題',
+    'home_all_tags' => '全部標籤',
+    'home_featured' => '精選',
+    'home_more_featured' => '還有 :n 篇精選 →',
+    'home_latest' => '最新',
+    'feed_filter' => '篩選類型',
+    'feed_all' => '全部',
+    'feed_posts' => '文章',
+    'feed_tweets' => '碎念',
+    'kind_post' => '文章',
+    'kind_tweet' => '碎念',
+    'load_more' => '載入更多',
+    'feed_empty' => '這裡還沒有內容。',
+    'feed_error' => '載入失敗，請再試一次。',
+    'home_series' => '系列',
+    'home_tags' => '標籤',
+    'home_site_updates' => '網站更新',
+    'home_changelog_link' => 'Changelog →',
+    'minutes' => ':n 分鐘',
+    'n_photos' => ':n 張照片',
+    'feed_video' => '播放影片',
+    'featured_filter' => '只看精選',
+    'clear_filter' => '清除篩選',
 ];

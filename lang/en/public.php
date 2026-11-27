@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'home_intro' => "Notes on JYu's software engineering, life, and reading thoughts.",
+    'home_intro' => 'Long-form writing lives in Posts, quick thoughts in Tweets. They link to each other, so you can follow the thread.',
     'home_featured_posts' => 'Featured Posts',
     'home_recent_tweets' => 'Recent Tweets',
     'home_popular_tags' => 'Popular Tags',
@@ -72,4 +72,33 @@ return [
     'topics_tags' => 'Tags',
     'topics_empty' => 'No categories or tags yet.',
     'n_posts' => ':n posts',
+
+    // Home page (JYU-534)
+    'home_hello' => 'Hi, I\'m JYu.',
+    'home_headline' => 'I write about software engineering, careers, reading, and life.',
+    'home_work_cta' => 'Work & experience',
+    'home_role' => 'Software engineer · Laravel / PostgreSQL / DevOps',
+    'home_topics' => 'Topics',
+    'home_all_tags' => 'All tags',
+    'home_featured' => 'Featured',
+    'home_more_featured' => ':n more featured →',
+    'home_latest' => 'Latest',
+    'feed_filter' => 'Filter by type',
+    'feed_all' => 'All',
+    'feed_posts' => 'Posts',
+    'feed_tweets' => 'Tweets',
+    'kind_post' => 'Post',
+    'kind_tweet' => 'Tweet',
+    'load_more' => 'Load more',
+    'feed_empty' => 'Nothing here yet.',
+    'feed_error' => 'Couldn\'t load more. Please try again.',
+    'home_series' => 'Series',
+    'home_tags' => 'Tags',
+    'home_site_updates' => 'Site updates',
+    'home_changelog_link' => 'Changelog →',
+    'minutes' => ':n min',
+    'n_photos' => ':n photo(s)',
+    'feed_video' => 'Play video',
+    'featured_filter' => 'Featured only',
+    'clear_filter' => 'Clear filter',
 ];

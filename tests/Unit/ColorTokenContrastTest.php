@@ -105,4 +105,16 @@ class ColorTokenContrastTest extends TestCase
             }
         }
     }
+
+    #[DataProvider('themes')]
+    public function test_inverse_text_tokens_reach_aa_contrast_on_ink(string $theme): void
+    {
+        $t = self::tokens($theme);
+
+        foreach (['paper', 'inverse-ink-2', 'inverse-ink-3', 'inverse-accent'] as $fg) {
+            $this->assertArrayHasKey($fg, $t, "[{$theme}] missing --color-{$fg}");
+            $ratio = self::contrast($t[$fg], $t['ink']);
+            $this->assertGreaterThanOrEqual(4.5, $ratio, sprintf('[%s] --color-%s on --color-ink is only %.2f:1', $theme, $fg, $ratio));
+        }
+    }
 }

@@ -153,6 +153,12 @@ class Post extends Model
         return $q->where('is_featured', true);
     }
 
+    /** Order of featured posts on the home page and the featured list. */
+    public function scopeOrderForFeatured(Builder $q): Builder
+    {
+        return $q->orderByDesc('published_at')->orderByDesc('id');
+    }
+
     public function scopeSortBy(Builder $q, string $sort): Builder
     {
         return match ($sort) {

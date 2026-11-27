@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'home_intro' => 'JYuのソフトウェアエンジニアリング、生活、読書についての記録。',
+    'home_intro' => '長い文章は「記事」、ふとした考えは「つぶやき」に。互いにリンクしているので、たどりながら読めます。',
     'home_featured_posts' => '注目の記事',
     'home_recent_tweets' => '最近のつぶやき',
     'home_popular_tags' => '人気のタグ',
@@ -72,4 +72,33 @@ return [
     'topics_tags' => 'タグ',
     'topics_empty' => 'カテゴリやタグはまだありません。',
     'n_posts' => ':n 件',
+
+    // Home page (JYU-534)
+    'home_hello' => 'こんにちは、JYu です。',
+    'home_headline' => 'ソフトウェア開発、キャリア、読書、そして日々のことを書いています。',
+    'home_work_cta' => '実績と経歴',
+    'home_role' => 'ソフトウェアエンジニア · Laravel / PostgreSQL / DevOps',
+    'home_topics' => 'トピック',
+    'home_all_tags' => 'すべてのタグ',
+    'home_featured' => '注目記事',
+    'home_more_featured' => '注目記事をあと :n 件 →',
+    'home_latest' => '新着',
+    'feed_filter' => '種類で絞り込み',
+    'feed_all' => 'すべて',
+    'feed_posts' => '記事',
+    'feed_tweets' => 'つぶやき',
+    'kind_post' => '記事',
+    'kind_tweet' => 'つぶやき',
+    'load_more' => 'もっと読み込む',
+    'feed_empty' => 'まだ何もありません。',
+    'feed_error' => '読み込めませんでした。もう一度お試しください。',
+    'home_series' => 'シリーズ',
+    'home_tags' => 'タグ',
+    'home_site_updates' => 'サイト更新',
+    'home_changelog_link' => 'Changelog →',
+    'minutes' => ':n 分',
+    'n_photos' => '写真 :n 枚',
+    'feed_video' => '動画を再生',
+    'featured_filter' => '注目記事のみ',
+    'clear_filter' => '絞り込みを解除',
 ];

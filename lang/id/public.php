@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'home_intro' => 'Catatan JYu tentang rekayasa perangkat lunak, kehidupan, dan bacaan.',
+    'home_intro' => 'Tulisan panjang ada di "Artikel", pikiran singkat di "Catatan". Keduanya saling terhubung, jadi kamu bisa mengikuti alurnya.',
     'home_featured_posts' => 'Artikel Unggulan',
     'home_recent_tweets' => 'Catatan Terbaru',
     'home_popular_tags' => 'Tag Populer',
@@ -72,4 +72,33 @@ return [
     'topics_tags' => 'Tag',
     'topics_empty' => 'Belum ada kategori atau tag.',
     'n_posts' => ':n artikel',
+
+    // Home page (JYU-534)
+    'home_hello' => 'Halo, saya JYu.',
+    'home_headline' => 'Saya menulis tentang rekayasa perangkat lunak, karier, membaca, dan kehidupan.',
+    'home_work_cta' => 'Karya & pengalaman',
+    'home_role' => 'Software engineer · Laravel / PostgreSQL / DevOps',
+    'home_topics' => 'Topik',
+    'home_all_tags' => 'Semua tag',
+    'home_featured' => 'Pilihan',
+    'home_more_featured' => ':n artikel pilihan lagi →',
+    'home_latest' => 'Terbaru',
+    'feed_filter' => 'Filter jenis',
+    'feed_all' => 'Semua',
+    'feed_posts' => 'Artikel',
+    'feed_tweets' => 'Catatan',
+    'kind_post' => 'Artikel',
+    'kind_tweet' => 'Catatan',
+    'load_more' => 'Muat lebih banyak',
+    'feed_empty' => 'Belum ada konten.',
+    'feed_error' => 'Gagal memuat. Silakan coba lagi.',
+    'home_series' => 'Seri',
+    'home_tags' => 'Tag',
+    'home_site_updates' => 'Pembaruan situs',
+    'home_changelog_link' => 'Changelog →',
+    'minutes' => ':n menit',
+    'n_photos' => ':n foto',
+    'feed_video' => 'Putar video',
+    'featured_filter' => 'Hanya pilihan',
+    'clear_filter' => 'Hapus filter',
 ];

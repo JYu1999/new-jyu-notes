@@ -18,6 +18,7 @@ class PostListRequest extends FormRequest
             'tag' => 'nullable|integer|exists:tags,id',
             'category' => 'nullable|integer|exists:categories,id',
             'page' => 'nullable|integer|min:1',
+            'featured' => 'nullable|boolean',
         ];
     }
 }

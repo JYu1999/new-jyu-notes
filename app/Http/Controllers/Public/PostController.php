@@ -28,12 +28,14 @@ class PostController extends Controller
                 sort: $params['sort'] ?? 'published',
                 tag: $params['tag'] ?? null,
                 category: $params['category'] ?? null,
+                featured: (bool) ($params['featured'] ?? false),
             ),
             'categories' => $categories->all($locale),
             'tags' => $tags->all($locale),
             'sort' => $params['sort'] ?? 'published',
             'selectedTag' => $params['tag'] ?? null,
             'selectedCategory' => $params['category'] ?? null,
+            'featuredOnly' => (bool) ($params['featured'] ?? false),
         ]);
     }
 
