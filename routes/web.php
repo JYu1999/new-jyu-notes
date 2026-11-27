@@ -51,6 +51,7 @@ Route::middleware(['auth', 'role:admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('drafts', [Admin\DashboardController::class, 'drafts'])->name('drafts.index');
 
         // Posts
         Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');

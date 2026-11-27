@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Admin home: greeting, a quick tweet box (Markdown, @ mentions, paste images, tags, sensitive flag, language, ⌘↵ to publish) and "continue writing" with recent drafts plus an all-drafts page
 - Admin sidebar grouped into Writing / Organize / Site, with post, tweet and page counts
 - External links in tweets show a preview card with the site and page title
 - Topics page shows each category's description

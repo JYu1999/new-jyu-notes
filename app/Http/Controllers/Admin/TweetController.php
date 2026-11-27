@@ -54,7 +54,12 @@ class TweetController extends Controller
 
     public function store(StoreRequest $request, TweetService $service): RedirectResponse
     {
-        $tweet = $service->create($request->validated());
+        $tweet = $service->create($request->safe()->except('redirect_to'));
+
+        if ($request->validated('redirect_to') === 'dashboard') {
+            return redirect()->route('admin.dashboard')
+                ->with('success', $tweet->status === 'published' ? '已發布' : '已存草稿');
+        }
 
         return redirect()->route('admin.tweets.edit', $tweet)->with('success', '已建立');
     }
