@@ -21,6 +21,11 @@ class AiActivity extends Model
         return $this->morphTo()->withTrashed();
     }
 
+    public function actionRequest(): BelongsTo
+    {
+        return $this->belongsTo(AiActionRequest::class, 'ai_action_request_id');
+    }
+
     public function revision(): BelongsTo
     {
         return $this->belongsTo(ContentRevision::class, 'content_revision_id');

@@ -110,6 +110,9 @@ Route::middleware(['auth', 'role:admin'])
         // AI connections (JYU-554).
         Route::get('agents', [Admin\AgentController::class, 'index'])->name('agents.index');
         Route::get('agents/activity', [Admin\AgentController::class, 'activity'])->name('agents.activity');
+        Route::get('agents/requests/{actionRequest}', [Admin\AgentController::class, 'showRequest'])->name('agents.requests.show');
+        Route::post('agents/requests/{actionRequest}/approve', [Admin\AgentController::class, 'approve'])->name('agents.requests.approve');
+        Route::post('agents/requests/{actionRequest}/reject', [Admin\AgentController::class, 'reject'])->name('agents.requests.reject');
         Route::put('agents/policy', [Admin\AgentController::class, 'updatePolicy'])->name('agents.policy');
         Route::put('agents/connections/{connection}/policy', [Admin\AgentController::class, 'updateConnectionPolicy'])->name('agents.connections.policy');
         Route::delete('agents/connections/{connection}', [Admin\AgentController::class, 'revoke'])->name('agents.connections.revoke');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\TagRepository;
+use App\Services\AiApprovalService;
 use App\Services\DraftService;
 use App\Services\MediaUsageService;
 use App\Services\TranslationStatusService;
@@ -26,7 +27,8 @@ class DashboardController extends Controller
             'draftCount' => $drafts->count(),
             'tags' => $tags->all(),
             'views' => $views->summary(),
-            'attention' => array_values(array_filter([...$translations->attentionItems(), $media->attentionItem()])),
+            // AI requests waiting for approval come first (JYU-556).
+            'attention' => array_values(array_filter([...app(AiApprovalService::class)->attentionItems(), ...$translations->attentionItems(), $media->attentionItem()])),
         ]);
     }
 
