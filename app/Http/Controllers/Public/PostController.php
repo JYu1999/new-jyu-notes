@@ -8,6 +8,7 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\PostRepository;
 use App\Repositories\TagRepository;
 use App\Services\PostService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -45,9 +46,15 @@ class PostController extends Controller
         PostRepository $posts,
         PostService $service,
         Request $request,
-    ): View {
+    ): View|RedirectResponse {
         $post = $posts->findPublishedBySlug($locale, $slug);
-        abort_if(! $post, 404);
+        if (! $post) {
+            // The slug changed after publishing: send old links to the new URL (JYU-550).
+            $current = $posts->redirectedSlug($locale, $slug);
+            abort_if(! $current, 404);
+
+            return redirect()->route('public.posts.show', [$locale, $current], 301);
+        }
 
         // Stash the post on the request so TrackPostView middleware can record a view post-response.
         $request->attributes->set('tracked_post', $post);
