@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Topics page shows each category's description
 - Press ⌘K / Ctrl+K (or tap search) on any page to search posts and tweets as you type, with highlighted matches, type tabs, keyboard navigation, recent searches and an "all languages" option
 - Fix home "Latest" tabs showing two tabs as selected after switching
 - Home timeline renders tweets with full formatting (Markdown, YouTube embeds, blurred-image warning with tap to reveal), shows post cover images, expands long tweets, and loads more automatically as you scroll
