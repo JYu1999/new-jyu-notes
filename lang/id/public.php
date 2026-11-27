@@ -64,4 +64,12 @@ return [
     'loading_more' => 'Memuat lainnya…',
     'toc' => 'Daftar isi',
     'no_more' => '— Tidak ada lagi —',
+
+    // Topics overview (JYU-533 / JYU-539)
+    'topics_title' => 'Topik',
+    'topics_intro' => 'Jelajahi semua artikel berdasarkan kategori, seri, dan tag.',
+    'topics_categories' => 'Kategori & seri',
+    'topics_tags' => 'Tag',
+    'topics_empty' => 'Belum ada kategori atau tag.',
+    'n_posts' => ':n artikel',
 ];

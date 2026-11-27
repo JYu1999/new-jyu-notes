@@ -63,4 +63,21 @@ class TagRepository
             ->filter(fn ($t) => $t->posts_count > 0)
             ->values();
     }
+
+    /**
+     * Every tag translated into this locale, with the number of published posts
+     * in this locale, most-used first. Tags without posts are kept (they may
+     * still have tweets) so the topics page lists the full vocabulary.
+     */
+    public function allWithPostCounts(string $locale): Collection
+    {
+        return Tag::query()
+            ->with('translations')
+            ->whereHas('translations', fn ($qq) => $qq->where('locale', $locale))
+            ->withCount(['posts as posts_count' => function ($q) use ($locale) {
+                $q->where('status', 'published')->where('locale', $locale);
+            }])
+            ->orderByDesc('posts_count')
+            ->get();
+    }
 }

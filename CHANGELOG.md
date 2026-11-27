@@ -1,4 +1,6 @@
 ## 2026-11-27
+- New site menu (Posts, Tweets, Topics, About) on every page, with a scrollable menu on phones, a header search box and ⌘K / Ctrl+K shortcut
+- New Topics page listing every category, series and tag
 - Dark mode no longer flashes a light page on load, and the site follows your system theme until you pick one
 - Higher-contrast colors for dates and secondary text in light and dark mode
 - Tags, section headings, buttons and cards now share one consistent style across public pages

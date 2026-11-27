@@ -64,4 +64,12 @@ return [
     'loading_more' => 'Đang tải thêm…',
     'toc' => 'Mục lục',
     'no_more' => '— Hết rồi —',
+
+    // Topics overview (JYU-533 / JYU-539)
+    'topics_title' => 'Chủ đề',
+    'topics_intro' => 'Duyệt mọi bài viết theo danh mục, loạt bài và thẻ.',
+    'topics_categories' => 'Danh mục & loạt bài',
+    'topics_tags' => 'Thẻ',
+    'topics_empty' => 'Chưa có danh mục hay thẻ nào.',
+    'n_posts' => ':n bài',
 ];

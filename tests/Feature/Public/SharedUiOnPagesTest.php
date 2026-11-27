@@ -96,6 +96,6 @@ class SharedUiOnPagesTest extends TestCase
     {
         $html = $this->get('/zh')->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression('/<button [^>]*class="[^"]*ui-btn-icon[^"]*"[^>]*aria-label="Toggle theme"|<button [^>]*aria-label="Toggle theme"[^>]*class="[^"]*ui-btn-icon/', $html);
+        $this->assertMatchesRegularExpression('/<button [^>]*class="[^"]*ui-btn-icon[^"]*"[^>]*aria-label="切換深色模式"|<button [^>]*aria-label="切換深色模式"[^>]*class="[^"]*ui-btn-icon/', $html);
     }
 }

@@ -64,4 +64,12 @@ return [
     'loading_more' => 'Loading more…',
     'toc' => 'On this page',
     'no_more' => '— No more —',
+
+    // Topics overview (JYU-533 / JYU-539)
+    'topics_title' => 'Topics',
+    'topics_intro' => 'Browse every post by category, series and tag.',
+    'topics_categories' => 'Categories & series',
+    'topics_tags' => 'Tags',
+    'topics_empty' => 'No categories or tags yet.',
+    'n_posts' => ':n posts',
 ];

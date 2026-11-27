@@ -17,6 +17,25 @@ window.toggleTheme = function () {
     document.cookie = `theme=${next}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
 };
 
+// ⌘K / Ctrl+K opens search from any page (JYU-533). The header link carries
+// [data-search-trigger]; JYU-538 can intercept the same event for an in-page panel.
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+document.addEventListener('DOMContentLoaded', () => {
+    if (!isMac) {
+        document.querySelectorAll('[data-shortcut-label]').forEach((el) => { el.textContent = 'Ctrl K'; });
+    }
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key?.toLowerCase() !== 'k' || !(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
+    const trigger = document.querySelector('[data-search-trigger]');
+    if (!trigger) return;
+    e.preventDefault();
+    const evt = new CustomEvent('open-search', { cancelable: true });
+    if (window.dispatchEvent(evt)) {
+        window.location.href = trigger.href;
+    }
+});
+
 /**
  * AJAX live filter: posts a form's serialized fields to a URL + ?partial=1,
  * replaces the target element's innerHTML with the response, and updates
