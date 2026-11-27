@@ -3,25 +3,34 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Post;
-use App\Models\Tweet;
-use App\Repositories\PostRepository;
-use App\Repositories\TweetRepository;
+use App\Repositories\TagRepository;
+use App\Services\DraftService;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(PostRepository $posts, TweetRepository $tweets): View
+    public function index(DraftService $drafts, TagRepository $tags): View
     {
         return view('admin.dashboard', [
-            'stats' => [
-                'posts_published' => $posts->countByStatus(Post::STATUS_PUBLISHED),
-                'posts_draft' => $posts->countByStatus(Post::STATUS_DRAFT),
-                'tweets_published' => $tweets->countByStatus(Tweet::STATUS_PUBLISHED),
-                'tweets_draft' => $tweets->countByStatus(Tweet::STATUS_DRAFT),
-            ],
-            'recentPosts' => $posts->recentForAdmin(5),
-            'recentTweets' => $tweets->recentForAdmin(5),
+            'greeting' => self::greeting(Carbon::now(config('app.display_timezone'))),
+            'drafts' => $drafts->recent(3),
+            'draftCount' => $drafts->count(),
+            'tags' => $tags->all(),
         ]);
+    }
+
+    public function drafts(DraftService $drafts): View
+    {
+        return view('admin.drafts', ['drafts' => $drafts->recent()]);
+    }
+
+    public static function greeting(Carbon $now): string
+    {
+        return match (true) {
+            $now->hour >= 5 && $now->hour < 11 => '早安',
+            $now->hour >= 11 && $now->hour < 18 => '午安',
+            default => '晚上好',
+        };
     }
 }
