@@ -19,7 +19,7 @@
     @if($isLong) x-data="{ expanded: false }" @endif
     class="bg-card border-l-2 border-accent/40 pl-4 pr-3 py-3 relative overflow-hidden">
 
-    <div class="text-[10px] uppercase tracking-widest text-ink-3 font-mono mb-1.5">
+    <div class="text-xs text-ink-3 font-mono mb-1.5">
         <a href="{{ route('public.tweets.show', [app()->getLocale(), $tweet->id]) }}"
             class="hover:text-accent"
             @if(! $preview) @click.stop @endif>
@@ -73,17 +73,9 @@
     @endif
 
     @if($tweet->tags->isNotEmpty())
-        @php $loc = app()->getLocale(); @endphp
         <div class="mt-3 flex flex-wrap gap-1.5">
             @foreach($tweet->tags as $tag)
-                @php $tt = $tag->translations->firstWhere('locale', $loc); @endphp
-                @if($tt)
-                    <a href="{{ route('public.tags.show', [$loc, $tt->slug]) }}"
-                        class="text-[10px] font-mono px-2 py-0.5 rounded {{ $tag->color ? 'tag-chip' : 'bg-paper-2 text-ink-3 hover:text-accent' }}"
-                        @if($tag->color) style="--tag-color: {{ $tag->color }}" @endif>
-                        #{{ $tt->name }}
-                    </a>
-                @endif
+                <x-ui.tag :tag="$tag" size="sm" />
             @endforeach
         </div>
     @endif

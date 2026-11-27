@@ -45,12 +45,10 @@
                 $localeLabels = ['zh' => '繁體中文', 'en' => 'English', 'ja' => '日本語', 'vi' => 'Tiếng Việt', 'id' => 'Bahasa Indonesia'];
             @endphp
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
                 {{-- Language switcher --}}
                 <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-9 h-9 rounded-full border border-line hover:border-accent flex items-center justify-center text-ink-2 hover:text-accent"
-                        aria-label="Switch language">
+                    <x-ui.button icon @click="open = !open" aria-label="Switch language">
                         {{-- globe icon --}}
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="9"/>
@@ -58,7 +56,7 @@
                             <path d="M12 3a14 14 0 0 1 0 18"/>
                             <path d="M12 3a14 14 0 0 0 0 18"/>
                         </svg>
-                    </button>
+                    </x-ui.button>
                     <div x-show="open" @click.outside="open = false" x-cloak
                         class="absolute right-0 mt-2 w-40 rounded-md border border-line bg-card shadow-md text-sm overflow-hidden z-40">
                         @foreach($localeLabels as $code => $label)
@@ -77,10 +75,9 @@
                 </div>
 
                 {{-- Theme toggle (icon flips based on current theme) --}}
-                <button
+                <x-ui.button icon
                     x-data="{ dark: document.documentElement.getAttribute('data-theme') === 'dark' }"
                     @click="window.toggleTheme(); dark = !dark"
-                    class="w-9 h-9 rounded-full border border-line hover:border-accent flex items-center justify-center text-ink-2 hover:text-accent"
                     aria-label="Toggle theme">
                     {{-- Sun when in dark mode (click to go light) --}}
                     <svg x-show="dark" x-cloak width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -91,7 +88,7 @@
                     <svg x-show="!dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                     </svg>
-                </button>
+                </x-ui.button>
             </div>
         </div>
     </header>
