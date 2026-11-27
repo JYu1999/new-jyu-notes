@@ -127,7 +127,7 @@
 
                 <label class="flex items-center gap-2 text-sm cursor-pointer">
                     <input type="checkbox" name="is_featured" value="1" {{ old('is_featured', $post->is_featured) ? 'checked' : '' }}>
-                    <span>顯示在首頁精選</span>
+                    <span>設為精選 <span class="text-xs text-ink-3">（新精選排在最後，可在「文章 › 精選」調整順序）</span></span>
                 </label>
 
                 <div x-data="coverUpload({ initial: @js($post->cover_image_path) })">

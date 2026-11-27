@@ -57,6 +57,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
         Route::get('posts/create', [Admin\PostController::class, 'create'])->name('posts.create');
         Route::post('posts/bulk', [Admin\PostController::class, 'bulk'])->name('posts.bulk');
+        Route::post('posts/featured-order', [Admin\PostController::class, 'featuredOrder'])->name('posts.featured-order');
         Route::get('mentions/search', [Admin\MentionController::class, 'search'])->name('mentions.search');
         Route::post('posts', [Admin\PostController::class, 'store'])->name('posts.store');
         Route::get('posts/{post}/edit', [Admin\PostController::class, 'edit'])->name('posts.edit');

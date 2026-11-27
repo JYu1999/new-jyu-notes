@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Post\BulkRequest;
 use App\Http\Requests\Admin\Post\CreateTranslationRequest;
+use App\Http\Requests\Admin\Post\FeaturedOrderRequest;
 use App\Http\Requests\Admin\Post\IndexRequest;
 use App\Http\Requests\Admin\Post\StoreRequest;
 use App\Http\Requests\Admin\Post\UpdateRequest;
@@ -13,7 +14,9 @@ use App\Models\Post;
 use App\Repositories\AdminPostListRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\TagRepository;
+use App\Services\FeaturedOrderService;
 use App\Services\PostService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -26,6 +29,18 @@ class PostController extends Controller
         TagRepository $tags,
     ): View {
         $filters = $request->filters();
+
+        // "精選" tab: the ordered featured list (JYU-547).
+        if ($filters['status'] === 'featured') {
+            return view('admin.posts.index', [
+                'featuredList' => app(FeaturedOrderService::class)->articles(),
+                'counts' => $list->counts(),
+                'filters' => $filters,
+                'categories' => $categories->all(),
+                'tags' => $tags->all(),
+            ]);
+        }
+
         $posts = $list->paginate($filters);
 
         $data = [
@@ -126,5 +141,13 @@ class PostController extends Controller
         $message = $service->bulk($request->validated('action'), $posts, $request->validated('tag_id'));
 
         return back()->with('success', $message);
+    }
+
+    /** Save the featured order after a drag (JYU-547). */
+    public function featuredOrder(FeaturedOrderRequest $request, FeaturedOrderService $featured): JsonResponse
+    {
+        $featured->reorder($request->validated('group_ids'));
+
+        return response()->json(['ok' => true]);
     }
 }

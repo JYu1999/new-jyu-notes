@@ -56,6 +56,7 @@ class PostService
             }
 
             (new ReferenceSyncer)->sync($post);
+            app(FeaturedOrderService::class)->sync($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -109,6 +110,8 @@ class PostService
             }
 
             (new ReferenceSyncer)->sync($post);
+
+            app(FeaturedOrderService::class)->sync($post);
 
             return $post->fresh(['tags', 'categories']);
         });
@@ -223,6 +226,8 @@ class PostService
                 'cover_image_path' => $existingPost->cover_image_path,
                 'status' => Post::STATUS_DRAFT,
                 'is_featured' => false,
+                // Keep the article's place in the featured order (JYU-547).
+                'featured_order' => $existingPost->featured_order,
                 'last_modified_at' => now(),
                 'author_id' => auth()->id(),
             ]);

@@ -14,7 +14,7 @@ class IndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'nullable|in:all,published,draft,hidden,trashed',
+            'status' => 'nullable|in:all,published,draft,hidden,featured,trashed',
             'q' => 'nullable|string|max:100',
             'category' => 'nullable|integer|exists:categories,id',
             'tag' => 'nullable|integer|exists:tags,id',

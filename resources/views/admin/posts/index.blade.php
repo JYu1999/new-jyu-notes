@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $tabs = ['all' => '全部', 'published' => '已發布', 'draft' => '草稿', 'hidden' => '隱藏', 'trashed' => '垃圾桶'];
+    $tabs = ['all' => '全部', 'published' => '已發布', 'draft' => '草稿', 'hidden' => '隱藏', 'featured' => '精選', 'trashed' => '垃圾桶'];
     $langNames = \App\Services\TranslationStatusService::LANGUAGE_NAMES;
     $tabUrl = fn ($key) => route('admin.posts.index', array_filter([...$filters, 'status' => $key === 'all' ? null : $key, 'translation' => $filters['translation']]));
 @endphp
@@ -26,6 +26,9 @@
     @endforeach
 </nav>
 
+@if($filters['status'] === 'featured')
+    @include('admin.posts._featured', ['articles' => $featuredList])
+@else
 {{-- Filters: auto-apply via AJAX --}}
 <div x-data="liveFilter({ url: '{{ route('admin.posts.index') }}', target: '#post-results' })" class="mb-3.5">
     <form @input.debounce.300ms="submit($event)" @change="submit($event)" class="flex flex-wrap items-center gap-2">
@@ -75,4 +78,5 @@
 <div id="post-results">
     @include('admin.posts._table')
 </div>
+@endif
 @endsection

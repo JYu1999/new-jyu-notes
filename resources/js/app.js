@@ -725,6 +725,82 @@ window.searchPanel = function ({ url, pageUrl, noResults, found, labels }) {
 };
 
 /**
+ * Featured order (JYU-547): drag rows of [data-group] (or ↑ / ↓) and save right away.
+ * After every change the numbers and the "not on the home page" divider are recomputed.
+ */
+window.featuredSort = function ({ url, ids, onHome = 3 }) {
+    return {
+        ids,
+        dragging: null,
+        status: '',
+        rows() {
+            return Array.from(this.$refs.list.querySelectorAll(':scope > li[data-group]'));
+        },
+        dragStart(e) {
+            this.dragging = e.currentTarget;
+            e.dataTransfer.effectAllowed = 'move';
+            e.currentTarget.classList.add('opacity-50');
+        },
+        dragOver(e) {
+            const over = e.currentTarget;
+            if (!this.dragging || over === this.dragging) return;
+            const rect = over.getBoundingClientRect();
+            const after = e.clientY > rect.top + rect.height / 2;
+            over.parentNode.insertBefore(this.dragging, after ? over.nextSibling : over);
+        },
+        dragEnd() {
+            this.dragging?.classList.remove('opacity-50');
+            this.dragging = null;
+        },
+        drop() {
+            this.dragEnd();
+            this.save();
+        },
+        move(li, delta) {
+            const rows = this.rows();
+            const i = rows.indexOf(li);
+            const j = i + delta;
+            if (j < 0 || j >= rows.length) return;
+            delta < 0 ? li.parentNode.insertBefore(li, rows[j]) : li.parentNode.insertBefore(rows[j], li);
+            this.save();
+            li.querySelector(delta < 0 ? '[aria-label^="上移"]' : '[aria-label^="下移"]')?.focus();
+        },
+        refresh() {
+            const rows = this.rows();
+            rows.forEach((li, i) => {
+                li.querySelector('[data-position]').textContent = i + 1;
+                const divider = li.querySelector('[data-divider]');
+                const show = i === onHome - 1 && rows.length > onHome;
+                divider.classList.toggle('hidden', !show);
+                divider.classList.toggle('flex', show);
+            });
+        },
+        async save() {
+            this.refresh();
+            const groupIds = this.rows().map((li) => Number(li.dataset.group));
+            if (JSON.stringify(groupIds) === JSON.stringify(this.ids)) return;
+            this.status = 'saving';
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    },
+                    body: JSON.stringify({ group_ids: groupIds }),
+                });
+                if (!res.ok) throw new Error(String(res.status));
+                this.ids = groupIds;
+                this.status = 'saved';
+            } catch (e) {
+                this.status = 'error';
+            }
+        },
+    };
+};
+
+/**
  * Tweets page "load older" (JYU-537). The button is a real link to the next
  * page (keeps filters), so it works without JS; with JS the next page's items
  * are appended in place.
