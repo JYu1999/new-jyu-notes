@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Admin sidebar grouped into Writing / Organize / Site, with post, tweet and page counts
 - External links in tweets show a preview card with the site and page title
 - Topics page shows each category's description
 - Press ⌘K / Ctrl+K (or tap search) on any page to search posts and tweets as you type, with highlighted matches, type tabs, keyboard navigation, recent searches and an "all languages" option
