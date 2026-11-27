@@ -101,7 +101,7 @@
                     <x-ui.section-heading id="tags-h" size="md" class="mb-3.5">{{ __('public.home_tags') }}</x-ui.section-heading>
                     <div class="flex flex-wrap gap-2">
                         @foreach($tags as $tag)
-                            <x-ui.tag :tag="$tag" />
+                            <x-ui.tag :tag="$tag" :count="$tag->posts_count" />
                         @endforeach
                     </div>
                 </section>
@@ -110,7 +110,7 @@
             @if($latestChange)
                 <section aria-labelledby="site-h" class="p-5 rounded-[var(--radius-card)] border border-dashed border-line-2">
                     <h2 id="site-h" class="m-0 mb-1.5 font-sans text-sm font-bold tracking-normal">{{ __('public.home_site_updates') }}</h2>
-                    <p class="m-0 mb-1 text-sm text-ink-2" lang="en">{{ $latestChange->title }}</p>
+                    <p class="m-0 mb-1 text-sm text-ink-2 changelog-md" lang="en">{!! $latestChange->html !!}</p>
                     <p class="m-0 mb-2 font-mono text-xs text-ink-3">{{ $latestChange->date }}</p>
                     <a href="{{ route('changelog') }}" class="inline-flex items-center min-h-11 text-sm text-accent hover:text-accent-ink">{{ __('public.home_changelog_link') }}</a>
                 </section>

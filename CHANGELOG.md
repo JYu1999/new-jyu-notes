@@ -1,6 +1,7 @@
 ## 2026-11-27
 - Home timeline renders tweets with full formatting (Markdown, YouTube embeds, blurred-image warning with tap to reveal), shows post cover images, expands long tweets, and loads more automatically as you scroll
 - Simpler home intro
+- Changelog entries support inline Markdown (code, bold, links), and home sidebar tags show how many posts each has
 - Tweets page can be filtered by tag, by month (with counts per month) and to only tweets with photos or videos; tweets are grouped by month with a "load older" button
 - End of each post now shows who mentions it, previous / next posts, and up to three related posts on the same topic; the sidebar lists what the post links to
 - Post pages show breadcrumbs, publish and update dates, other-language versions, a reading progress bar, a highlighted table of contents (a bottom sheet on phones), copy buttons on code blocks, adjustable text size, back to top and copy link

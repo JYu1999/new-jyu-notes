@@ -29,6 +29,22 @@ class ChangelogPageTest extends TestCase
         File::put($this->changelogFile, $content);
     }
 
+    // 條目支援 inline Markdown，但不允許原始 HTML
+    public function test_entries_render_inline_markdown_without_raw_html(): void
+    {
+        $this->putContent(<<<'MD'
+        ## 2026-11-27
+        - Use `pint` and **always** read [the guide](https://example.com/guide) <img src=x onerror=alert(1)>
+        MD);
+
+        $html = $this->get('/changelog')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<code>pint</code>', $html);
+        $this->assertStringContainsString('<strong>always</strong>', $html);
+        $this->assertStringContainsString('<a href="https://example.com/guide">the guide</a>', $html);
+        $this->assertStringNotContainsString('onerror', $html);
+    }
+
     // 真實存在日期與內容的格式都正確
     public function test_changelog_shows_grouped_entries(): void
     {

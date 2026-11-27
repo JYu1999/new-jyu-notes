@@ -14,7 +14,7 @@
                 @foreach($items as $item)
                     <li class="flex gap-2 text-ink-2">
                         <span class="text-accent">–</span>
-                        <span>{{ $item->title }}</span>
+                        <span class="changelog-md">{!! $item->html !!}</span>
                     </li>
                 @endforeach
             </ul>

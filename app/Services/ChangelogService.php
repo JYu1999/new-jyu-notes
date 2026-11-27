@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 /**
  * Reads the repository's CHANGELOG.md (path in config/changelog.php).
@@ -53,8 +54,11 @@ class ChangelogService
             }
             // 有效的日期與以- 為開頭，這兩個條件要同時存在
             if ($currentDate !== null && preg_match('/^-\s+(.+)$/', $line, $match) === 1) {
+                $title = trim($match[1]);
                 $groups->put($currentDate, $groups->get($currentDate)->push((object) [
-                    'title' => trim($match[1]),
+                    'title' => $title,
+                    // Inline Markdown (code, bold, links). Raw HTML is stripped and unsafe links dropped.
+                    'html' => Str::inlineMarkdown($title, ['html_input' => 'strip', 'allow_unsafe_links' => false]),
                 ]));
             }
         }
@@ -66,7 +70,7 @@ class ChangelogService
     /**
      * The newest entry (first bullet of the newest date section), or null.
      *
-     * @return object{date: string, title: string}|null
+     * @return object{date: string, title: string, html: string}|null
      */
     public function latest(): ?object
     {
@@ -77,6 +81,8 @@ class ChangelogService
             return null;
         }
 
-        return (object) ['date' => $date, 'title' => $groups->get($date)->first()->title];
+        $first = $groups->get($date)->first();
+
+        return (object) ['date' => $date, 'title' => $first->title, 'html' => $first->html];
     }
 }

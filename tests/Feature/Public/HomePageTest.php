@@ -350,6 +350,36 @@ class HomePageTest extends TestCase
         @unlink($file);
     }
 
+    public function test_site_update_renders_inline_markdown_safely(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'changelog');
+        File::put($file, "## 2026-11-27\n- Add `ChangelogService` and **bold** [docs](https://example.com) <script>alert(1)</script>\n");
+        config(['changelog.path' => $file]);
+
+        $html = $this->get('/zh')->getContent();
+        preg_match('/<section[^>]*aria-labelledby="site-h"[^>]*>(.*?)<\/section>/s', $html, $m);
+
+        $this->assertStringContainsString('<code>ChangelogService</code>', $m[1]);
+        $this->assertStringContainsString('<strong>bold</strong>', $m[1]);
+        $this->assertStringContainsString('<a href="https://example.com">docs</a>', $m[1]);
+        $this->assertStringNotContainsString('<script>', $m[1]);
+
+        @unlink($file);
+    }
+
+    public function test_sidebar_tags_show_post_counts(): void
+    {
+        $tag = Tag::create([]);
+        $tag->translations()->create(['locale' => 'zh', 'name' => '閱讀', 'slug' => 'reading']);
+        $this->makePost()->tags()->attach($tag);
+        $this->makePost()->tags()->attach($tag);
+
+        $html = $this->get('/zh')->getContent();
+        preg_match('/<section[^>]*aria-labelledby="tags-h"[^>]*>(.*?)<\/section>/s', $html, $m);
+
+        $this->assertMatchesRegularExpression('/#閱讀<span class="ui-chip-count">2<\/span>/u', $m[1]);
+    }
+
     public function test_page_renders_with_no_content_at_all(): void
     {
         config(['changelog.path' => '/nonexistent']);

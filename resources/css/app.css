@@ -280,6 +280,11 @@
 .code-block-bar button:hover { background: color-mix(in srgb, var(--color-code-ink) 16%, transparent); }
 .prose-blog .code-block pre { margin: 0; border-radius: 0; background: transparent; color: var(--color-code-ink); }
 
+/* Inline Markdown in changelog entries (home "site updates" + /changelog) */
+.changelog-md code { font-family: var(--font-mono); font-size: 0.9em; background: var(--color-paper-2); padding: 0.05em 0.35em; border-radius: 4px; }
+.changelog-md a { color: var(--color-accent-ink); text-decoration: underline; text-decoration-thickness: 1px; }
+.changelog-md a:hover { color: var(--color-accent); }
+
 /* Tweet body: tighter spacing within prose */
 .tweet-body p:first-child { margin-top: 0; }
 .tweet-body p:last-child { margin-bottom: 0; }
