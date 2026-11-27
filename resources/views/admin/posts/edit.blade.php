@@ -164,7 +164,7 @@
                                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>
                             </button>
                             <button type="button" @click="format('mention', $refs.body); detectMention()" aria-label="引用文章或碎念" class="size-9 rounded-md text-ink-2 hover:bg-paper-2">@</button>
-                            <span class="ml-auto text-xs text-ink-3" x-text="uploading > 0 ? '上傳中…' : ''"></span>
+                            <span class="ml-auto text-xs text-ink-3" x-text="uploading > 0 ? '上傳中…' : '輸入 / 叫出所有指令'">輸入 / 叫出所有指令</span>
                         </div>
 
                         <label for="body" class="sr-only">內文（Markdown）</label>
@@ -172,14 +172,29 @@
                             @dragover.prevent="dragging = true" @dragleave="dragging = false"
                             @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files)"
                             @paste="handlePaste($event)"
-                            @input="dismissYtPrompt(); detectMention()"
-                            @keydown="onMentionKeydown($event)"
+                            @input="dismissYtPrompt(); detectMention(); detectSlash()"
+                            @click="detectSlash()" @blur="setTimeout(() => closeSlash(), 150)"
+                            @keydown="onSlashKeydown($event) || onMentionKeydown($event)"
                             @keydown.meta.b.prevent="format('bold', $refs.body)" @keydown.meta.i.prevent="format('italic', $refs.body)"
                             :class="dragging && 'ring-2 ring-accent'"
                             class="w-full min-h-[55vh] bg-transparent border-0 font-serif text-[18px] leading-[1.85] text-ink placeholder:text-ink-3/60 resize-none focus:outline-none field-sizing-content">{{ old('body', $post->body) }}</textarea>
                         <input type="file" class="hidden" x-ref="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" @change="handleFiles($event.target.files); $event.target.value = ''">
                         <p x-show="error" x-cloak class="mt-1 text-xs text-danger" x-text="error"></p>
                         @include('admin.partials.youtube-embed-prompt')
+                        {{-- "/" command menu (JYU-552): ↑↓ to choose, Enter to insert, Esc to close --}}
+                        <div x-show="slashActive" x-cloak data-slash-menu role="listbox" aria-label="指令" :style="{ top: slashTop + 'px' }"
+                            class="absolute left-0 top-0 z-20 mt-1 w-72 max-w-full bg-card border border-line rounded-[var(--radius-control)] shadow-lg overflow-hidden">
+                            <div class="px-3 py-1.5 text-xs text-ink-3 border-b border-line">指令 · ↑↓ 選擇　Enter 插入　Esc 關閉</div>
+                            <template x-for="(cmd, i) in slashResults" :key="cmd.id">
+                                <button type="button" role="option" :aria-selected="i === slashIndex ? 'true' : 'false'"
+                                    @mousedown.prevent="runSlash(cmd)" @mouseenter="slashIndex = i"
+                                    :class="i === slashIndex ? 'bg-paper-2' : ''" class="w-full min-h-10 px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-paper-2">
+                                    <span class="text-sm text-ink" x-text="cmd.label"></span>
+                                    <span class="font-mono text-xs text-ink-3" x-text="cmd.hint"></span>
+                                </button>
+                            </template>
+                            <p x-show="!slashResults.length" class="m-0 px-3 py-2 text-sm text-ink-3">沒有符合的指令</p>
+                        </div>
                         <div x-show="mentionActive && mentionResults.length" x-cloak role="listbox" aria-label="引用建議"
                             class="absolute left-0 right-0 z-20 mt-1 bg-card border border-line rounded-[var(--radius-control)] shadow-lg overflow-hidden max-h-64 overflow-y-auto">
                             <div class="px-3 py-1.5 text-xs text-ink-3 border-b border-line">引用文章或碎念 · 存檔時自動建立反向連結</div>

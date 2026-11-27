@@ -1,5 +1,6 @@
 import Alpine from 'alpinejs';
 import { parseYoutubeUrl, youtubeShortcode } from './youtube';
+import { applyCommand, filterCommands, slashQueryAt } from './slash-commands';
 import './post-reading';
 
 window.Alpine = Alpine;
@@ -437,6 +438,104 @@ const mentionBehavior = {
 };
 
 /**
+ * "/" command menu for the post editor (JYU-552). Spread into markdownMediaInsert;
+ * expects x-ref="body" and the pick() / mention helpers from that component.
+ */
+/** Pixel offset of the caret's line bottom inside a textarea, via a mirror element. */
+function caretBottom(ta) {
+    const style = getComputedStyle(ta);
+    const mirror = document.createElement('div');
+    ['font', 'letterSpacing', 'lineHeight', 'padding', 'border', 'boxSizing', 'whiteSpace', 'wordWrap', 'overflowWrap', 'tabSize']
+        .forEach((p) => { mirror.style[p] = style[p]; });
+    Object.assign(mirror.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', width: `${ta.clientWidth}px` });
+    mirror.textContent = ta.value.slice(0, ta.selectionStart);
+    const marker = document.createElement('span');
+    marker.textContent = '​';
+    mirror.appendChild(marker);
+    document.body.appendChild(mirror);
+    const bottom = marker.offsetTop + marker.offsetHeight;
+    mirror.remove();
+    return ta.offsetTop + bottom - ta.scrollTop;
+}
+
+const slashCommandBehavior = {
+    slashTop: 0,
+    slashActive: false,
+    slashStart: -1,
+    slashQuery: '',
+    slashIndex: 0,
+    // A plain array (not a getter): this object is spread into components.
+    slashResults: [],
+    detectSlash() {
+        const ta = this.$refs.body;
+        const found = ta.selectionStart === ta.selectionEnd ? slashQueryAt(ta.value, ta.selectionStart) : null;
+        if (!found) return this.closeSlash();
+        if (!this.slashActive || found.query !== this.slashQuery) this.slashIndex = 0;
+        this.slashActive = true;
+        this.slashStart = found.start;
+        this.slashQuery = found.query;
+        this.slashResults = filterCommands(found.query);
+        this.slashTop = caretBottom(ta);
+    },
+    closeSlash() {
+        this.slashActive = false;
+        this.slashQuery = '';
+        this.slashStart = -1;
+        this.slashIndex = 0;
+        this.slashResults = [];
+    },
+    /** Returns true when the key was handled by the menu. */
+    onSlashKeydown(e) {
+        if (!this.slashActive) return false;
+        const n = this.slashResults.length;
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            this.closeSlash();
+            return true;
+        }
+        if (!n) return false;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.slashIndex = (this.slashIndex + 1) % n;
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.slashIndex = (this.slashIndex - 1 + n) % n;
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            this.runSlash(this.slashResults[this.slashIndex]);
+        } else {
+            return false;
+        }
+        return true;
+    },
+    runSlash(cmd) {
+        if (!cmd) return;
+        const ta = this.$refs.body;
+        const { value, caret } = applyCommand(cmd.id, ta.value, this.slashStart, ta.selectionStart);
+        this.closeSlash();
+        ta.value = value;
+        ta.setSelectionRange(caret, caret);
+        ta.focus();
+
+        if (cmd.id === 'image') {
+            this.pick();
+        } else if (cmd.id === 'youtube') {
+            const url = window.prompt('貼上 YouTube 網址');
+            const parsed = url ? parseYoutubeUrl(url) : null;
+            if (parsed) {
+                const code = youtubeShortcode({ id: parsed.id, start: parsed.start || 0 }) + '\n';
+                ta.setRangeText(code, caret, caret, 'end');
+            }
+            ta.focus();
+        } else if (cmd.id === 'mention') {
+            ta.setRangeText('@', caret, caret, 'end');
+        }
+        // Let the editor see the change (autosave, counts) and open @ suggestions.
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+};
+
+/**
  * YouTube paste prompt for plain textareas without media upload
  * (e.g. the tweet composer). Expects x-ref="body" in scope.
  */
@@ -458,6 +557,7 @@ window.markdownMediaInsert = function ({ locale = 'zh', postId = null } = {}) {
     return {
         ...youtubePasteBehavior,
         ...mentionBehavior,
+        ...slashCommandBehavior,
         locale,
         postId,
         mentionExcludeType: 'post',
