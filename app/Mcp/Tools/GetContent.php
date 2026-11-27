@@ -14,16 +14,19 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsReadOnly]
 class GetContent extends BlogTool
 {
-    public function handle(Request $request): Response
-    {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
+    protected string $action = 'read';
 
+    protected function run(Request $request): Response
+    {
         $data = $request->validate(['type' => 'required|in:post,tweet,page', 'id' => 'required|integer']);
         $model = $this->find($data['type'], $data['id']);
 
         return $model ? Response::json($this->detail($model)) : Response::error('找不到這筆內容。');
+    }
+
+    protected function describe(array $args): string
+    {
+        return '讀取'.$this->label($args).'（唯讀）';
     }
 
     public function schema(JsonSchema $schema): array

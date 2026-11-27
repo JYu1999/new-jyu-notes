@@ -15,12 +15,11 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsReadOnly]
 class ListTranslationGaps extends BlogTool
 {
-    public function handle(Request $request, TranslationStatusService $status): Response
-    {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
+    protected string $action = 'read';
 
+    protected function run(Request $request): Response
+    {
+        $status = app(TranslationStatusService::class);
         $data = $request->validate(['locale' => 'nullable|in:en,ja,vi,id']);
         $locales = isset($data['locale']) ? [$data['locale']] : $status->activeTargetLocales();
 
@@ -33,6 +32,11 @@ class ListTranslationGaps extends BlogTool
         }
 
         return Response::json($out);
+    }
+
+    protected function describe(array $args): string
+    {
+        return '列出缺少的翻譯'.(isset($args['locale']) ? '（'.strtoupper($args['locale']).'）' : '').'（唯讀）';
     }
 
     public function schema(JsonSchema $schema): array

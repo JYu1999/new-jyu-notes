@@ -17,12 +17,10 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsReadOnly]
 class SearchContent extends BlogTool
 {
-    public function handle(Request $request): Response
-    {
-        if ($denied = $this->denied()) {
-            return $denied;
-        }
+    protected string $action = 'read';
 
+    protected function run(Request $request): Response
+    {
         $data = $request->validate([
             'query' => 'required|string|max:200',
             'type' => 'nullable|in:all,post,tweet,page',
@@ -48,6 +46,11 @@ class SearchContent extends BlogTool
         }
 
         return Response::json($results->sortByDesc('updated_at')->take($limit)->map(fn ($m) => $this->summary($m))->values()->all());
+    }
+
+    protected function describe(array $args): string
+    {
+        return '搜尋「'.($args['query'] ?? '').'」相關內容（唯讀）';
     }
 
     public function schema(JsonSchema $schema): array

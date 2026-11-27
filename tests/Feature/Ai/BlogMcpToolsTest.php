@@ -12,8 +12,8 @@ use App\Mcp\Tools\RequestPublish;
 use App\Mcp\Tools\SearchContent;
 use App\Mcp\Tools\UpdateContent;
 use App\Mcp\Tools\UploadMedia;
+use App\Models\AiActionRequest;
 use App\Models\AiConnection;
-use App\Models\AiPublishRequest;
 use App\Models\AiUser;
 use App\Models\ContentRevision;
 use App\Models\Post;
@@ -149,13 +149,14 @@ class BlogMcpToolsTest extends TestCase
     {
         $post = $this->article(['status' => 'draft']);
 
-        $this->as(['publish'])->tool(RequestPublish::class, ['type' => 'post', 'id' => $post->id, 'action' => 'publish', 'note' => '翻好了'])
-            ->assertOk()->assertSee('等作者在後台核准');
+        $server = $this->as(['publish']);
+        $server->tool(RequestPublish::class, ['type' => 'post', 'id' => $post->id, 'action' => 'publish', 'note' => '翻好了'])
+            ->assertOk()->assertSee('作者在後台核准後才會執行');
 
         $this->assertSame('draft', $post->fresh()->status);
-        $this->assertDatabaseHas('ai_publish_requests', ['publishable_id' => $post->id, 'action' => 'publish', 'status' => 'pending', 'note' => '翻好了']);
-        $this->as(['publish'])->tool(RequestPublish::class, ['type' => 'post', 'id' => $post->id, 'action' => 'publish']);
-        $this->assertSame(1, AiPublishRequest::count(), 'asking twice keeps one pending request');
+        $this->assertDatabaseHas('ai_action_requests', ['publishable_id' => $post->id, 'action' => 'publish', 'status' => 'pending', 'note' => '翻好了']);
+        $server->tool(RequestPublish::class, ['type' => 'post', 'id' => $post->id, 'action' => 'publish', 'note' => '翻好了']);
+        $this->assertSame(1, AiActionRequest::count(), 'asking twice keeps one pending request');
     }
 
     public function test_tools_outside_the_granted_permissions_are_refused(): void
