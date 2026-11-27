@@ -1,4 +1,5 @@
 ## 2026-11-27
+- Version history for posts, tweets and pages: see every saved version by day (who, when, characters added/removed), filter to AI or status changes, view only the changed paragraphs with additions and deletions marked plus title/slug/tag/category/status changes, compare with any older version, and restore the content from before a version (also works from the trash)
 - Type "/" on an empty line in the post editor to insert a heading (H2/H3), quote, code block, divider, image upload, YouTube embed or @ mention; filter by typing, choose with ↑↓, Enter to insert, Esc to close
 - Full-screen "new tweet" composer for phones (＋ 碎念 button on the admin home and tweet list): language and tag chips, up to 4 photos with upload progress and per-photo removal, a sensitive-content switch, @ mentions and draft autosave
 - Changing the URL (slug) of a published post keeps the old link working: it permanently redirects to the new address

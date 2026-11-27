@@ -19,6 +19,9 @@
                 <a href="{{ route('admin.tweets.index') }}" class="hover:text-accent">Tweets</a> / {{ $isCreate ? '新增' : '編輯' }}
             </nav>
             <h1 class="font-serif text-2xl font-semibold">{{ $isCreate ? '新增 Tweet' : '編輯 Tweet' }}</h1>
+            @unless($isCreate)
+                <a href="{{ route('admin.revisions.index', ['type' => 'tweets', 'id' => $tweet->id]) }}" data-history-link class="text-sm text-accent hover:text-accent-ink">版本紀錄 · {{ $tweet->revisions()->count() }}</a>
+            @endunless
         </div>
         <div class="flex items-center gap-3">
             <select name="status" class="bg-card border border-line rounded px-3 py-1.5 text-sm focus:border-accent focus:outline-none">

@@ -89,6 +89,18 @@
  * so light/dark both work without per-page overrides.
  */
 @layer components {
+    /* Revision diff (JYU-553): added / removed text */
+    .revision-diff ins {
+        text-decoration: none;
+        background: color-mix(in srgb, var(--color-good) 18%, transparent);
+        border-radius: 3px;
+    }
+    .revision-diff del {
+        color: var(--color-danger);
+        background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+        border-radius: 3px;
+    }
+
     /* Chip: tags, filters */
     .ui-chip {
         display: inline-flex;

@@ -22,6 +22,7 @@
                         <form method="POST" action="{{ route('admin.tweets.restore', $t->id) }}" class="inline">
                             @csrf<button class="text-accent hover:text-accent-ink">還原</button>
                         </form>
+                        <a href="{{ route('admin.revisions.index', ['type' => 'tweets', 'id' => $t->id]) }}" data-history-link class="text-ink-2 hover:text-accent">版本</a>
                     @else
                         <a href="{{ route('admin.tweets.edit', $t->id) }}" class="text-accent hover:text-accent-ink">編輯</a>
                         <form method="POST" action="{{ route('admin.tweets.destroy', $t->id) }}" class="inline" onsubmit="return confirm('確定？')">

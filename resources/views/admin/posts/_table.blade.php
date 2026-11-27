@@ -131,6 +131,7 @@
                                 @csrf
                                 <button type="submit" class="inline-flex items-center min-h-9 px-2 text-sm text-accent hover:text-accent-ink">還原</button>
                             </form>
+                            <a href="{{ route('admin.revisions.index', ['type' => 'posts', 'id' => $post->id]) }}" data-history-link class="inline-flex items-center min-h-9 px-2 text-sm text-ink-2 hover:text-accent">版本</a>
                         @else
                             <details class="relative inline-block text-left">
                                 <summary aria-label="更多操作" class="list-none inline-flex items-center justify-center size-9 rounded-md text-lg text-ink-3 hover:bg-paper-2 cursor-pointer">⋯</summary>

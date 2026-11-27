@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Page;
 use App\Models\Post;
 use App\Models\Tweet;
+use App\Services\RevisionService;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->scoped(RevisionService::class);
     }
 
     /**
@@ -28,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'post' => Post::class,
             'tweet' => Tweet::class,
+            'page' => Page::class,
         ]);
     }
 }

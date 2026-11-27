@@ -47,6 +47,7 @@ class TweetService
 
             (new ReferenceSyncer)->sync($tweet);
             FetchLinkPreviews::dispatchAfterResponse($tweet->id);
+            app(RevisionService::class)->record($tweet);
 
             return $tweet->fresh(['tags']);
         });
@@ -55,6 +56,7 @@ class TweetService
     public function update(Tweet $tweet, array $data): Tweet
     {
         return DB::transaction(function () use ($tweet, $data) {
+            app(RevisionService::class)->ensureBaseline($tweet);
             $updateData = array_filter([
                 'body' => $data['body'] ?? null,
                 'status' => $data['status'] ?? null,
@@ -75,6 +77,7 @@ class TweetService
             if (array_key_exists('body', $data)) {
                 FetchLinkPreviews::dispatchAfterResponse($tweet->id);
             }
+            app(RevisionService::class)->record($tweet);
 
             return $tweet->fresh(['tags']);
         });
@@ -92,12 +95,14 @@ class TweetService
 
     public function updateStatus(Tweet $tweet, string $status): void
     {
+        app(RevisionService::class)->ensureBaseline($tweet);
         $tweet->update([
             'status' => $status,
             'published_at' => $status === Tweet::STATUS_PUBLISHED && ! $tweet->published_at
                 ? now()
                 : $tweet->published_at,
         ]);
+        app(RevisionService::class)->record($tweet);
     }
 
     public function createTranslation(Tweet $existingTweet, string $newLocale): Tweet
@@ -130,6 +135,7 @@ class TweetService
             if ($siblingTagIds) {
                 $newTweet->tags()->sync($siblingTagIds);
             }
+            app(RevisionService::class)->record($newTweet);
 
             return $newTweet;
         });

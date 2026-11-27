@@ -18,6 +18,9 @@
                 <a href="{{ route('admin.pages.index') }}" class="hover:text-accent">Pages</a> / {{ $isCreate ? '新增' : '編輯' }}
             </nav>
             <h1 class="font-serif text-2xl font-semibold">{{ $isCreate ? '新增頁面' : '編輯頁面' }}</h1>
+            @unless($isCreate)
+                <a href="{{ route('admin.revisions.index', ['type' => 'pages', 'id' => $page->id]) }}" data-history-link class="text-sm text-accent hover:text-accent-ink">版本紀錄 · {{ $page->revisions()->count() }}</a>
+            @endunless
         </div>
         <div class="flex items-center gap-3">
             @if(!$isCreate)
