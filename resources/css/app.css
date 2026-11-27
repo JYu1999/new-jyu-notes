@@ -31,6 +31,10 @@
     --color-inverse-ink-2: #d9cfbf;
     --color-inverse-ink-3: #bfb3a2;
     --color-inverse-accent: #e8a58b;
+    /* Code blocks stay dark in both themes. */
+    --color-code-bg: #221d1a;
+    --color-code-ink: #f1e8d8;
+    --color-code-muted: #bfb3a2;
     --color-good: #4a6b3f;
     --color-warn: #b08234;
     --color-danger: #a83a2e;
@@ -57,6 +61,7 @@
     --color-inverse-ink-2: #4a3f35;
     --color-inverse-ink-3: #6b5f53;
     --color-inverse-accent: #a4472f;
+    --color-code-bg: #100e0c;
 }
 
 @layer base {
@@ -198,8 +203,8 @@
     border-radius: 3px;
 }
 .prose-blog pre {
-    background: var(--color-ink);
-    color: var(--color-card);
+    background: var(--color-code-bg);
+    color: var(--color-code-ink);
     padding: 1em 1.2em;
     border-radius: 6px;
     overflow-x: auto;
@@ -256,6 +261,24 @@
     aspect-ratio: 16 / 9;
     height: auto;
 }
+
+/* Post body: reader-adjustable size (A− / A+), see resources/js/post-reading.js */
+.prose-blog.post-body { font-size: var(--post-font-size, 19px); line-height: 1.85; }
+.prose-blog.post-body > :first-child { margin-top: 0; }
+
+/* Code block toolbar added by post-reading.js */
+.code-block { margin: 1.4em 0; border-radius: var(--radius-card); overflow: hidden; background: var(--color-code-bg); }
+.code-block-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 8px 6px 16px; border-bottom: 1px solid color-mix(in srgb, var(--color-code-ink) 10%, transparent);
+    font-family: var(--font-mono); font-size: 12px; color: var(--color-code-muted);
+}
+.code-block-bar button {
+    min-height: 32px; padding: 0 10px; border: 0; border-radius: 6px;
+    background: color-mix(in srgb, var(--color-code-ink) 8%, transparent); color: var(--color-code-ink); font-size: 12px; cursor: pointer;
+}
+.code-block-bar button:hover { background: color-mix(in srgb, var(--color-code-ink) 16%, transparent); }
+.prose-blog .code-block pre { margin: 0; border-radius: 0; background: transparent; color: var(--color-code-ink); }
 
 /* Tweet body: tighter spacing within prose */
 .tweet-body p:first-child { margin-top: 0; }

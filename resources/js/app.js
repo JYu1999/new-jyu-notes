@@ -1,5 +1,6 @@
 import Alpine from 'alpinejs';
 import { parseYoutubeUrl, youtubeShortcode } from './youtube';
+import './post-reading';
 
 window.Alpine = Alpine;
 
@@ -564,60 +565,6 @@ window.infiniteScroll = function ({ url, startPage, hasMore, listSelector }) {
             } finally {
                 this.loading = false;
             }
-        },
-    };
-};
-
-/**
- * Post TOC scrollspy.
- *
- * Watches all article headings via IntersectionObserver and exposes
- * `active` (current heading id) for the sidebar to highlight.
- * Provides `scrollTo(id)` that scrolls smoothly and updates URL hash.
- */
-window.postToc = function () {
-    return {
-        active: null,
-        observer: null,
-        init() {
-            // Collect all headings the TOC references.
-            const ids = Array.from(document.querySelectorAll('[data-toc-id]'))
-                .map((a) => a.getAttribute('data-toc-id'));
-            const headings = ids
-                .map((id) => document.getElementById(id))
-                .filter(Boolean);
-            if (!headings.length) return;
-
-            this.observer = new IntersectionObserver(
-                (entries) => {
-                    // Pick the topmost entry that is currently intersecting; fall back to closest.
-                    const visible = entries.filter((e) => e.isIntersecting);
-                    if (visible.length > 0) {
-                        // Sort by document position
-                        visible.sort((a, b) =>
-                            a.target.compareDocumentPosition(b.target) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
-                        );
-                        this.active = visible[0].target.id;
-                    }
-                },
-                { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
-            );
-            headings.forEach((h) => this.observer.observe(h));
-
-            // Initialise from hash if present.
-            if (window.location.hash) {
-                this.active = window.location.hash.slice(1);
-            } else if (headings[0]) {
-                this.active = headings[0].id;
-            }
-        },
-        scrollTo(id) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            const top = el.getBoundingClientRect().top + window.scrollY - 80;
-            window.scrollTo({ top, behavior: 'smooth' });
-            history.replaceState(null, '', '#' + id);
-            this.active = id;
         },
     };
 };
