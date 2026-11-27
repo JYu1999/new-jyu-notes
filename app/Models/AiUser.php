@@ -9,9 +9,9 @@ use Laravel\Passport\HasApiTokens;
 /**
  * The site owner as seen by an AI connection (JYU-554).
  *
- * Same `users` row as App\Models\User, but with Passport's token methods so the
- * `api` guard (OAuth / MCP) can coexist with the Sanctum API tokens still on
- * User until JYU-557 removes them.
+ * Same `users` row as App\Models\User, with Passport's token methods for the
+ * `api` guard (OAuth / MCP). Kept separate from User so the admin session user
+ * carries no API-token behaviour at all.
  */
 class AiUser extends Authenticatable implements OAuthenticatable
 {

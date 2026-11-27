@@ -37,7 +37,7 @@ class AdminSidebarTest extends TestCase
         $nav = $this->sidebar($this->actingAs($this->admin())->get('/admin')->assertOk()->getContent());
 
         $this->assertMatchesRegularExpression('/寫作[\s\S]*首頁[\s\S]*文章[\s\S]*碎念[\s\S]*頁面[\s\S]*整理[\s\S]*分類與系列[\s\S]*標籤[\s\S]*媒體庫[\s\S]*網站/u', $nav);
-        foreach (['admin.posts.index', 'admin.tweets.index', 'admin.pages.index', 'admin.categories.index', 'admin.tags.index', 'admin.media.index', 'admin.tokens.index'] as $route) {
+        foreach (['admin.posts.index', 'admin.tweets.index', 'admin.pages.index', 'admin.categories.index', 'admin.tags.index', 'admin.media.index'] as $route) {
             $this->assertStringContainsString('href="'.route($route).'"', $nav, $route);
         }
     }

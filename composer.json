@@ -10,7 +10,6 @@
         "laravel/framework": "^13.8",
         "laravel/mcp": "^1.3",
         "laravel/passport": "^13.12",
-        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "league/commonmark": "^2.8",
         "league/flysystem-aws-s3-v3": "^3.34",
