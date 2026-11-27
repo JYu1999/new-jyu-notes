@@ -127,6 +127,22 @@
             </div>
         @endif
     </section>
+    {{-- Needs attention: translations + unused media (JYU-544) --}}
+    <section aria-labelledby="todo-h" class="bg-card border border-line rounded-[var(--radius-card-lg)] p-5">
+        <h2 id="todo-h" class="m-0 mb-3 font-sans text-lg font-bold tracking-normal">需要你處理</h2>
+        @forelse($attention as $item)
+            <a href="{{ $item['url'] }}" data-attention class="flex gap-3 py-3 text-ink hover:text-ink {{ $loop->last ? '' : 'border-b border-line' }}">
+                <span aria-hidden="true" class="flex-none flex items-center justify-center size-8 rounded-lg bg-paper-2 text-ink-2 text-xs font-bold">{{ $item['badge'] }}</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block font-semibold">{{ $item['title'] }}</span>
+                    <span class="text-[13px] text-ink-3">{{ $item['hint'] }}</span>
+                </span>
+            </a>
+        @empty
+            <p class="m-0 text-sm text-ink-3">目前沒有需要處理的事。</p>
+        @endforelse
+    </section>
+
     {{-- Views, last 30 days (posts only; JYU-543) --}}
     @php
         $max = max(1, collect($views['daily'])->max('count'));

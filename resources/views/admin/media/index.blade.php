@@ -14,6 +14,14 @@
     </label>
 </header>
 
+@if($unusedOnly ?? false)
+    <div data-unused-filter class="mb-4 flex items-center gap-3 px-4 py-3 rounded-[var(--radius-card)] bg-accent-soft text-sm">
+        <span class="font-semibold">未被使用的媒體（{{ $media->total() }}）</span>
+        <span class="text-ink-2">沒有任何文章、碎念、頁面或封面使用這些檔案</span>
+        <a href="{{ route('admin.media.index') }}" class="ml-auto text-accent hover:text-accent-ink">清除篩選</a>
+    </div>
+@endif
+
 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
     @forelse($media as $m)
         <div class="bg-card border border-line rounded-md overflow-hidden group">

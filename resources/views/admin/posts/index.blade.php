@@ -13,6 +13,13 @@
     </a>
 </header>
 
+@if($translationFilter ?? null)
+    <div data-translation-filter class="mb-4 flex items-center gap-3 px-4 py-3 rounded-[var(--radius-card)] bg-accent-soft text-sm">
+        <span class="font-semibold">{{ $translationFilter }}（{{ $posts->total() }}）</span>
+        <a href="{{ route('admin.posts.index') }}" class="text-accent hover:text-accent-ink">清除篩選</a>
+    </div>
+@endif
+
 {{-- Status tabs --}}
 <div class="border-b border-line mb-6 flex items-center gap-1 overflow-x-auto">
     @php

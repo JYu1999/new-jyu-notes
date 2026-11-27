@@ -36,9 +36,14 @@ class MediaService
         $media->delete();
     }
 
-    public function paginate(int $perPage = 24): LengthAwarePaginator
+    /** @param  list<int>|null  $onlyIds  restrict to these media (e.g. unused ones, JYU-544) */
+    public function paginate(int $perPage = 24, ?array $onlyIds = null): LengthAwarePaginator
     {
-        return Media::query()->latest()->paginate($perPage);
+        return Media::query()
+            ->when($onlyIds !== null, fn ($q) => $q->whereIn('id', $onlyIds))
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /**

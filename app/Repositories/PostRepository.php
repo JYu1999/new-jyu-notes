@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
+use App\Services\TranslationStatusService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
@@ -145,8 +146,16 @@ class PostRepository
         ?string $locale = null,
         ?string $search = null,
         int $perPage = 20,
+        ?string $missing = null,
+        ?string $stale = null,
     ): LengthAwarePaginator {
-        $q = Post::query()->with(['tags.translations', 'categories.translations']);
+        $translations = app(TranslationStatusService::class);
+        $q = match (true) {
+            $missing !== null => $translations->missing($missing),
+            $stale !== null => $translations->stale($stale),
+            default => Post::query(),
+        };
+        $q->with(['tags.translations', 'categories.translations']);
 
         if ($status === 'trashed') {
             $q->onlyTrashed();
