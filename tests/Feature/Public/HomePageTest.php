@@ -206,6 +206,21 @@ class HomePageTest extends TestCase
         }
     }
 
+    public function test_tab_selected_style_comes_only_from_aria_pressed(): void
+    {
+        // Regression: a server-rendered "selected" class stayed on "全部" after switching tabs.
+        $html = $this->get('/zh?type=post')->getContent();
+
+        preg_match_all('/<a [^>]*data-feed-tab="[^"]+"[^>]*>/', $html, $tabs);
+        $this->assertCount(3, $tabs[0]);
+        foreach ($tabs[0] as $tab) {
+            $this->assertDoesNotMatchRegularExpression('/class="[^"]*(?<![:\w-])bg-card/', $tab);
+            $this->assertStringContainsString('aria-pressed:bg-card', $tab);
+            $this->assertStringNotContainsString(':class=', $tab);
+        }
+        $this->assertSame(1, preg_match_all('/data-feed-tab="[^"]+"[^>]*aria-pressed="true"/', $html));
+    }
+
     public function test_load_more_returns_older_items_as_json(): void
     {
         foreach (range(1, 12) as $i) {
