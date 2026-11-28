@@ -112,7 +112,7 @@ class AccountPasskeysTest extends TestCase
             ->assertOk();
 
         $options = $this->getJson(route('admin.account.passkeys.options'))->assertOk()->json('options');
-        $this->assertSame('jyu-notes.test', $options['rp']['id']);
+        $this->assertSame(parse_url(config('app.url'), PHP_URL_HOST), $options['rp']['id']);
 
         $this->postJson(route('admin.account.passkeys.store'), [
             'name' => 'MacBook · Safari',
