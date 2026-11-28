@@ -1,3 +1,6 @@
+## 2026-11-28
+- Security update: upgraded Laravel, Symfony, Guzzle, CommonMark, Flysystem and front-end build tools (Vite, PostCSS, concurrently) to patched versions, closing every advisory reported by `composer audit` and `npm audit`
+
 ## 2026-11-27
 - Removed the retired Todo feature from the admin; the Changelog page reads only CHANGELOG.md as before
 - Old API tokens and the token-based /api endpoints are removed: AI assistants now connect through "AI 連線", which can also list content, tags, categories and media and rename tags and categories; existing tokens no longer work
