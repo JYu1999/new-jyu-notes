@@ -1,27 +1,21 @@
 @extends('layouts.admin')
 
-@section('title', $mode === 'create' ? '新增 Tweet' : '編輯 Tweet')
+@section('title', '編輯 Tweet')
 
+{{-- Editing an existing tweet. New tweets are written in the composer (admin.tweets.compose, JYU-563). --}}
 @section('content')
-@php
-    $isCreate = $mode === 'create';
-    $action = $isCreate ? route('admin.tweets.store') : route('admin.tweets.update', $tweet);
-@endphp
-
-<form method="POST" action="{{ $action }}" class="space-y-6" id="tweet-form"
+<form method="POST" action="{{ route('admin.tweets.update', $tweet) }}" class="space-y-6" id="tweet-form"
     x-data="tweetMediaUpload({ initial: @js(old('media', $tweet->media ?? [])) })">
     @csrf
-    @if(!$isCreate)@method('PUT')@endif
+    @method('PUT')
 
     <header class="flex items-center justify-between gap-3 flex-wrap">
         <div>
             <nav class="text-xs text-ink-3 font-mono mb-1">
-                <a href="{{ route('admin.tweets.index') }}" class="hover:text-accent">Tweets</a> / {{ $isCreate ? '新增' : '編輯' }}
+                <a href="{{ route('admin.tweets.index') }}" class="hover:text-accent">Tweets</a> / 編輯
             </nav>
-            <h1 class="font-serif text-2xl font-semibold">{{ $isCreate ? '新增 Tweet' : '編輯 Tweet' }}</h1>
-            @unless($isCreate)
-                <a href="{{ route('admin.revisions.index', ['type' => 'tweets', 'id' => $tweet->id]) }}" data-history-link class="text-sm text-accent hover:text-accent-ink">版本紀錄 · {{ $tweet->revisions()->count() }}</a>
-            @endunless
+            <h1 class="font-serif text-2xl font-semibold">編輯 Tweet</h1>
+            <a href="{{ route('admin.revisions.index', ['type' => 'tweets', 'id' => $tweet->id]) }}" data-history-link class="text-sm text-accent hover:text-accent-ink">版本紀錄 · {{ $tweet->revisions()->count() }}</a>
         </div>
         <div class="flex items-center gap-3">
             <select name="status" class="bg-card border border-line rounded px-3 py-1.5 text-sm focus:border-accent focus:outline-none">
@@ -128,7 +122,7 @@
                     @foreach($tags as $tag)
                         <label class="inline-flex items-center gap-1.5 text-sm px-3 py-1 bg-card border border-line rounded-full hover:border-accent cursor-pointer">
                             <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}"
-                                {{ !$isCreate && $tweet->tags->contains($tag->id) ? 'checked' : '' }}>
+                                {{ $tweet->tags->contains($tag->id) ? 'checked' : '' }}>
                             <span>#{{ $tag->name(app()->getLocale()) }}</span>
                         </label>
                     @endforeach
@@ -138,67 +132,51 @@
 
         {{-- Sidebar --}}
         <aside class="space-y-5">
-            {{-- Locale (create-mode only) --}}
-            @if($isCreate)
-                <div class="bg-card border border-line rounded-md p-4">
-                    <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">語言</label>
-                    <select name="locale" class="w-full bg-paper border border-line rounded px-2 py-1.5 text-sm">
-                        @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
-                            <option value="{{ $loc }}" {{ old('locale', $tweet->locale) === $loc ? 'selected' : '' }}>{{ strtoupper($loc) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            @else
-                <div class="bg-card border border-line rounded-md p-4">
-                    <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">語言</label>
-                    <div class="text-sm font-mono uppercase">{{ $tweet->locale }}</div>
-                </div>
-            @endif
+            <div class="bg-card border border-line rounded-md p-4">
+                <label class="block text-xs text-ink-3 mb-1 font-mono uppercase">語言</label>
+                <div class="text-sm font-mono uppercase">{{ $tweet->locale }}</div>
+            </div>
 
             {{-- Translations (same UX as posts edit) --}}
-            @if(!$isCreate)
-                <div class="bg-card border border-line rounded-md p-4">
-                    <h3 class="text-xs text-ink-3 font-mono uppercase mb-3">翻譯版本</h3>
-                    <div class="space-y-1 text-sm">
-                        @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
-                            @php $t = $translations[$loc] ?? null; @endphp
-                            <div class="flex items-center justify-between">
-                                <span class="font-mono uppercase text-xs text-ink-3 w-8">{{ $loc }}</span>
-                                @if($t)
-                                    <a href="{{ route('admin.tweets.edit', $t) }}" class="text-accent hover:text-accent-ink flex-1 truncate ml-2">
-                                        {{ \Illuminate\Support\Str::limit($t->body, 30) ?: '(empty)' }}
-                                    </a>
-                                @else
-                                    <button type="submit" form="translate-tweet-{{ $loc }}"
-                                        class="text-xs text-ink-3 hover:text-accent">
-                                        + 新增翻譯
-                                    </button>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
+            <div class="bg-card border border-line rounded-md p-4">
+                <h3 class="text-xs text-ink-3 font-mono uppercase mb-3">翻譯版本</h3>
+                <div class="space-y-1 text-sm">
+                    @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
+                        @php $t = $translations[$loc] ?? null; @endphp
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono uppercase text-xs text-ink-3 w-8">{{ $loc }}</span>
+                            @if($t)
+                                <a href="{{ route('admin.tweets.edit', $t) }}" class="text-accent hover:text-accent-ink flex-1 truncate ml-2">
+                                    {{ \Illuminate\Support\Str::limit($t->body, 30) ?: '(empty)' }}
+                                </a>
+                            @else
+                                <button type="submit" form="translate-tweet-{{ $loc }}"
+                                    class="text-xs text-ink-3 hover:text-accent">
+                                    + 新增翻譯
+                                </button>
+                            @endif
+                        </div>
+                    @endforeach
                 </div>
+            </div>
 
-                {{-- Metadata --}}
-                <div class="text-xs text-ink-3 font-mono space-y-1 px-1">
-                    <div>建立：{{ $tweet->created_at?->format('Y/m/d H:i') }}</div>
-                    <div>更新：{{ $tweet->updated_at?->format('Y/m/d H:i') }}</div>
-                </div>
-            @endif
+            {{-- Metadata --}}
+            <div class="text-xs text-ink-3 font-mono space-y-1 px-1">
+                <div>建立：{{ $tweet->created_at?->format('Y/m/d H:i') }}</div>
+                <div>更新：{{ $tweet->updated_at?->format('Y/m/d H:i') }}</div>
+            </div>
         </aside>
     </div>
 </form>
 
 {{-- Hidden "create translation" forms (referenced via form="..." attribute). --}}
-@if(!$isCreate)
-    @foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
-        @if(!isset($translations[$loc]))
-            <form id="translate-tweet-{{ $loc }}" method="POST"
-                action="{{ route('admin.tweets.create-translation', $tweet) }}" class="hidden">
-                @csrf
-                <input type="hidden" name="locale" value="{{ $loc }}">
-            </form>
-        @endif
-    @endforeach
-@endif
+@foreach(['zh', 'en', 'ja', 'vi', 'id'] as $loc)
+    @if(!isset($translations[$loc]))
+        <form id="translate-tweet-{{ $loc }}" method="POST"
+            action="{{ route('admin.tweets.create-translation', $tweet) }}" class="hidden">
+            @csrf
+            <input type="hidden" name="locale" value="{{ $loc }}">
+        </form>
+    @endif
+@endforeach
 @endsection

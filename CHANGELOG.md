@@ -1,3 +1,6 @@
+## 2026-11-28
+- "+ 新增 Tweet" on the admin tweet list now opens the same full-screen composer as the phone shortcut (centred on desktop), and cancelling or publishing returns to the page you came from; each photo has its own alt text and sensitive flag, replacing the tweet-wide sensitive switch
+
 ## 2026-11-27
 - Removed the retired Todo feature from the admin; the Changelog page reads only CHANGELOG.md as before
 - Old API tokens and the token-based /api endpoints are removed: AI assistants now connect through "AI 連線", which can also list content, tags, categories and media and rename tags and categories; existing tokens no longer work

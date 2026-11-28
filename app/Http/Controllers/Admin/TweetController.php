@@ -15,10 +15,17 @@ use App\Repositories\TweetRepository;
 use App\Services\TweetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TweetController extends Controller
 {
+    /** Where the composer may send me back to: redirect_to value => route name. */
+    private const COMPOSER_ORIGINS = [
+        'dashboard' => 'admin.dashboard',
+        'tweets' => 'admin.tweets.index',
+    ];
+
     public function index(IndexRequest $request, TweetRepository $repo): View
     {
         $params = $request->validated();
@@ -41,29 +48,12 @@ class TweetController extends Controller
         return view('admin.tweets.index', $data);
     }
 
-    public function create(TagRepository $tags): View
-    {
-        return view('admin.tweets.edit', [
-            'tweet' => new Tweet([
-                'status' => Tweet::STATUS_DRAFT,
-                'locale' => app()->getLocale(),
-            ]),
-            'translations' => collect(),
-            'tags' => $tags->all(),
-            'mode' => 'create',
-        ]);
-    }
-
     public function store(StoreRequest $request, TweetService $service): RedirectResponse
     {
         $tweet = $service->create($request->safe()->except('redirect_to'));
 
-        if ($request->validated('redirect_to') === 'dashboard') {
-            return redirect()->route('admin.dashboard')
-                ->with('success', $tweet->status === 'published' ? '已發布' : '已存草稿');
-        }
-
-        return redirect()->route('admin.tweets.edit', $tweet)->with('success', '已建立');
+        return $this->backToComposerOrigin($tweet, $request->validated('redirect_to'))
+            ?? redirect()->route('admin.tweets.edit', $tweet)->with('success', '已建立');
     }
 
     public function edit(Tweet $tweet, TagRepository $tags): View
@@ -74,7 +64,6 @@ class TweetController extends Controller
             'tweet' => $tweet,
             'translations' => $tweet->allTranslations()->keyBy('locale'),
             'tags' => $tags->all(),
-            'mode' => 'edit',
         ]);
     }
 
@@ -82,20 +71,38 @@ class TweetController extends Controller
     {
         $tweet = $service->update($tweet, $request->safe()->except(['redirect_to', 'tags_sent']));
 
-        if ($request->validated('redirect_to') === 'dashboard') {
-            return redirect()->route('admin.dashboard')
-                ->with('success', $tweet->status === Tweet::STATUS_PUBLISHED ? '已發布' : '已存草稿');
-        }
-
-        return redirect()->route('admin.tweets.edit', $tweet)->with('success', '已更新');
+        return $this->backToComposerOrigin($tweet, $request->validated('redirect_to'))
+            ?? redirect()->route('admin.tweets.edit', $tweet)->with('success', '已更新');
     }
 
-    /** Full-screen composer for posting a tweet from a phone (JYU-551). */
-    public function compose(TagRepository $tags): View
+    /**
+     * The composer and the quick tweet box send me back where I came from
+     * (JYU-542, JYU-563); other forms keep returning to the edit page.
+     */
+    private function backToComposerOrigin(Tweet $tweet, ?string $redirectTo): ?RedirectResponse
     {
+        $route = self::COMPOSER_ORIGINS[$redirectTo] ?? null;
+        if ($route === null) {
+            return null;
+        }
+
+        return redirect()->route($route)
+            ->with('success', $tweet->status === Tweet::STATUS_PUBLISHED ? '已發布' : '已存草稿');
+    }
+
+    /**
+     * Full-screen composer for new tweets (JYU-551), on desktop too since JYU-563.
+     * `?from=tweets` sends 取消 / 發布 back to the tweet list instead of the dashboard.
+     */
+    public function compose(Request $request, TagRepository $tags): View
+    {
+        $origin = $request->query('from') === 'tweets' ? 'tweets' : 'dashboard';
+
         return view('admin.tweets.compose', [
             'tags' => $tags->all(),
             'locale' => app()->getLocale(),
+            'origin' => $origin,
+            'cancelUrl' => route(self::COMPOSER_ORIGINS[$origin]),
         ]);
     }
 
