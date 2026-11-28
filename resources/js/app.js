@@ -662,16 +662,27 @@ window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
         saveState: 'idle',
         savedAt: null,
         submitting: false,
+        tokenChecked: false,
         timer: null,
         tick: 0,
         init() {
             setInterval(() => { this.tick++; }, 15000);
             window.addEventListener('beforeunload', (e) => {
-                if (!this.submitting && (this.saveState === 'dirty' || this.saveState === 'saving')) {
+                if (!this.submitting && ['dirty', 'saving', 'logged-out'].includes(this.saveState)) {
                     e.preventDefault();
                     e.returnValue = '';
                 }
             });
+            // Back from logging in on another tab: carry on saving.
+            window.addEventListener('focus', () => this.recheckLogin());
+        },
+        submit(event) {
+            return submitWithFreshToken(this, event);
+        },
+        async recheckLogin() {
+            if (this.saveState !== 'logged-out' || !(await refreshCsrfToken())) return;
+            this.saveState = 'dirty';
+            this.autosave();
         },
         get selectedTags() {
             return this.selected.map((id) => this.tags.find((t) => t.id === id)).filter(Boolean);
@@ -686,6 +697,7 @@ window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
                 case 'saved': return `草稿已自動儲存 · ${relativeTime(this.savedAt)}`;
                 case 'saving': return '儲存中…';
                 case 'error': return '自動儲存失敗';
+                case 'logged-out': return '已登出，內容尚未儲存';
                 case 'dirty': return '有變更，稍後自動儲存';
                 default: return '尚未儲存';
             }
@@ -703,11 +715,8 @@ window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
             if (this.tweetId) fd.set('tweet_id', this.tweetId);
             this.saveState = 'saving';
             try {
-                const res = await fetch(autosaveUrl, {
-                    method: 'POST',
-                    headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: fd,
-                });
+                const res = await postWithFreshToken(autosaveUrl, fd);
+                if (!res) { this.saveState = 'logged-out'; return; }
                 if (res.status === 422 || res.status === 409) { this.saveState = 'idle'; return; }
                 if (!res.ok) throw new Error(String(res.status));
                 const data = await res.json();
@@ -936,6 +945,68 @@ const CJK = /[぀-ヿ㐀-鿿豈-﫿가-힯]/g;
 const READING = { zh: ['char', 400], ja: ['char', 500], en: ['word', 230], vi: ['word', 230], id: ['word', 230] };
 const INTERNAL_LINK = /\]\((?:https?:\/\/[^)\/\s]+)?\/(?:zh|en|ja|vi|id)\/(?:posts|tweets)\/([^)\s]+)\)/g;
 
+/*
+ * Expired sessions in the editors (JYU-565). An editor can sit open longer than
+ * the session lives; the next POST then fails CSRF (419) even when 「記住我」 is
+ * still valid. Fetching a fresh token logs back in through that cookie; when it
+ * answers 401 the admin really is logged out and the editor says so, keeping
+ * what was typed on the page.
+ */
+async function refreshCsrfToken() {
+    try {
+        const res = await fetch('/admin/session/csrf-token', {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store',
+        });
+        if (!res.ok) return false;
+        const { token } = await res.json();
+        document.querySelector('meta[name=csrf-token]')?.setAttribute('content', token);
+        document.querySelectorAll('input[name=_token]').forEach((input) => { input.value = token; });
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+/** Autosave POST that retries once with a fresh token. Resolves to null when logged out. */
+async function postWithFreshToken(url, body) {
+    const send = () => fetch(url, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+        body,
+    });
+    const expired = (res) => res.status === 419 || res.status === 401;
+    let res = await send();
+    if (expired(res)) {
+        if (!(await refreshCsrfToken())) return null;
+        res = await send();
+        if (expired(res)) return null;
+    }
+    return res;
+}
+
+/**
+ * Submit handler for the editor forms: refresh the CSRF token before the real
+ * submit, so 發布 / ⌘S after a long pause doesn't land on a 419 page and lose
+ * the text. When logged out, stay on the page in the 'logged-out' state.
+ */
+async function submitWithFreshToken(editor, event) {
+    if (editor.tokenChecked) {
+        editor.submitting = true;
+        return;
+    }
+    event.preventDefault();
+    const form = event.target;
+    const submitter = event.submitter;
+    if (!(await refreshCsrfToken())) {
+        editor.saveState = 'logged-out';
+        return;
+    }
+    editor.tokenChecked = true;
+    if (submitter) form.requestSubmit(submitter);
+    else form.requestSubmit();
+}
+
 function relativeTime(date) {
     if (!date) return '';
     const s = Math.round((Date.now() - date.getTime()) / 1000);
@@ -955,6 +1026,7 @@ window.postEditor = function ({ postId, status, locale, publishWhen = 'now', aut
         saveState: postId ? 'saved' : 'idle',
         savedAt: null,
         submitting: false,
+        tokenChecked: false,
         timer: null,
         previewTimer: null,
         previewHtml: '',
@@ -966,13 +1038,20 @@ window.postEditor = function ({ postId, status, locale, publishWhen = 'now', aut
         init() {
             this.readFields();
             setInterval(() => { this.tick++; }, 15000);
-            this.$root.addEventListener('submit', () => { this.submitting = true; });
+            this.$root.addEventListener('submit', (e) => submitWithFreshToken(this, e));
             window.addEventListener('beforeunload', (e) => {
-                if (!this.submitting && (this.saveState === 'dirty' || this.saveState === 'saving')) {
+                if (!this.submitting && ['dirty', 'saving', 'logged-out'].includes(this.saveState)) {
                     e.preventDefault();
                     e.returnValue = '';
                 }
             });
+            // Back from logging in on another tab: carry on saving.
+            window.addEventListener('focus', () => this.recheckLogin());
+        },
+        async recheckLogin() {
+            if (this.saveState !== 'logged-out' || !(await refreshCsrfToken())) return;
+            this.saveState = 'dirty';
+            if (this.status === 'draft') this.autosave();
         },
         field(name) {
             return this.$root.elements.namedItem(name);
@@ -987,6 +1066,7 @@ window.postEditor = function ({ postId, status, locale, publishWhen = 'now', aut
                 case 'saved': return this.savedAt ? `已自動儲存 · ${relativeTime(this.savedAt)}` : '已儲存';
                 case 'saving': return '儲存中…';
                 case 'error': return '自動儲存失敗，請按 ⌘S';
+                case 'logged-out': return '已登出，內容尚未儲存';
                 case 'dirty': return this.status === 'draft' ? '有變更，稍後自動儲存' : '有未儲存的變更 · ⌘S 儲存';
                 default: return '尚未儲存';
             }
@@ -1007,11 +1087,8 @@ window.postEditor = function ({ postId, status, locale, publishWhen = 'now', aut
             if (this.postId) fd.set('post_id', this.postId);
             this.saveState = 'saving';
             try {
-                const res = await fetch(autosaveUrl, {
-                    method: 'POST',
-                    headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: fd,
-                });
+                const res = await postWithFreshToken(autosaveUrl, fd);
+                if (!res) { this.saveState = 'logged-out'; return; }
                 if (res.status === 409 || res.status === 422) { this.saveState = 'dirty'; return; }
                 if (!res.ok) throw new Error(String(res.status));
                 const data = await res.json();

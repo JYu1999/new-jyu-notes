@@ -53,6 +53,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('drafts', [Admin\DashboardController::class, 'drafts'])->name('drafts.index');
 
+        // Editors fetch a fresh CSRF token when the session expired under them (JYU-565).
+        Route::get('session/csrf-token', [Admin\SessionController::class, 'csrfToken'])->name('session.csrf');
+
         // Posts
         Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
         Route::get('posts/create', [Admin\PostController::class, 'create'])->name('posts.create');

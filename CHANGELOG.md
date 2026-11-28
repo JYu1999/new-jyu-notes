@@ -1,3 +1,6 @@
+## 2026-11-28
+- "Remember me" on the admin login now lasts 7 days instead of about a year, and remembered logins from before this change have to sign in again; if you get logged out while writing a post or tweet, the editor says so with a link to sign in again and keeps your text, then carries on autosaving when you come back
+
 ## 2026-11-27
 - Removed the retired Todo feature from the admin; the Changelog page reads only CHANGELOG.md as before
 - Old API tokens and the token-based /api endpoints are removed: AI assistants now connect through "AI 連線", which can also list content, tags, categories and media and rename tags and categories; existing tokens no longer work
