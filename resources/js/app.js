@@ -2,6 +2,7 @@ import Alpine from 'alpinejs';
 import { parseYoutubeUrl, youtubeShortcode } from './youtube';
 import { applyCommand, filterCommands, slashQueryAt } from './slash-commands';
 import './post-reading';
+import './passkeys';
 
 window.Alpine = Alpine;
 

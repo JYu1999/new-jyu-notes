@@ -2,12 +2,17 @@
 
 namespace App\Providers;
 
+use App\Actions\Passkeys\StorePasskey;
+use App\Http\Responses\PasskeyConfirmedResponse;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Tweet;
 use App\Services\RevisionService;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passkeys\Actions\StorePasskey as BaseStorePasskey;
+use Laravel\Passkeys\Contracts\PasskeyConfirmationResponse;
+use Laravel\Passkeys\Passkeys;
 use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
 
         // OAuth routes are declared in routes/ai.php (JYU-554).
         Passport::ignoreRoutes();
+
+        // Passkey routes are declared in routes/web.php (JYU-566).
+        Passkeys::ignoreRoutes();
+        $this->app->singleton(PasskeyConfirmationResponse::class, PasskeyConfirmedResponse::class);
+        $this->app->bind(BaseStorePasskey::class, StorePasskey::class);
     }
 
     /**
