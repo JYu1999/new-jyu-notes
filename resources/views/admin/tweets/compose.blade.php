@@ -1,32 +1,51 @@
 @extends('layouts.editor')
 
-@section('title', '新碎念')
+@section('title', $tweet ? '編輯碎念' : '新碎念')
 
 {{--
     Full-screen tweet composer (JYU-551): cancel / publish header, language + tags,
     text with @ mentions, up to 4 photos with upload progress, per-photo alt text and
     sensitive flag, and draft autosave. Also how new tweets are added on desktop (JYU-563, centred column).
+    With $tweet it edits that tweet (JYU-567): drafts keep autosaving and are published with 發布; live tweets
+    only change when 儲存 is pressed. The language is fixed, and translations, history and dates sit under the text.
 --}}
 @section('content')
 @php
     $locales = ['zh' => '繁中', 'en' => 'English', 'ja' => '日本語', 'vi' => 'Tiếng Việt', 'id' => 'Indonesia'];
     $tagOptions = $tags->map(fn ($t) => ['id' => $t->id, 'name' => $t->name('zh') ?: '(unnamed)'])->values();
+    $isDraft = ! $tweet || $tweet->status === \App\Models\Tweet::STATUS_DRAFT;
+    $statusLabels = ['draft' => '草稿', 'published' => '已發布', 'hidden' => '隱藏'];
+    $composeOptions = [
+        'autosaveUrl' => route('admin.tweets.autosave'),
+        'tags' => $tagOptions,
+        'selected' => $tweet ? $tweet->tags->pluck('id')->values() : [],
+        'tweetId' => $tweet?->id,
+        'autosave' => $isDraft,
+    ];
 @endphp
 
-<form method="POST" action="{{ route('admin.tweets.store') }}" id="compose-form"
-    x-data="tweetCompose({ autosaveUrl: @js(route('admin.tweets.autosave')), tags: @js($tagOptions) })"
+<form method="POST" action="{{ $tweet ? route('admin.tweets.update', $tweet) : route('admin.tweets.store') }}" id="compose-form"
+    x-data="tweetCompose(@js($composeOptions))"
     @input="changed()" @change="changed()" @media-changed="changed()" @submit="submit($event)"
     class="min-h-[100dvh] flex flex-col max-w-xl mx-auto bg-paper md:border-x md:border-line">
     @csrf
+    @if($tweet)
+        @method('PUT')
+    @endif
     <input type="hidden" name="redirect_to" value="{{ $origin }}">
     <input type="hidden" name="tags_sent" value="1">
 
-    <div x-data="tweetMediaUpload({ initial: [] })" class="flex-1 flex flex-col">
+    <div x-data="tweetMediaUpload({ initial: @js(old('media', $tweet?->media ?? [])) })" class="flex-1 flex flex-col">
         <header class="sticky top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center h-14 px-4 border-b border-line bg-paper/95 backdrop-blur-sm">
             <a href="{{ $cancelUrl }}" class="justify-self-start inline-flex items-center min-h-11 text-[15px] text-ink-2 hover:text-accent">取消</a>
-            <h1 class="m-0 font-sans text-base font-bold tracking-normal">新碎念</h1>
-            <button type="submit" name="status" value="published" data-publish :disabled="uploading !== 0"
-                class="justify-self-end h-9 px-4 rounded-full bg-ink text-paper text-sm font-semibold hover:bg-accent disabled:opacity-50">發布</button>
+            <h1 class="m-0 font-sans text-base font-bold tracking-normal">{{ $tweet ? '編輯碎念' : '新碎念' }}</h1>
+            @if($isDraft)
+                <button type="submit" name="status" value="published" data-publish :disabled="uploading !== 0"
+                    class="justify-self-end h-9 px-4 rounded-full bg-ink text-paper text-sm font-semibold hover:bg-accent disabled:opacity-50">發布</button>
+            @else
+                <button type="submit" data-save :disabled="uploading !== 0"
+                    class="justify-self-end h-9 px-4 rounded-full bg-ink text-paper text-sm font-semibold hover:bg-accent disabled:opacity-50">儲存</button>
+            @endif
         </header>
 
         @if($errors->any())
@@ -37,13 +56,19 @@
 
         {{-- Language + tags --}}
         <div class="flex flex-wrap items-center gap-2 px-4 pt-3">
-            <label class="sr-only" for="compose-locale">語言</label>
-            <select id="compose-locale" name="locale"
-                class="h-9 pl-3 pr-8 rounded-full border border-line-2 bg-transparent text-[13px] font-semibold text-ink">
-                @foreach($locales as $code => $label)
-                    <option value="{{ $code }}" @selected(old('locale', $locale) === $code)>{{ $label }}</option>
-                @endforeach
-            </select>
+            @if($tweet)
+                {{-- The language of an existing tweet is fixed; other languages are translations. --}}
+                <span data-compose-locale title="語言" class="inline-flex items-center h-9 px-3 rounded-full border border-line-2 text-[13px] font-semibold text-ink">{{ $locales[$tweet->locale] ?? strtoupper($tweet->locale) }}</span>
+                <span data-compose-status class="inline-flex items-center h-9 px-3 rounded-full bg-paper-2 text-[13px] text-ink-2">{{ $statusLabels[$tweet->status] ?? $tweet->status }}</span>
+            @else
+                <label class="sr-only" for="compose-locale">語言</label>
+                <select id="compose-locale" name="locale"
+                    class="h-9 pl-3 pr-8 rounded-full border border-line-2 bg-transparent text-[13px] font-semibold text-ink">
+                    @foreach($locales as $code => $label)
+                        <option value="{{ $code }}" @selected(old('locale', $locale) === $code)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            @endif
 
             <template x-for="tag in selectedTags" :key="tag.id">
                 <span data-tag-chip class="inline-flex items-center gap-1 h-9 pl-3 pr-1 rounded-full bg-paper-2 text-[13px] text-ink-2">
@@ -57,14 +82,14 @@
         </div>
 
         {{-- Text --}}
-        <div class="relative px-4" x-data="tweetComposer({ locale: @js($locale) })"
+        <div class="relative px-4" x-data="tweetComposer({ locale: @js($locale), tweetId: @js($tweet?->id) })"
             @insert-mention.window="$refs.body.focus(); $refs.body.setRangeText('@', $refs.body.selectionStart, $refs.body.selectionEnd, 'end'); detectMention()">
             <label for="compose-body" class="sr-only">碎念內容</label>
             <textarea id="compose-body" name="body" x-ref="body" maxlength="2000" required rows="6"
                 placeholder="在想什麼？支援 Markdown、@ 引用文章或碎念"
                 @paste="handlePaste($event)" @paste.capture="if ($event.clipboardData?.files?.length) { $event.preventDefault(); add($event.clipboardData.files) }"
                 @input="dismissYtPrompt(); detectMention()" @keydown="onMentionKeydown($event)"
-                class="block w-full min-h-[30vh] py-4 border-0 bg-transparent text-[17px] leading-[1.7] text-ink placeholder:text-ink-3 resize-none field-sizing-content focus:outline-none">{{ old('body') }}</textarea>
+                class="block w-full min-h-[30vh] py-4 border-0 bg-transparent text-[17px] leading-[1.7] text-ink placeholder:text-ink-3 resize-none field-sizing-content focus:outline-none">{{ old('body', $tweet?->body) }}</textarea>
             @include('admin.partials.youtube-embed-prompt')
             <div x-show="mentionActive && mentionResults.length" x-cloak role="listbox" aria-label="引用建議"
                 class="absolute left-4 right-4 z-20 bg-card border border-line rounded-lg shadow-lg overflow-hidden max-h-64 overflow-y-auto">
@@ -110,8 +135,39 @@
                 </div>
             </template>
         </div>
+        {{-- With every photo removed, still send `media` so the tweet's photos are cleared. --}}
+        <template x-if="items.length === 0"><input type="hidden" name="media" value=""></template>
         <p x-show="items.length" x-cloak class="m-0 px-4 pb-3 text-xs text-ink-3">標記敏感的照片會先模糊，讀者點一下才顯示</p>
         <p x-show="error" x-cloak class="m-0 px-4 pb-2 text-xs text-danger" x-text="error"></p>
+
+        @if($tweet)
+            {{-- Translations, version history and dates from the old edit page (JYU-567). --}}
+            <section data-tweet-info aria-label="碎念資訊" class="mx-4 mt-2 mb-4 rounded-[var(--radius-card)] border border-line divide-y divide-line">
+                <div class="px-3 py-2">
+                    <h2 class="m-0 py-1 font-sans text-xs font-semibold tracking-normal text-ink-3">翻譯版本</h2>
+                    <ul class="m-0 p-0 list-none">
+                        @foreach($locales as $code => $label)
+                            @php $t = $translations[$code] ?? null; @endphp
+                            <li class="flex items-center gap-3 min-h-10 text-sm">
+                                <span class="w-20 shrink-0 text-[13px] text-ink-3">{{ $label }}</span>
+                                @if($code === $tweet->locale)
+                                    <span class="text-ink-2">目前這篇</span>
+                                @elseif($t)
+                                    <a href="{{ route('admin.tweets.edit', $t) }}" class="min-w-0 truncate text-accent hover:text-accent-ink">{{ \Illuminate\Support\Str::limit($t->body, 30) ?: '（空白）' }}</a>
+                                @else
+                                    <button type="submit" form="translate-tweet-{{ $code }}" class="min-h-10 text-[13px] text-ink-3 hover:text-accent">＋ 新增翻譯</button>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-3 py-2 text-xs text-ink-3">
+                    <a href="{{ route('admin.revisions.index', ['type' => 'tweets', 'id' => $tweet->id]) }}" data-history-link
+                        class="inline-flex items-center min-h-10 text-sm text-accent hover:text-accent-ink">版本紀錄 · {{ $tweet->revisions()->count() }}</a>
+                    <span class="font-mono">建立 {{ $tweet->created_at?->format('Y/m/d H:i') }} · 更新 {{ $tweet->updated_at?->format('Y/m/d H:i') }}</span>
+                </div>
+            </section>
+        @endif
 
         <span class="flex-1"></span>
 
@@ -152,4 +208,16 @@
         </div>
     </div>
 </form>
+
+@if($tweet)
+    {{-- "＋ 新增翻譯" buttons submit these (form="..."), outside the composer form. --}}
+    @foreach(array_keys($locales) as $code)
+        @if(! isset($translations[$code]))
+            <form id="translate-tweet-{{ $code }}" method="POST" action="{{ route('admin.tweets.create-translation', $tweet) }}" class="hidden">
+                @csrf
+                <input type="hidden" name="locale" value="{{ $code }}">
+            </form>
+        @endif
+    @endforeach
+@endif
 @endsection

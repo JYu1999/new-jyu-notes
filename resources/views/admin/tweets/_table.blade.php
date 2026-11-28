@@ -25,6 +25,14 @@
                         <a href="{{ route('admin.revisions.index', ['type' => 'tweets', 'id' => $t->id]) }}" data-history-link class="text-ink-2 hover:text-accent">版本</a>
                     @else
                         <a href="{{ route('admin.tweets.edit', $t->id) }}" class="text-accent hover:text-accent-ink">編輯</a>
+                        {{-- Hiding lives here since the editor dropped its status menu (JYU-567). --}}
+                        @if(in_array($t->status, ['published', 'hidden'], true))
+                            <form method="POST" action="{{ route('admin.tweets.status', $t->id) }}" class="inline">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="status" value="{{ $t->status === 'published' ? 'hidden' : 'published' }}">
+                                <button class="text-ink-2 hover:text-accent">{{ $t->status === 'published' ? '隱藏' : '取消隱藏' }}</button>
+                            </form>
+                        @endif
                         <form method="POST" action="{{ route('admin.tweets.destroy', $t->id) }}" class="inline" onsubmit="return confirm('確定？')">
                             @csrf @method('DELETE')
                             <button class="text-danger hover:underline">刪除</button>

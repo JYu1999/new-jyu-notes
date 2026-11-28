@@ -144,7 +144,7 @@ class AdminDashboardTest extends TestCase
 
         $this->assertMatchesRegularExpression('/href="'.preg_quote(route('admin.posts.edit', $post), '/').'"[\s\S]*?文章 · ZH · 2小時前[\s\S]*?1,240 字/u', $cw);
         $this->assertMatchesRegularExpression('/href="'.preg_quote(route('admin.posts.edit', $translation), '/').'"[\s\S]*?翻譯 · EN · 1天前[\s\S]*?譯自〈如何工作匯報？〉/u', $cw);
-        $this->assertMatchesRegularExpression('/href="'.preg_quote(route('admin.tweets.edit', $tweet), '/').'"[\s\S]*?碎念 · ZH[\s\S]*?（未命名）關於早起/u', $cw);
+        $this->assertMatchesRegularExpression('/href="'.preg_quote(e(route('admin.tweets.edit', ['tweet' => $tweet, 'from' => 'dashboard'])), '/').'"[\s\S]*?碎念 · ZH[\s\S]*?（未命名）關於早起/u', $cw);
 
         $this->assertMatchesRegularExpression('/href="'.preg_quote(route('admin.drafts.index'), '/').'"[^>]*>\s*所有草稿 \(4\) →/u', $cw);
     }
