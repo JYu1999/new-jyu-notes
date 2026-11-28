@@ -26,8 +26,8 @@ class StoreRequest extends FormRequest
             'published_at' => 'nullable|date',
             'tag_ids' => 'array',
             'tag_ids.*' => 'integer|exists:tags,id',
-            // Quick tweet on the admin home goes back there (JYU-542).
-            'redirect_to' => 'nullable|in:dashboard',
+            // Quick tweet / composer go back where they came from (JYU-542, JYU-563).
+            'redirect_to' => 'nullable|in:dashboard,tweets',
         ];
     }
 }

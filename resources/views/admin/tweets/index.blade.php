@@ -9,7 +9,7 @@
         <h1 class="font-serif text-2xl font-semibold">Tweets</h1>
         <p class="text-sm text-ink-3 mt-1">總共 {{ $counts['all'] }} 則</p>
     </div>
-    <a href="{{ route('admin.tweets.create') }}" class="bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-ink text-sm font-medium">+ 新增 Tweet</a>
+    <a href="{{ route('admin.tweets.compose', ['from' => 'tweets']) }}" class="bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-ink text-sm font-medium">+ 新增 Tweet</a>
 </header>
 
 <div class="border-b border-line mb-6 flex items-center gap-1 overflow-x-auto">
