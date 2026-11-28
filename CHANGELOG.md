@@ -1,4 +1,5 @@
 ## 2026-11-28
+- Security update: upgraded Laravel, Symfony, Guzzle, CommonMark, Flysystem and front-end build tools (Vite, PostCSS, concurrently) to patched versions, closing every advisory reported by `composer audit` and `npm audit`
 - "+ 新增 Tweet" on the admin tweet list now opens the same full-screen composer as the phone shortcut (centred on desktop), and cancelling or publishing returns to the page you came from; each photo has its own alt text and sensitive flag, replacing the tweet-wide sensitive switch
 
 ## 2026-11-27
