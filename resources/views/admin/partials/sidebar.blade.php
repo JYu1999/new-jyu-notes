@@ -35,12 +35,16 @@
         @endforeach
     </nav>
 
-    <div class="flex items-center gap-2.5 px-2.5 pt-3 border-t border-line">
-        <span aria-hidden="true" class="flex items-center justify-center size-8 rounded-full bg-ink text-paper text-[13px] font-bold">{{ mb_strtoupper(mb_substr($user?->name ?? '?', 0, 1)) }}</span>
-        <span class="flex-1 min-w-0">
-            <span class="block text-sm text-ink truncate">{{ $user?->name }}</span>
-            <span class="block text-xs text-ink-3 truncate">{{ $user?->email }}</span>
-        </span>
+    <div class="flex items-center gap-1 pt-3 border-t border-line">
+        {{-- 帳號與安全 (JYU-566): reached from the account block, not the main nav. --}}
+        <a href="{{ route('admin.account.show') }}" title="帳號與安全" @if(request()->routeIs('admin.account.*')) aria-current="page" @endif
+            class="flex-1 min-w-0 flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->routeIs('admin.account.*') ? 'bg-paper-2' : 'hover:bg-paper-2' }}">
+            <span aria-hidden="true" class="flex items-center justify-center size-8 shrink-0 rounded-full bg-ink text-paper text-[13px] font-bold">{{ mb_strtoupper(mb_substr($user?->name ?? '?', 0, 1)) }}</span>
+            <span class="flex-1 min-w-0">
+                <span class="block text-sm text-ink truncate">{{ $user?->name }}</span>
+                <span class="block text-xs text-ink-3 truncate">{{ $user?->email }}</span>
+            </span>
+        </a>
         <form method="POST" action="{{ route('auth.logout') }}">
             @csrf
             <button type="submit" class="min-h-9 px-2 text-[13px] text-ink-3 hover:text-accent">登出</button>

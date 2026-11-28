@@ -42,6 +42,8 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            // 「記住我」cookie lifetime in minutes (JYU-565): 7 days instead of Laravel's ~400.
+            'remember' => (int) env('AUTH_REMEMBER_MINUTES', 60 * 24 * 7),
         ],
 
         // AI connections over MCP (JYU-554): OAuth access tokens issued by Passport.

@@ -36,7 +36,7 @@ class ChangelogService
         $groups = collect();
         $currentDate = null;
 
-        foreach (preg_split('/\R/', File::get($path)) as $line) {
+        foreach (preg_split('/\R/u', File::get($path)) as $line) {
             $line = rtrim($line);
 
             // 以 # 開頭來判斷標題
@@ -53,7 +53,7 @@ class ChangelogService
                 continue;
             }
             // 有效的日期與以- 為開頭，這兩個條件要同時存在
-            if ($currentDate !== null && preg_match('/^-\s+(.+)$/', $line, $match) === 1) {
+            if ($currentDate !== null && preg_match('/^-\s+(.+)$/u', $line, $match) === 1) {
                 $title = trim($match[1]);
                 $groups->put($currentDate, $groups->get($currentDate)->push((object) [
                     'title' => $title,

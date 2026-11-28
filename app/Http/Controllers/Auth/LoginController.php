@@ -29,6 +29,11 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        // JYU-566: the password was just typed, so adding a passkey right away needs
+        // no second prompt; and the admin layout offers a passkey for this device once.
+        $request->session()->passwordConfirmed();
+        $request->session()->put('passkeys.offer', true);
+
         return redirect()->intended(route('admin.dashboard'));
     }
 

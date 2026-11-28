@@ -4,6 +4,9 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public;
 use Illuminate\Support\Facades\Route;
+use Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController;
+use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
+use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +37,12 @@ Route::post('/locale/{locale}', [Public\LocaleController::class, 'switch'])
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('auth.login.show');
     Route::post('/login', [LoginController::class, 'store'])->name('auth.login.store');
+
+    // 「用 Passkey 登入」(JYU-566): same session login as the password form.
+    Route::middleware(config('passkeys.throttle'))->group(function () {
+        Route::get('/login/passkey/options', [PasskeyLoginController::class, 'index'])->name('auth.passkey.options');
+        Route::post('/login/passkey', [PasskeyLoginController::class, 'store'])->name('auth.passkey.login');
+    });
 });
 
 Route::middleware('auth')->group(function () {
@@ -52,6 +61,9 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('drafts', [Admin\DashboardController::class, 'drafts'])->name('drafts.index');
+
+        // Editors fetch a fresh CSRF token when the session expired under them (JYU-565).
+        Route::get('session/csrf-token', [Admin\SessionController::class, 'csrfToken'])->name('session.csrf');
 
         // Posts
         Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
@@ -115,6 +127,22 @@ Route::middleware(['auth', 'role:admin'])
         Route::put('agents/policy', [Admin\AgentController::class, 'updatePolicy'])->name('agents.policy');
         Route::put('agents/connections/{connection}/policy', [Admin\AgentController::class, 'updateConnectionPolicy'])->name('agents.connections.policy');
         Route::delete('agents/connections/{connection}', [Admin\AgentController::class, 'revoke'])->name('agents.connections.revoke');
+
+        // 帳號與安全 (JYU-566): passkeys. Adding or deleting one needs identity
+        // re-confirmed (password or an existing passkey) within passkeys.confirm_timeout.
+        $reconfirm = 'password.confirm:admin.account.confirm,'.config('passkeys.confirm_timeout');
+        Route::get('account', [Admin\AccountController::class, 'show'])->name('account.show');
+        Route::get('account/confirm', [Admin\ConfirmIdentityController::class, 'show'])->name('account.confirm');
+        Route::post('account/confirm', [Admin\ConfirmIdentityController::class, 'store'])
+            ->middleware(config('passkeys.throttle'))->name('account.confirm.password');
+        Route::middleware(config('passkeys.throttle'))->group(function () use ($reconfirm) {
+            Route::get('account/confirm/passkey', [PasskeyConfirmationController::class, 'index'])->name('account.confirm.passkey-options');
+            Route::post('account/confirm/passkey', [PasskeyConfirmationController::class, 'store'])->name('account.confirm.passkey');
+            Route::get('account/passkeys/options', [PasskeyRegistrationController::class, 'index'])->middleware($reconfirm)->name('account.passkeys.options');
+            Route::post('account/passkeys', [PasskeyRegistrationController::class, 'store'])->middleware($reconfirm)->name('account.passkeys.store');
+        });
+        Route::patch('account/passkeys/{passkey}', [Admin\AccountController::class, 'update'])->name('account.passkeys.update');
+        Route::delete('account/passkeys/{passkey}', [Admin\AccountController::class, 'destroy'])->middleware($reconfirm)->name('account.passkeys.destroy');
 
         // Version history of posts, tweets and pages (JYU-553).
         Route::get('{type}/{id}/revisions', [Admin\RevisionController::class, 'index'])

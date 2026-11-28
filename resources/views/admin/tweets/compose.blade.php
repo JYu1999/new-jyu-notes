@@ -26,7 +26,7 @@
 
 <form method="POST" action="{{ $tweet ? route('admin.tweets.update', $tweet) : route('admin.tweets.store') }}" id="compose-form"
     x-data="tweetCompose(@js($composeOptions))"
-    @input="changed()" @change="changed()" @media-changed="changed()" @submit="submitting = true"
+    @input="changed()" @change="changed()" @media-changed="changed()" @submit="submit($event)"
     class="min-h-[100dvh] flex flex-col max-w-xl mx-auto bg-paper md:border-x md:border-line">
     @csrf
     @if($tweet)
@@ -183,8 +183,10 @@
             <span class="font-mono text-xs text-ink-3" x-text="items.length + pending.length + ' / 4'">0 / 4</span>
             <span class="flex-1"></span>
             <span data-autosave-status class="inline-flex items-center gap-1.5 text-xs text-ink-3" aria-live="polite">
-                <span aria-hidden="true" class="size-2 rounded-full" :class="{ 'bg-good': saveState === 'saved', 'bg-warn': saveState === 'dirty' || saveState === 'saving', 'bg-danger': saveState === 'error', 'bg-line-2': saveState === 'idle' }"></span>
+                <span aria-hidden="true" class="size-2 rounded-full" :class="{ 'bg-good': saveState === 'saved', 'bg-warn': saveState === 'dirty' || saveState === 'saving', 'bg-danger': saveState === 'error' || saveState === 'logged-out', 'bg-line-2': saveState === 'idle' }"></span>
                 <span x-text="saveLabel">尚未儲存</span>
+                {{-- Logged out while writing (JYU-565): log in on another tab, then come back. --}}
+                <a x-show="saveState === 'logged-out'" x-cloak href="{{ route('auth.login.show') }}" target="_blank" rel="noopener" class="font-semibold text-accent underline underline-offset-2">重新登入</a>
             </span>
         </div>
     </div>

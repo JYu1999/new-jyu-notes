@@ -40,6 +40,10 @@
                     {{ session('success') }}
                 </div>
             @endif
+            {{-- JYU-566: once, right after a password login. --}}
+            @if(session()->pull('passkeys.offer'))
+                @include('admin.partials.passkey-offer')
+            @endif
             <div class="px-6 py-8">
                 @yield('content')
             </div>
