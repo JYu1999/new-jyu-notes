@@ -33,3 +33,6 @@ Thumbs.db
 
 # brainstorming visual companion
 .superpowers/
+
+oauth-private.key
+oauth-public.key

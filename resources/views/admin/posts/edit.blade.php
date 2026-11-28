@@ -72,8 +72,10 @@
         <span class="flex-1"></span>
 
         <span data-autosave-status class="inline-flex items-center gap-1.5 text-[13px] text-ink-3" aria-live="polite">
-            <span aria-hidden="true" class="size-2 rounded-full" :class="{ 'bg-good': saveState === 'saved', 'bg-warn': saveState === 'dirty' || saveState === 'saving', 'bg-danger': saveState === 'error', 'bg-line-2': saveState === 'idle' }"></span>
+            <span aria-hidden="true" class="size-2 rounded-full" :class="{ 'bg-good': saveState === 'saved', 'bg-warn': saveState === 'dirty' || saveState === 'saving', 'bg-danger': saveState === 'error' || saveState === 'logged-out', 'bg-line-2': saveState === 'idle' }"></span>
             <span x-text="saveLabel">{{ $isCreate ? '尚未儲存' : '已儲存' }}</span>
+            {{-- Logged out while writing (JYU-565): log in on another tab, then come back. --}}
+            <a x-show="saveState === 'logged-out'" x-cloak href="{{ route('auth.login.show') }}" target="_blank" rel="noopener" class="font-semibold text-accent underline underline-offset-2">重新登入</a>
         </span>
 
         @if($scheduled)
