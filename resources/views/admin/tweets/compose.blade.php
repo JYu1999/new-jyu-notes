@@ -3,9 +3,9 @@
 @section('title', '新碎念')
 
 {{--
-    Full-screen tweet composer for phones (JYU-551): cancel / publish header, language + tags,
-    text with @ mentions, up to 4 photos with upload progress, a sensitive-content switch and
-    draft autosave. Also usable on desktop (centred column).
+    Full-screen tweet composer (JYU-551): cancel / publish header, language + tags,
+    text with @ mentions, up to 4 photos with upload progress, per-photo alt text and
+    sensitive flag, and draft autosave. Also how new tweets are added on desktop (JYU-563, centred column).
 --}}
 @section('content')
 @php
@@ -18,12 +18,12 @@
     @input="changed()" @change="changed()" @media-changed="changed()" @submit="submitting = true"
     class="min-h-[100dvh] flex flex-col max-w-xl mx-auto bg-paper md:border-x md:border-line">
     @csrf
-    <input type="hidden" name="redirect_to" value="dashboard">
+    <input type="hidden" name="redirect_to" value="{{ $origin }}">
     <input type="hidden" name="tags_sent" value="1">
 
     <div x-data="tweetMediaUpload({ initial: [] })" class="flex-1 flex flex-col">
         <header class="sticky top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center h-14 px-4 border-b border-line bg-paper/95 backdrop-blur-sm">
-            <a href="{{ route('admin.dashboard') }}" class="justify-self-start inline-flex items-center min-h-11 text-[15px] text-ink-2 hover:text-accent">取消</a>
+            <a href="{{ $cancelUrl }}" class="justify-self-start inline-flex items-center min-h-11 text-[15px] text-ink-2 hover:text-accent">取消</a>
             <h1 class="m-0 font-sans text-base font-bold tracking-normal">新碎念</h1>
             <button type="submit" name="status" value="published" data-publish :disabled="uploading !== 0"
                 class="justify-self-end h-9 px-4 rounded-full bg-ink text-paper text-sm font-semibold hover:bg-accent disabled:opacity-50">發布</button>
@@ -78,18 +78,27 @@
             </div>
         </div>
 
-        {{-- Photos (max 4) with upload progress --}}
+        {{-- Photos (max 4) with upload progress; each has its own alt text and sensitive flag (JYU-563) --}}
         <div x-show="items.length || pending.length" x-cloak data-photos class="grid grid-cols-2 gap-2 px-4 pb-3">
             <template x-for="(item, i) in items" :key="item.path">
-                <div class="relative aspect-[4/3] rounded-[var(--radius-card)] overflow-hidden border border-line bg-paper-2">
-                    <template x-if="item.type === 'image'"><img :src="url(item)" alt="" class="size-full object-cover"></template>
-                    <template x-if="item.type === 'video'"><video :src="url(item)" class="size-full object-cover" muted></video></template>
-                    <button type="button" @click="remove(i); $dispatch('media-changed')" :aria-label="'移除照片 ' + (i + 1)"
-                        class="absolute top-1.5 right-1.5 inline-flex items-center justify-center size-8 rounded-full bg-ink/70 text-paper text-base">×</button>
+                <div class="flex flex-col rounded-[var(--radius-card)] overflow-hidden border border-line bg-paper-2">
+                    <div class="relative aspect-[4/3] overflow-hidden">
+                        <template x-if="item.type === 'image'"><img :src="url(item)" :alt="item.alt" class="size-full object-cover transition-[filter]" :class="item.sensitive && 'blur-md'"></template>
+                        <template x-if="item.type === 'video'"><video :src="url(item)" class="size-full object-cover transition-[filter]" :class="item.sensitive && 'blur-md'" muted></video></template>
+                        <button type="button" @click="remove(i); $dispatch('media-changed')" :aria-label="'移除照片 ' + (i + 1)"
+                            class="absolute top-1.5 right-1.5 inline-flex items-center justify-center size-8 rounded-full bg-ink/70 text-paper text-base">×</button>
+                        <label data-photo-sensitive class="absolute bottom-1.5 left-1.5 inline-flex items-center h-8 px-3 rounded-full text-xs font-semibold cursor-pointer focus-within:ring-2 focus-within:ring-accent"
+                            :class="item.sensitive ? 'bg-danger text-paper' : 'bg-ink/70 text-paper'">
+                            <input type="checkbox" x-model="item.sensitive" class="sr-only" :aria-label="'照片 ' + (i + 1) + ' 標記為敏感內容'">
+                            <span aria-hidden="true" x-text="item.sensitive ? '敏感內容' : '標記敏感'"></span>
+                        </label>
+                    </div>
+                    <input type="text" x-model="item.alt" maxlength="200" placeholder="替代文字（選填）" :aria-label="'照片 ' + (i + 1) + ' 的替代文字'"
+                        class="block w-full h-10 px-2.5 border-0 border-t border-line bg-paper text-[13px] text-ink placeholder:text-ink-3 focus:outline-none focus:bg-card">
                     <input type="hidden" :name="`media[${i}][path]`" :value="item.path">
                     <input type="hidden" :name="`media[${i}][type]`" :value="item.type">
                     <input type="hidden" :name="`media[${i}][alt]`" :value="item.alt">
-                    <input type="hidden" :name="`media[${i}][sensitive]`" :value="sensitive ? '1' : '0'">
+                    <input type="hidden" :name="`media[${i}][sensitive]`" :value="item.sensitive ? '1' : '0'">
                 </div>
             </template>
             <template x-for="job in pending" :key="job.id">
@@ -101,17 +110,8 @@
                 </div>
             </template>
         </div>
+        <p x-show="items.length" x-cloak class="m-0 px-4 pb-3 text-xs text-ink-3">標記敏感的照片會先模糊，讀者點一下才顯示</p>
         <p x-show="error" x-cloak class="m-0 px-4 pb-2 text-xs text-danger" x-text="error"></p>
-
-        {{-- Sensitive content --}}
-        <label class="flex items-center justify-between gap-4 mx-4 mb-3 p-3 rounded-[var(--radius-card)] border border-line cursor-pointer">
-            <span class="flex flex-col">
-                <span class="text-sm font-semibold">標記為敏感內容</span>
-                <span class="text-xs text-ink-3">照片會先模糊，讀者點一下才顯示</span>
-            </span>
-            <input type="checkbox" x-model="sensitive" class="peer sr-only" data-sensitive>
-            <span aria-hidden="true" class="relative shrink-0 w-11 h-6 rounded-full bg-line-2 transition-colors peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-accent after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-paper after:transition-transform peer-checked:after:translate-x-5"></span>
-        </label>
 
         <span class="flex-1"></span>
 
