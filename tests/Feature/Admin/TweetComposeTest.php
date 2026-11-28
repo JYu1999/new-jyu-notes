@@ -7,6 +7,7 @@ use App\Models\Tweet;
 use App\Models\User;
 use App\Services\TweetService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
@@ -177,7 +178,7 @@ class TweetComposeTest extends TestCase
         $html = $this->get(route('admin.tweets.index'))->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression('/href="'.preg_quote(e(route('admin.tweets.compose', ['from' => 'tweets'])), '/').'"[^>]*>\+ 新增 Tweet<\/a>/', $html);
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('admin.tweets.create'), 'the old create page is gone');
+        $this->assertFalse(Route::has('admin.tweets.create'), 'the old create page is gone');
     }
 
     public function test_composer_opened_from_the_list_returns_to_the_list(): void
