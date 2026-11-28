@@ -7,6 +7,7 @@ use App\Models\Tweet;
 use App\Models\User;
 use App\Services\TweetService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
@@ -65,8 +66,7 @@ class TweetComposeTest extends TestCase
         $this->assertStringContainsString('data-upload-progress', $html);
         $this->assertStringContainsString("x-text=\"'上傳中 ' + job.progress + '%'\"", $html);
         $this->assertStringContainsString(":aria-label=\"'移除照片 ' + (i + 1)\"", $html);
-        $this->assertMatchesRegularExpression('/標記為敏感內容<\/span>\s*<span[^>]*>照片會先模糊，讀者點一下才顯示<\/span>/', $html);
-        $this->assertStringContainsString('x-model="sensitive"', $html);
+        $this->assertStringContainsString('照片會先模糊，讀者點一下才顯示', $html);
         $this->assertMatchesRegularExpression('/\$dispatch\(\'insert-mention\'\)" aria-label="引用文章或碎念"/', $html);
         $this->assertStringContainsString('x-data="tweetComposer(', $html);
         $this->assertStringContainsString('data-autosave-status', $html);
@@ -161,10 +161,76 @@ class TweetComposeTest extends TestCase
 
     public function test_phones_get_a_shortcut_to_the_composer(): void
     {
-        foreach (['admin.dashboard', 'admin.tweets.index'] as $route) {
+        $shortcuts = [
+            'admin.dashboard' => route('admin.tweets.compose'),
+            'admin.tweets.index' => route('admin.tweets.compose', ['from' => 'tweets']),
+        ];
+        foreach ($shortcuts as $route => $href) {
             $html = $this->get(route($route))->assertOk()->getContent();
-            $this->assertMatchesRegularExpression('/href="'.preg_quote(route('admin.tweets.compose'), '/').'" data-compose-fab\s+class="md:hidden/', $html);
+            $this->assertMatchesRegularExpression('/href="'.preg_quote(e($href), '/').'" data-compose-fab\s+class="md:hidden/', $html);
         }
+    }
+
+    // JYU-563: the composer replaces the old create page on desktop too.
+
+    public function test_new_tweet_button_on_the_list_opens_the_composer(): void
+    {
+        $html = $this->get(route('admin.tweets.index'))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/href="'.preg_quote(e(route('admin.tweets.compose', ['from' => 'tweets'])), '/').'"[^>]*>\+ 新增 Tweet<\/a>/', $html);
+        $this->assertFalse(Route::has('admin.tweets.create'), 'the old create page is gone');
+    }
+
+    public function test_composer_opened_from_the_list_returns_to_the_list(): void
+    {
+        $html = $this->get(route('admin.tweets.compose', ['from' => 'tweets']))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/href="'.preg_quote(route('admin.tweets.index'), '/').'"[^>]*>取消<\/a>/', $html);
+        $this->assertStringContainsString('name="redirect_to" value="tweets"', $html);
+    }
+
+    public function test_composer_ignores_unknown_origins(): void
+    {
+        $html = $this->get(route('admin.tweets.compose', ['from' => 'https://evil.example']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="redirect_to" value="dashboard"', $html);
+    }
+
+    public function test_publishing_from_the_list_returns_to_the_list(): void
+    {
+        $this->post(route('admin.tweets.store'), [
+            'locale' => 'zh', 'body' => '新的', 'status' => 'published', 'redirect_to' => 'tweets',
+        ])->assertRedirect(route('admin.tweets.index'))->assertSessionHas('success', '已發布');
+
+        $draft = app(TweetService::class)->create(['locale' => 'zh', 'body' => '草稿', 'status' => 'draft']);
+        $this->put(route('admin.tweets.update', $draft), [
+            'body' => '發出去', 'status' => 'published', 'redirect_to' => 'tweets', 'tags_sent' => '1',
+        ])->assertRedirect(route('admin.tweets.index'))->assertSessionHas('success', '已發布');
+    }
+
+    public function test_each_photo_has_its_own_alt_text_and_sensitive_flag(): void
+    {
+        $html = $this->get(route('admin.tweets.compose'))->getContent();
+
+        $this->assertMatchesRegularExpression('/<input type="text" x-model="item.alt" maxlength="200"/', $html);
+        $this->assertStringContainsString('x-model="item.sensitive"', $html);
+        $this->assertStringContainsString(':value="item.sensitive ? \'1\' : \'0\'"', $html);
+        $this->assertStringNotContainsString('x-model="sensitive"', $html, 'no tweet-wide sensitive switch');
+    }
+
+    public function test_publishing_keeps_alt_text_and_sensitive_flag_per_photo(): void
+    {
+        $this->post(route('admin.tweets.store'), [
+            'locale' => 'zh', 'body' => '兩張', 'status' => 'published',
+            'media' => [
+                ['path' => 'uploads/a.jpg', 'type' => 'image', 'alt' => '海邊', 'sensitive' => '0'],
+                ['path' => 'uploads/b.jpg', 'type' => 'image', 'alt' => '傷口', 'sensitive' => '1'],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $media = Tweet::firstOrFail()->media;
+        $this->assertSame(['海邊', '傷口'], array_column($media, 'alt'));
+        $this->assertSame([false, true], array_map(fn ($m) => (bool) $m['sensitive'], $media));
     }
 
     public function test_composer_requires_admin(): void

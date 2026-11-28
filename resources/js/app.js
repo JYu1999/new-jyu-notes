@@ -648,8 +648,7 @@ window.tweetComposer = function ({ locale = 'zh', tweetId = null } = {}) {
 };
 
 /**
- * Full-screen tweet composer (JYU-551): tag chips, sensitive switch and draft
- * autosave. The first autosave creates a draft; from then on the form updates it,
+ * Full-screen tweet composer (JYU-551): tag chips and draft autosave. The first autosave creates a draft; from then on the form updates it,
  * so 發布 publishes that same tweet.
  */
 window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
@@ -657,7 +656,6 @@ window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
         tags,
         selected: [],
         tagsOpen: false,
-        sensitive: false,
         tweetId: null,
         saveState: 'idle',
         savedAt: null,

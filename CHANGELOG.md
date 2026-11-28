@@ -1,5 +1,7 @@
 ## 2026-11-28
 - "Remember me" on the admin login now lasts 7 days instead of about a year, and remembered logins from before this change have to sign in again; if you get logged out while writing a post or tweet, the editor says so with a link to sign in again and keeps your text, then carries on autosaving when you come back
+- Security update: upgraded Laravel, Symfony, Guzzle, CommonMark, Flysystem and front-end build tools (Vite, PostCSS, concurrently) to patched versions, closing every advisory reported by `composer audit` and `npm audit`
+- "+ 新增 Tweet" on the admin tweet list now opens the same full-screen composer as the phone shortcut (centred on desktop), and cancelling or publishing returns to the page you came from; each photo has its own alt text and sensitive flag, replacing the tweet-wide sensitive switch
 
 ## 2026-11-27
 - Removed the retired Todo feature from the admin; the Changelog page reads only CHANGELOG.md as before
