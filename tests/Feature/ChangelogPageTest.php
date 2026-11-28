@@ -29,6 +29,14 @@ class ChangelogPageTest extends TestCase
         File::put($this->changelogFile, $content);
     }
 
+    // 「登入」的「入」是 E5 85 A5：0x85 不能被當成換行（NEL）把條目切成兩半
+    public function test_multibyte_text_is_not_split_into_broken_lines(): void
+    {
+        $this->putContent("## 2026-11-28\n- 在登入頁按「用 Passkey 登入」就能登入\n");
+
+        $this->get('/changelog')->assertOk()->assertSee('在登入頁按「用 Passkey 登入」就能登入');
+    }
+
     // 條目支援 inline Markdown，但不允許原始 HTML
     public function test_entries_render_inline_markdown_without_raw_html(): void
     {
