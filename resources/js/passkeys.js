@@ -51,7 +51,9 @@ function describe(error) {
         case 429: return '試太多次了，請一分鐘後再試。';
         case 422: return error.data?.errors?.password?.[0] ?? 'Passkey 驗證沒有通過，請再試一次或改用密碼。';
     }
-    return '出了點問題，請再試一次。';
+    // Unclassified: name the status / error so the next report says what failed.
+    const detail = error?.status ? `HTTP ${error.status}` : error?.name;
+    return detail ? `出了點問題（${detail}），請再試一次。` : '出了點問題，請再試一次。';
 }
 
 /** Registers a passkey on this device. Throws { status: 423 } when identity must be re-confirmed first. */
@@ -86,8 +88,8 @@ window.passkeyLogin = function () {
             this.error = '';
             try {
                 const { redirect } = await verifyPasskey({
-                    optionsUrl: this.$el.dataset.optionsUrl,
-                    verifyUrl: this.$el.dataset.loginUrl,
+                    optionsUrl: this.$root.dataset.optionsUrl,
+                    verifyUrl: this.$root.dataset.loginUrl,
                     extra: { remember: !!this.$refs.remember?.checked },
                 });
                 window.location.assign(redirect);
@@ -209,7 +211,7 @@ window.passkeyConfirm = function () {
             this.busy = true;
             this.error = '';
             try {
-                const { redirect } = await verifyPasskey({ optionsUrl: this.$el.dataset.optionsUrl, verifyUrl: this.$el.dataset.confirmUrl });
+                const { redirect } = await verifyPasskey({ optionsUrl: this.$root.dataset.optionsUrl, verifyUrl: this.$root.dataset.confirmUrl });
                 window.location.assign(redirect);
             } catch (e) {
                 this.error = describe(e);
@@ -237,7 +239,7 @@ window.passkeyOffer = function () {
             if (this.busy) return;
             this.busy = true;
             this.error = '';
-            const { optionsUrl, storeUrl, defaultName, accountUrl } = this.$el.dataset;
+            const { optionsUrl, storeUrl, defaultName, accountUrl } = this.$root.dataset;
             try {
                 await addPasskey({ optionsUrl, storeUrl, name: defaultName });
                 this.done = true;
