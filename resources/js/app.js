@@ -649,14 +649,16 @@ window.tweetComposer = function ({ locale = 'zh', tweetId = null } = {}) {
 
 /**
  * Full-screen tweet composer (JYU-551): tag chips and draft autosave. The first autosave creates a draft; from then on the form updates it,
- * so 發布 publishes that same tweet.
+ * so 發布 publishes that same tweet. Editing an existing tweet (JYU-567) starts with its id and tags; only drafts autosave, so a live
+ * tweet never shows half-typed changes and only changes on 儲存.
  */
-window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
+window.tweetCompose = function ({ autosaveUrl, tags = [], selected = [], tweetId = null, autosave = true }) {
     return {
         tags,
-        selected: [],
+        selected,
         tagsOpen: false,
-        tweetId: null,
+        tweetId,
+        autosaves: autosave,
         saveState: 'idle',
         savedAt: null,
         submitting: false,
@@ -680,6 +682,9 @@ window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
         },
         get saveLabel() {
             this.tick;
+            if (!this.autosaves) {
+                return this.saveState === 'dirty' ? '有未儲存的變更' : '按「儲存」才會更新';
+            }
             switch (this.saveState) {
                 case 'saved': return `草稿已自動儲存 · ${relativeTime(this.savedAt)}`;
                 case 'saving': return '儲存中…';
@@ -691,11 +696,12 @@ window.tweetCompose = function ({ autosaveUrl, tags = [] }) {
         changed() {
             if (this.submitting) return;
             this.saveState = 'dirty';
+            if (!this.autosaves) return;
             clearTimeout(this.timer);
             this.timer = setTimeout(() => this.autosave(), 3000);
         },
         async autosave() {
-            if (this.submitting) return;
+            if (this.submitting || !this.autosaves) return;
             const fd = new FormData(this.$root);
             ['_method', 'status', 'redirect_to', 'tags_sent'].forEach((k) => fd.delete(k));
             if (this.tweetId) fd.set('tweet_id', this.tweetId);

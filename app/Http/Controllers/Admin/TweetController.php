@@ -23,6 +23,7 @@ class TweetController extends Controller
     /** Where the composer may send me back to: redirect_to value => route name. */
     private const COMPOSER_ORIGINS = [
         'dashboard' => 'admin.dashboard',
+        'drafts' => 'admin.drafts.index',
         'tweets' => 'admin.tweets.index',
     ];
 
@@ -52,42 +53,66 @@ class TweetController extends Controller
     {
         $tweet = $service->create($request->safe()->except('redirect_to'));
 
-        return $this->backToComposerOrigin($tweet, $request->validated('redirect_to'))
+        $message = $tweet->status === Tweet::STATUS_PUBLISHED ? '已發布' : '已存草稿';
+
+        return $this->backToComposerOrigin($request->validated('redirect_to'), $message)
             ?? redirect()->route('admin.tweets.edit', $tweet)->with('success', '已建立');
     }
 
-    public function edit(Tweet $tweet, TagRepository $tags): View
+    /**
+     * Editing happens in the composer too (JYU-567). Drafts keep autosaving;
+     * live tweets only change when I press 儲存. Opened from anywhere but the
+     * dashboard or the drafts page, it goes back to the tweet list.
+     */
+    public function edit(Request $request, Tweet $tweet, TagRepository $tags): View
     {
-        $tweet->load('tags.translations');
+        $tweet->load('tags');
+        $origin = $this->composerOrigin($request, default: 'tweets');
 
-        return view('admin.tweets.edit', [
+        return view('admin.tweets.compose', [
             'tweet' => $tweet,
             'translations' => $tweet->allTranslations()->keyBy('locale'),
             'tags' => $tags->all(),
+            'locale' => $tweet->locale,
+            'origin' => $origin,
+            'cancelUrl' => route(self::COMPOSER_ORIGINS[$origin]),
         ]);
     }
 
     public function update(Tweet $tweet, UpdateRequest $request, TweetService $service): RedirectResponse
     {
+        $wasDraft = $tweet->status === Tweet::STATUS_DRAFT;
         $tweet = $service->update($tweet, $request->safe()->except(['redirect_to', 'tags_sent']));
+        $message = match (true) {
+            $tweet->status === Tweet::STATUS_DRAFT => '已存草稿',
+            $wasDraft && $tweet->status === Tweet::STATUS_PUBLISHED => '已發布',
+            default => '已更新',
+        };
 
-        return $this->backToComposerOrigin($tweet, $request->validated('redirect_to'))
+        return $this->backToComposerOrigin($request->validated('redirect_to'), $message)
             ?? redirect()->route('admin.tweets.edit', $tweet)->with('success', '已更新');
+    }
+
+    /** `?from=` names the page the composer was opened from; anything unknown falls back to $default. */
+    private function composerOrigin(Request $request, string $default): string
+    {
+        $from = $request->query('from');
+
+        return is_string($from) && isset(self::COMPOSER_ORIGINS[$from]) ? $from : $default;
     }
 
     /**
      * The composer and the quick tweet box send me back where I came from
      * (JYU-542, JYU-563); other forms keep returning to the edit page.
      */
-    private function backToComposerOrigin(Tweet $tweet, ?string $redirectTo): ?RedirectResponse
+    private function backToComposerOrigin(?string $redirectTo, string $message): ?RedirectResponse
     {
         $route = self::COMPOSER_ORIGINS[$redirectTo] ?? null;
         if ($route === null) {
             return null;
         }
 
-        return redirect()->route($route)
-            ->with('success', $tweet->status === Tweet::STATUS_PUBLISHED ? '已發布' : '已存草稿');
+        return redirect()->route($route)->with('success', $message);
     }
 
     /**
@@ -96,9 +121,10 @@ class TweetController extends Controller
      */
     public function compose(Request $request, TagRepository $tags): View
     {
-        $origin = $request->query('from') === 'tweets' ? 'tweets' : 'dashboard';
+        $origin = $this->composerOrigin($request, default: 'dashboard');
 
         return view('admin.tweets.compose', [
+            'tweet' => null,
             'tags' => $tags->all(),
             'locale' => app()->getLocale(),
             'origin' => $origin,
@@ -158,9 +184,18 @@ class TweetController extends Controller
 
     public function updateStatus(Tweet $tweet, UpdateStatusRequest $request, TweetService $service): RedirectResponse
     {
-        $service->updateStatus($tweet, $request->validated()['status']);
+        $wasHidden = $tweet->status === Tweet::STATUS_HIDDEN;
+        $status = $request->validated()['status'];
+        $service->updateStatus($tweet, $status);
 
-        return back()->with('success', '狀態已更新');
+        // The tweet list hides and unhides from each row (JYU-567).
+        $message = match (true) {
+            $status === Tweet::STATUS_HIDDEN => '已隱藏',
+            $wasHidden && $status === Tweet::STATUS_PUBLISHED => '已取消隱藏',
+            default => '狀態已更新',
+        };
+
+        return back()->with('success', $message);
     }
 
     public function createTranslation(Tweet $tweet, CreateTranslationRequest $request, TweetService $service): RedirectResponse

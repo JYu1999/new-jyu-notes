@@ -27,7 +27,7 @@ class StoreRequest extends FormRequest
             'tag_ids' => 'array',
             'tag_ids.*' => 'integer|exists:tags,id',
             // Quick tweet / composer go back where they came from (JYU-542, JYU-563).
-            'redirect_to' => 'nullable|in:dashboard,tweets',
+            'redirect_to' => 'nullable|in:dashboard,drafts,tweets',
         ];
     }
 }

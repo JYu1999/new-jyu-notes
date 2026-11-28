@@ -1,4 +1,5 @@
 ## 2026-11-28
+- Editing a tweet now uses the same full-screen composer as writing one: drafts keep autosaving and are published with 發布, live tweets only change when you press 儲存, and translations, version history and dates sit under the text; cancelling returns to the list, the admin home or the drafts page you came from. Hide and unhide tweets from the buttons on each row of the admin tweet list, which keeps your filters and page
 - "+ 新增 Tweet" on the admin tweet list now opens the same full-screen composer as the phone shortcut (centred on desktop), and cancelling or publishing returns to the page you came from; each photo has its own alt text and sensitive flag, replacing the tweet-wide sensitive switch
 
 ## 2026-11-27

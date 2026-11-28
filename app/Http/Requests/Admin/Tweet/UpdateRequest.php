@@ -25,7 +25,7 @@ class UpdateRequest extends FormRequest
             'tag_ids' => 'sometimes|array',
             'tag_ids.*' => 'integer|exists:tags,id',
             // The composer goes back where it was opened from after publishing (JYU-551, JYU-563).
-            'redirect_to' => 'nullable|in:dashboard,tweets',
+            'redirect_to' => 'nullable|in:dashboard,drafts,tweets',
             'tags_sent' => 'sometimes|boolean',
         ];
     }
